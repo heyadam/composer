@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Map, { Source, Layer, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox';
 import type { MapMouseEvent, MapGeoJSONFeature } from 'react-map-gl/mapbox';
+import type { GeolocateControl as GeolocateControlType } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 import { AvalanchePopup } from './AvalanchePopup';
@@ -30,6 +31,13 @@ export function AvalancheMap() {
   const [error, setError] = useState<string | null>(null);
   const [initialViewState, setInitialViewState] = useState(DEFAULT_VIEW_STATE);
   const [locationLoaded, setLocationLoaded] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const geolocateRef = useRef<GeolocateControlType>(null);
+
+  // Detect touch device to hide hover tooltip on mobile
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
 
   // Request user's location on mount
   useEffect(() => {
@@ -114,10 +122,15 @@ export function AvalancheMap() {
     return hoverInfo ? 'pointer' : 'grab';
   }, [hoverInfo]);
 
+  // Trigger geolocate control when map loads to show user location dot
+  const onMapLoad = useCallback(() => {
+    geolocateRef.current?.trigger();
+  }, []);
+
   if (isLoading || !locationLoaded) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
+      <div className="fixed inset-0 flex items-center justify-center bg-gray-100">
+        <div className="text-center px-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">
             {!locationLoaded ? 'Getting your location...' : 'Loading avalanche data...'}
@@ -129,12 +142,12 @@ export function AvalancheMap() {
 
   if (error) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
+      <div className="fixed inset-0 flex items-center justify-center bg-gray-100 px-4">
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md w-full">
           <p className="text-red-600 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 active:bg-blue-800"
           >
             Retry
           </button>
@@ -154,8 +167,15 @@ export function AvalancheMap() {
       onMouseLeave={() => setHoverInfo(null)}
       onClick={onClick}
       cursor={cursor}
+      onLoad={onMapLoad}
     >
-      <GeolocateControl position="top-right" trackUserLocation />
+      <GeolocateControl
+        ref={geolocateRef}
+        position="top-right"
+        trackUserLocation
+        showUserLocation
+        fitBoundsOptions={{ maxZoom: MAX_INITIAL_ZOOM }}
+      />
       <NavigationControl position="top-right" />
 
       {geoJsonData && (
@@ -165,7 +185,8 @@ export function AvalancheMap() {
         </Source>
       )}
 
-      {hoverInfo && !clickInfo && (
+      {/* Hide hover tooltip on touch devices - they don't have hover */}
+      {hoverInfo && !clickInfo && !isTouchDevice && (
         <div
           className="absolute pointer-events-none bg-white px-3 py-2 rounded-md shadow-lg text-sm z-10"
           style={{ left: 10, top: 10 }}

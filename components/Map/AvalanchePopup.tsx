@@ -38,23 +38,23 @@ export function AvalanchePopup({
       closeOnClick={false}
       maxWidth="320px"
     >
-      <div className="p-3">
-        <h3 className="font-bold text-lg text-gray-900 mb-1">
+      <div className="p-4 sm:p-3">
+        <h3 className="font-bold text-lg sm:text-base text-gray-900 mb-1 pr-8">
           {properties.name}
         </h3>
 
-        <p className="text-sm text-gray-600 mb-2">
+        <p className="text-sm text-gray-600 mb-3 sm:mb-2">
           {properties.center}
         </p>
 
         <div
-          className={`inline-block px-3 py-1 rounded-full text-white text-sm font-medium mb-3 ${dangerInfo.bgColor}`}
+          className={`inline-block px-4 py-2 sm:px-3 sm:py-1 rounded-full text-white text-base sm:text-sm font-medium mb-4 sm:mb-3 ${dangerInfo.bgColor}`}
         >
           Danger: {dangerInfo.label}
         </div>
 
         {properties.travel_advice && (
-          <div className="mb-3">
+          <div className="mb-4 sm:mb-3">
             <h4 className="font-semibold text-sm text-gray-800 mb-1">Travel Advice</h4>
             <p className="text-sm text-gray-700 leading-relaxed">
               {properties.travel_advice}
@@ -66,7 +66,7 @@ export function AvalanchePopup({
           href={properties.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="inline-block w-full text-center bg-blue-600 text-white py-3 sm:py-2 px-4 rounded-lg sm:rounded-md text-base sm:text-sm font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors"
         >
           View Full Forecast
         </a>
