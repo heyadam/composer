@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import Map, { Source, Layer, NavigationControl } from 'react-map-gl/mapbox';
+import Map, { Source, Layer, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox';
 import type { MapMouseEvent, MapGeoJSONFeature } from 'react-map-gl/mapbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -12,7 +12,7 @@ import type { AvalancheGeoJSON, AvalancheZoneProperties, HoverInfo, ClickInfo } 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 const AVALANCHE_API_URL = 'https://api.avalanche.org/v2/public/products/map-layer';
 
-const INITIAL_VIEW_STATE = {
+const DEFAULT_VIEW_STATE = {
   longitude: -110,
   latitude: 45,
   zoom: 4,
@@ -20,13 +20,43 @@ const INITIAL_VIEW_STATE = {
   bearing: 0,
 };
 
+const MAX_INITIAL_ZOOM = 8;
+
 export function AvalancheMap() {
   const [geoJsonData, setGeoJsonData] = useState<AvalancheGeoJSON | null>(null);
   const [hoverInfo, setHoverInfo] = useState<HoverInfo | null>(null);
   const [clickInfo, setClickInfo] = useState<ClickInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [initialViewState, setInitialViewState] = useState(DEFAULT_VIEW_STATE);
+  const [locationLoaded, setLocationLoaded] = useState(false);
 
+  // Request user's location on mount
+  useEffect(() => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setInitialViewState({
+            longitude: position.coords.longitude,
+            latitude: position.coords.latitude,
+            zoom: MAX_INITIAL_ZOOM,
+            pitch: 0,
+            bearing: 0,
+          });
+          setLocationLoaded(true);
+        },
+        () => {
+          // User denied or error - use default view
+          setLocationLoaded(true);
+        },
+        { enableHighAccuracy: false, timeout: 5000 }
+      );
+    } else {
+      setLocationLoaded(true);
+    }
+  }, []);
+
+  // Fetch avalanche data
   useEffect(() => {
     async function fetchData() {
       try {
@@ -84,12 +114,14 @@ export function AvalancheMap() {
     return hoverInfo ? 'pointer' : 'grab';
   }, [hoverInfo]);
 
-  if (isLoading) {
+  if (isLoading || !locationLoaded) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-gray-100">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading avalanche data...</p>
+          <p className="text-gray-600">
+            {!locationLoaded ? 'Getting your location...' : 'Loading avalanche data...'}
+          </p>
         </div>
       </div>
     );
@@ -114,7 +146,7 @@ export function AvalancheMap() {
   return (
     <Map
       mapboxAccessToken={MAPBOX_TOKEN}
-      initialViewState={INITIAL_VIEW_STATE}
+      initialViewState={initialViewState}
       style={{ width: '100vw', height: '100vh' }}
       mapStyle="mapbox://styles/mapbox/outdoors-v12"
       interactiveLayerIds={['avalanche-zones-fill']}
@@ -123,6 +155,7 @@ export function AvalancheMap() {
       onClick={onClick}
       cursor={cursor}
     >
+      <GeolocateControl position="top-right" trackUserLocation />
       <NavigationControl position="top-right" />
 
       {geoJsonData && (
