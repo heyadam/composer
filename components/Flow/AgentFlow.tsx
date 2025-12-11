@@ -142,7 +142,7 @@ export function AgentFlow() {
   return (
     <div className="flex h-screen w-full">
       <NodeSidebar />
-      <div ref={reactFlowWrapper} className="flex-1">
+      <div ref={reactFlowWrapper} className="flex-1 bg-muted/10">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -180,12 +180,15 @@ export function AgentFlow() {
           />
 
           {/* Execution Controls */}
-          <Panel position="top-center" className="flex items-center gap-2 bg-background/95 backdrop-blur p-3 rounded-lg border shadow-lg">
+          <Panel
+            position="top-center"
+            className="flex items-center gap-2 rounded-xl border bg-background/95 backdrop-blur p-2 shadow-sm"
+          >
             <Input
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
               placeholder="Enter your input..."
-              className="w-80"
+              className="w-[360px]"
               disabled={isRunning}
             />
             <Button onClick={runFlow} disabled={isRunning} className="gap-2">
@@ -201,16 +204,21 @@ export function AgentFlow() {
                 </>
               )}
             </Button>
-            <Button onClick={resetExecution} variant="outline" disabled={isRunning}>
+            <Button onClick={resetExecution} variant="outline" size="icon" disabled={isRunning}>
               <RotateCcw className="h-4 w-4" />
             </Button>
           </Panel>
 
           {/* Final Output */}
           {finalOutput && (
-            <Panel position="bottom-center" className="bg-background/95 backdrop-blur p-4 rounded-lg border shadow-lg max-w-xl">
+            <Panel
+              position="bottom-center"
+              className="rounded-xl border bg-background/95 backdrop-blur p-4 shadow-sm max-w-xl"
+            >
               <h3 className="text-sm font-medium mb-2">Final Output</h3>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{finalOutput}</p>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap max-h-48 overflow-auto">
+                {finalOutput}
+              </p>
             </Panel>
           )}
         </ReactFlow>

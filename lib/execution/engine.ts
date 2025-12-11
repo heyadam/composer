@@ -1,5 +1,5 @@
 import type { Node, Edge } from "@xyflow/react";
-import type { ExecutionState, NodeExecutionState } from "./types";
+import type { NodeExecutionState } from "./types";
 
 // Find the starting node (input node)
 function findStartNode(nodes: Node[]): Node | undefined {
@@ -95,7 +95,7 @@ export async function executeFlow(
   }
 
   const context: Record<string, unknown> = { userInput };
-  let currentNodes: { node: Node; input: string }[] = [{ node: startNode, input: userInput }];
+  const currentNodes: { node: Node; input: string }[] = [{ node: startNode, input: userInput }];
   let finalOutput = "";
 
   // Process nodes in order

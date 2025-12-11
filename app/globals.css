@@ -131,9 +131,38 @@ html, body {
 .react-flow__node {
   background-clip: unset !important;
   -webkit-background-clip: unset !important;
+  background: transparent !important;
   border-color: rgba(0, 0, 0, 0) !important;
   border-image: none !important;
   border-width: 0px !important;
   border-style: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  outline: none !important;
   /* color: rgba(10, 10, 10, 1); -- Skipped to prevent accessibility issues in dark mode */
+}
+
+.react-flow__node.selected,
+.react-flow__node:focus,
+.react-flow__node:focus-visible {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* React Flow UI chrome */
+.react-flow__controls-button {
+  @apply bg-background/90 backdrop-blur border border-border shadow-sm;
+}
+
+.react-flow__controls-button:hover {
+  @apply bg-accent text-accent-foreground;
+}
+
+.react-flow__minimap {
+  @apply bg-background/90 border border-border rounded-xl shadow-sm overflow-hidden;
+}
+
+.react-flow__minimap-mask {
+  @apply fill-background/70;
 }
