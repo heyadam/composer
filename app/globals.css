@@ -126,3 +126,14 @@ html, body {
     @apply bg-background text-foreground;
   }
 }
+
+/* React Flow Node Overrides */
+.react-flow__node {
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  border-color: rgba(0, 0, 0, 0) !important;
+  border-image: none !important;
+  border-width: 0px !important;
+  border-style: none !important;
+  /* color: rgba(10, 10, 10, 1); -- Skipped to prevent accessibility issues in dark mode */
+}
