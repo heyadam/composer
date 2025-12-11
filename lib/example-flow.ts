@@ -12,8 +12,8 @@ export const initialNodes: Node[] = [
     type: "prompt",
     position: { x: 225, y: 100 },
     data: {
-      label: "AI Assistant",
-      prompt: `You are a helpful AI assistant. Answer the user's question clearly and concisely.`,
+      label: "Prompt",
+      prompt: "",
       model: "gpt-4o",
     },
   },

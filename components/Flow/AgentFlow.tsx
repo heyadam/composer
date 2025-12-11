@@ -31,7 +31,7 @@ const getId = () => `node_${id++}`;
 const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
   input: { label: "Input" },
   output: { label: "Output" },
-  prompt: { label: "Prompt", prompt: "Enter your prompt here...", model: "gpt-4o" },
+  prompt: { label: "Prompt", prompt: "", model: "gpt-4o" },
   tool: { label: "Tool", toolName: "custom_tool", description: "Tool description" },
   condition: { label: "Condition", condition: "value === true" },
 };

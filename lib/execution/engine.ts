@@ -30,12 +30,13 @@ async function executeNode(
       return { output: input };
 
     case "prompt": {
+      const prompt = typeof node.data?.prompt === "string" ? node.data.prompt : "";
       const response = await fetch("/api/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "prompt",
-          prompt: node.data.prompt,
+          prompt: prompt,
           model: node.data.model || "gpt-4",
           input,
           context,

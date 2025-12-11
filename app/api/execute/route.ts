@@ -15,18 +15,19 @@ export async function POST(request: NextRequest) {
         const { prompt, model } = body;
         const userInput = context?.userInput || input;
 
+        const messages: { role: "system" | "user"; content: string }[] = [];
+        if (typeof prompt === "string" && prompt.trim().length > 0) {
+          messages.push({ role: "system", content: prompt.trim() });
+        }
+
         const completion = await openai.chat.completions.create({
           model: model || "gpt-4",
-          messages: [
-            {
-              role: "system",
-              content: prompt,
-            },
+          messages: messages.concat([
             {
               role: "user",
               content: `Original user question: ${userInput}\n\nCurrent input from previous step: ${input}`,
             },
-          ],
+          ]),
           max_tokens: 1000,
         });
 

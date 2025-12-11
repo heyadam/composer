@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { NodeFrame } from "./NodeFrame";
+import { cn } from "@/lib/utils";
 
 type PromptNodeType = Node<PromptNodeData, "prompt">;
 
@@ -52,9 +53,15 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
       />
 
       <div className="space-y-2">
-        <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-3">
-          {data.prompt}
-        </p>
+        <textarea
+          value={typeof data.prompt === "string" ? data.prompt : ""}
+          onChange={(e) => updateNodeData(id, { prompt: e.target.value })}
+          placeholder="Enter instructions (optional)…"
+          className={cn(
+            "nodrag w-full min-h-[84px] resize-y rounded-md border border-input bg-background/60 dark:bg-muted/40 px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
+            "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+          )}
+        />
 
         <div className="flex items-center justify-between gap-2">
           <div className="text-[11px] text-muted-foreground">Model</div>
