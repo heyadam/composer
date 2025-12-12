@@ -10,4 +10,6 @@ export interface PreviewEntry {
   output?: string;
   error?: string;
   timestamp: number;
+  /** The type of node producing the content (e.g., "image" for image generation) */
+  sourceType?: NodeType;
 }

@@ -29,7 +29,7 @@ const getId = () => `node_${id++}`;
 const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
   input: { label: "Input", inputValue: "" },
   output: { label: "Response" },
-  prompt: { label: "Prompt", prompt: "", provider: "openai", model: "gpt-5" },
+  prompt: { label: "Text", prompt: "", provider: "openai", model: "gpt-5" },
   image: { label: "Image Generator", prompt: "", outputFormat: "webp", size: "1024x1024", quality: "low", partialImages: 3 },
 };
 
@@ -173,6 +173,7 @@ export function AgentFlow() {
               nodeLabel,
               nodeType: "output",
               status: "running",
+              sourceType: state.sourceType as "prompt" | "image" | undefined,
             });
           }
           // Update preview with streaming output while running
@@ -180,6 +181,12 @@ export function AgentFlow() {
             updatePreviewEntry(nodeId, {
               status: "running",
               output: state.output,
+            });
+          } else if (state.sourceType) {
+            // Update source type if provided (for loading state)
+            updatePreviewEntry(nodeId, {
+              status: "running",
+              sourceType: state.sourceType as "prompt" | "image" | undefined,
             });
           }
         } else {

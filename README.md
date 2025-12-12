@@ -32,7 +32,7 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
 | Provider | Models |
 |----------|--------|
 | OpenAI | GPT-5 (streaming partial images) |
-| Google | Gemini 2.5 Flash |
+| Google | Gemini 2.5 Flash, Gemini 3 Pro |
 
 ## Getting Started
 

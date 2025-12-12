@@ -52,6 +52,12 @@ Quick reference for AI model IDs used in API calls.
 | `gemini-2.5-pro-preview-tts` | Text-to-speech preview |
 
 
+### Native Image Generation (Gemini)
+| Model ID | Description |
+|----------|-------------|
+| `gemini-2.5-flash-image` | Fast image generation (1024px) |
+| `gemini-3-pro-image-preview` | High quality image generation (up to 4096px) |
+
 ### Image Generation (Imagen)
 | Model ID | Description |
 |----------|-------------|

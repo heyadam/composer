@@ -2,7 +2,7 @@
 
 import { Handle, Position, useReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import type { InputNodeData } from "@/types/flow";
-import { Play } from "lucide-react";
+import { Keyboard } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { cn } from "@/lib/utils";
 
@@ -15,9 +15,9 @@ export function InputNode({ id, data }: NodeProps<InputNodeType>) {
     <NodeFrame
       title={data.label}
       onTitleChange={(label) => updateNodeData(id, { label })}
-      icon={<Play className="h-4 w-4" />}
-      iconClassName="bg-green-500/10 text-green-600 dark:text-green-300"
-      accentBorderClassName="border-l-green-500"
+      icon={<Keyboard className="h-4 w-4" />}
+      iconClassName="bg-purple-500/10 text-purple-600 dark:text-purple-300"
+      accentBorderClassName="border-purple-500"
       status={data.executionStatus}
       className="w-[240px]"
     >
@@ -33,10 +33,10 @@ export function InputNode({ id, data }: NodeProps<InputNodeType>) {
       <Handle
         type="source"
         position={Position.Right}
-        className="!bg-cyan-500 !w-2.5 !h-2.5 !border-2 !border-background !shadow-sm"
+        className="!bg-gray-600 !w-2.5 !h-2.5 !border-2 !border-background !shadow-sm"
       />
       <div className="pointer-events-none absolute top-1/2 -translate-y-1/2 -right-12">
-        <span className="rounded-md bg-cyan-500/50 px-1.5 py-0.5 text-[11px] font-medium text-cyan-700 dark:text-cyan-300 shadow-sm border border-cyan-500/40">
+        <span className="rounded-md bg-gray-600 px-1.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
           string
         </span>
       </div>

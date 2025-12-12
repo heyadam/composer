@@ -32,7 +32,7 @@ export function NodeFrame({
     status === "running"
       ? "ring-2 ring-primary/20"
       : status === "success"
-        ? "ring-2 ring-emerald-500/20"
+        ? "ring-2 ring-gray-400/30"
         : status === "error"
           ? "ring-2 ring-destructive/25"
           : "";
@@ -40,7 +40,7 @@ export function NodeFrame({
   return (
     <div
       className={cn(
-        "relative rounded-xl border bg-card shadow-sm overflow-visible border-l-4",
+        "relative rounded-xl border bg-card shadow-sm overflow-visible",
         accentBorderClassName,
         statusClasses,
         className

@@ -97,7 +97,12 @@ export function ResponsesContent({ entries }: ResponsesContentProps) {
             ) : entry.output ? (
               <MessageResponse>{entry.output}</MessageResponse>
             ) : entry.status === "running" ? (
-              <p className="text-sm text-muted-foreground italic">Processing...</p>
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  {entry.sourceType === "image" ? "Generating image..." : "Processing..."}
+                </p>
+              </div>
             ) : null}
           </MessageContent>
         </Message>

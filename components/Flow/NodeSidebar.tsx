@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { nodeDefinitions, type NodeType } from "@/types/flow";
-import { Play, Square, MessageSquare, Plus, X, ImageIcon } from "lucide-react";
+import { Keyboard, Square, MessageSquare, Plus, X, ImageIcon } from "lucide-react";
 import type { DragEvent } from "react";
 import { Button } from "@/components/ui/button";
 
 const iconMap = {
-  input: Play,
+  input: Keyboard,
   output: Square,
   prompt: MessageSquare,
   image: ImageIcon,
@@ -27,9 +27,8 @@ export function NodeSidebar() {
       <div className="absolute top-4 left-4 z-10">
         <Button
           onClick={() => setIsOpen(!isOpen)}
-          variant={isOpen ? "secondary" : "default"}
           size="sm"
-          className="gap-2"
+          className="gap-2 bg-neutral-800 text-white hover:bg-neutral-700 border-neutral-700"
         >
           {isOpen ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
           {isOpen ? "Close" : "Add Node"}
@@ -38,13 +37,13 @@ export function NodeSidebar() {
 
       {/* Sliding Panel */}
       <aside
-        className={`absolute top-16 left-4 z-10 w-64 border rounded-xl bg-background/95 backdrop-blur shadow-lg transition-all duration-200 ${
+        className={`absolute top-16 left-4 z-10 w-64 border border-neutral-700 rounded-xl bg-neutral-800/95 backdrop-blur shadow-lg transition-all duration-200 ${
           isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"
         }`}
       >
-        <div className="p-3 border-b">
-          <div className="text-sm font-semibold">Node Palette</div>
-          <div className="text-xs text-muted-foreground mt-0.5">Drag nodes onto the canvas</div>
+        <div className="p-3 border-b border-neutral-700">
+          <div className="text-sm font-semibold text-white">Node Palette</div>
+          <div className="text-xs text-neutral-400 mt-0.5">Drag nodes onto the canvas</div>
         </div>
 
         <div className="p-2 space-y-1 max-h-[400px] overflow-y-auto">
@@ -55,14 +54,14 @@ export function NodeSidebar() {
                 key={node.type}
                 draggable
                 onDragStart={(e) => onDragStart(e, node.type)}
-                className="group flex items-center gap-3 p-2.5 border rounded-lg cursor-grab hover:bg-muted/40 hover:border-border/70 transition-colors active:cursor-grabbing"
+                className="group flex items-center gap-3 p-2.5 border border-neutral-700 rounded-lg cursor-grab hover:bg-neutral-700/50 hover:border-neutral-600 transition-colors active:cursor-grabbing"
               >
-                <div className={`p-1.5 ${node.color} rounded-md border border-border/60`}>
+                <div className={`p-1.5 ${node.color} rounded-md border border-neutral-600`}>
                   <Icon className="h-3.5 w-3.5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">{node.label}</p>
-                  <p className="text-[11px] text-muted-foreground truncate">{node.description}</p>
+                  <p className="text-sm font-medium text-white">{node.label}</p>
+                  <p className="text-[11px] text-neutral-400 truncate">{node.description}</p>
                 </div>
               </div>
             );

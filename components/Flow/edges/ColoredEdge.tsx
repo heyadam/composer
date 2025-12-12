@@ -4,10 +4,10 @@ import { BaseEdge, getSmoothStepPath, type EdgeProps } from "@xyflow/react";
 
 // Color mapping based on data type
 const edgeColors = {
-  string: "#06b6d4", // cyan-500
-  image: "#a855f7",  // purple-500
-  response: "#f59e0b", // amber-500
-  default: "#6b7280", // gray-500
+  string: "#d1d5db", // gray-300
+  image: "#d1d5db",  // gray-300
+  response: "#d1d5db", // gray-300
+  default: "#d1d5db", // gray-300
 };
 
 export function ColoredEdge({

@@ -48,8 +48,8 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
       title={data.label}
       onTitleChange={(label) => updateNodeData(id, { label })}
       icon={<Square className="h-4 w-4" />}
-      iconClassName="bg-red-500/10 text-red-600 dark:text-red-300"
-      accentBorderClassName="border-l-red-500"
+      iconClassName="bg-blue-500/10 text-blue-600 dark:text-blue-300"
+      accentBorderClassName="border-blue-500"
       status={data.executionStatus}
       className="min-w-[190px]"
       footer={renderFooter()}
@@ -57,10 +57,10 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
       <Handle
         type="target"
         position={Position.Left}
-        className="!bg-amber-500 !w-2.5 !h-2.5 !border-2 !border-background !shadow-sm"
+        className="!bg-gray-600 !w-2.5 !h-2.5 !border-2 !border-background !shadow-sm"
       />
       <div className="pointer-events-none absolute top-1/2 -translate-y-1/2 -left-[4.5rem]">
-        <span className="rounded-md bg-amber-500/50 px-1.5 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-300 shadow-sm border border-amber-500/40">
+        <span className="rounded-md bg-gray-600 px-1.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
           response
         </span>
       </div>

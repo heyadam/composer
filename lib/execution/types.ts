@@ -6,6 +6,8 @@ export interface NodeExecutionState {
   status: ExecutionStatus;
   output?: string;
   error?: string;
+  /** The type of node producing the content (for downstream outputs) */
+  sourceType?: string;
 }
 
 export type ExecutionState = Record<string, NodeExecutionState>;

@@ -94,8 +94,8 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
       title={data.label}
       onTitleChange={(label) => updateNodeData(id, { label })}
       icon={<ImageIcon className="h-4 w-4" />}
-      iconClassName="bg-purple-500/10 text-purple-600 dark:text-purple-300"
-      accentBorderClassName="border-l-purple-500"
+      iconClassName="bg-gray-500/10 text-gray-600 dark:text-gray-300"
+      accentBorderClassName=""
       status={data.executionStatus}
       className="w-[240px]"
       footer={renderFooter()}
@@ -103,10 +103,10 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
       <Handle
         type="target"
         position={Position.Left}
-        className="!bg-cyan-500 !w-2.5 !h-2.5 !border-2 !border-background !shadow-sm"
+        className="!bg-gray-600 !w-2.5 !h-2.5 !border-2 !border-background !shadow-sm"
       />
       <div className="pointer-events-none absolute top-1/2 -translate-y-1/2 -left-12">
-        <span className="rounded-md bg-cyan-500/50 px-1.5 py-0.5 text-[11px] font-medium text-cyan-700 dark:text-cyan-300 shadow-sm border border-cyan-500/40">
+        <span className="rounded-md bg-gray-600 px-1.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
           string
         </span>
       </div>
@@ -269,10 +269,10 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
       <Handle
         type="source"
         position={Position.Right}
-        className="!bg-purple-500 !w-2.5 !h-2.5 !border-2 !border-background !shadow-sm"
+        className="!bg-gray-600 !w-2.5 !h-2.5 !border-2 !border-background !shadow-sm"
       />
       <div className="pointer-events-none absolute top-1/2 -translate-y-1/2 -right-11">
-        <span className="rounded-md bg-purple-500/50 px-1.5 py-0.5 text-[11px] font-medium text-purple-700 dark:text-purple-300 shadow-sm border border-purple-500/40">
+        <span className="rounded-md bg-gray-600 px-1.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
           image
         </span>
       </div>

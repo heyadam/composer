@@ -66,6 +66,7 @@ export function findOutputNodes(nodes: Node[]): Node[] {
 /**
  * Find all downstream output nodes from a given starting node
  * Uses BFS to traverse the graph and collect all output nodes reachable from the start
+ * Stops at image nodes (they handle their own downstream outputs)
  */
 export function findDownstreamOutputNodes(
   startNodeId: string,
@@ -85,6 +86,9 @@ export function findDownstreamOutputNodes(
       if (target) {
         if (target.type === "output") {
           outputNodes.push(target);
+        } else if (target.type === "image") {
+          // Don't traverse through image nodes - they handle their own downstream outputs
+          // This prevents text from leaking through to outputs behind image nodes
         } else {
           traverse(target.id);
         }

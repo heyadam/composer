@@ -205,7 +205,7 @@ export async function executeFlow(
       ? findDownstreamOutputNodes(node.id, nodes, edges)
       : [];
     for (const outputNode of downstreamOutputs) {
-      onNodeStateChange(outputNode.id, { status: "running" });
+      onNodeStateChange(outputNode.id, { status: "running", sourceType: node.type });
     }
 
     try {

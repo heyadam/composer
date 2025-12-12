@@ -51,6 +51,7 @@ export const IMAGE_PROVIDERS = {
     label: "Google Gemini",
     models: [
       { value: "gemini-2.5-flash-image", label: "Gemini 2.5 Flash", supportsPartialImages: false },
+      { value: "gemini-3-pro-image-preview", label: "Gemini 3 Pro", supportsPartialImages: false },
     ],
   },
 } as const;
