@@ -78,13 +78,17 @@ async function executeNode(
 export async function executeFlow(
   nodes: Node[],
   edges: Edge[],
-  userInput: string,
   onNodeStateChange: (nodeId: string, state: NodeExecutionState) => void
 ): Promise<string> {
   const startNode = findStartNode(nodes);
   if (!startNode) {
     throw new Error("No input node found");
   }
+
+  // Get user input from the InputNode's data
+  const userInput = typeof startNode.data?.inputValue === "string"
+    ? startNode.data.inputValue
+    : "";
 
   const context: Record<string, unknown> = { userInput };
   const outputs: string[] = [];

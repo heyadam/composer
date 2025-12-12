@@ -5,7 +5,7 @@ export const initialNodes: Node[] = [
     id: "input-1",
     type: "input",
     position: { x: 0, y: 150 },
-    data: { label: "User Input" },
+    data: { label: "User Input", inputValue: "" },
   },
   {
     id: "prompt-1",

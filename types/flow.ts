@@ -11,6 +11,7 @@ interface ExecutionData {
 // Node data types for each custom node
 export interface InputNodeData extends Record<string, unknown>, ExecutionData {
   label: string;
+  inputValue?: string;
 }
 
 export interface OutputNodeData extends Record<string, unknown>, ExecutionData {

@@ -5,6 +5,7 @@ import {
   ReactFlow,
   Background,
   Controls,
+  Panel,
   addEdge,
   useNodesState,
   useEdgesState,
@@ -20,12 +21,14 @@ import type { NodeType } from "@/types/flow";
 import { executeFlow } from "@/lib/execution/engine";
 import type { NodeExecutionState } from "@/lib/execution/types";
 import { ResponsesSidebar, type PreviewEntry } from "./ResponsesSidebar";
+import { Button } from "@/components/ui/button";
+import { Play, Loader2 } from "lucide-react";
 
 let id = 0;
 const getId = () => `node_${id++}`;
 
 const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
-  input: { label: "Input" },
+  input: { label: "Input", inputValue: "" },
   output: { label: "Response" },
   prompt: { label: "Prompt", prompt: "", model: "gpt-5.2" },
 };
@@ -36,7 +39,6 @@ export function AgentFlow() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
 
-  const [userInput, setUserInput] = useState("What is the weather like today?");
   const [isRunning, setIsRunning] = useState(false);
   const [finalOutput, setFinalOutput] = useState<string | null>(null);
   const [previewEntries, setPreviewEntries] = useState<PreviewEntry[]>([]);
@@ -189,14 +191,14 @@ export function AgentFlow() {
     setIsRunning(true);
 
     try {
-      const output = await executeFlow(nodes, edges, userInput, updateNodeExecutionState);
+      const output = await executeFlow(nodes, edges, updateNodeExecutionState);
       setFinalOutput(output);
     } catch (error) {
       console.error("Flow execution error:", error);
     } finally {
       setIsRunning(false);
     }
-  }, [nodes, edges, userInput, isRunning, updateNodeExecutionState, resetExecution]);
+  }, [nodes, edges, isRunning, updateNodeExecutionState, resetExecution]);
 
   return (
     <div className="flex h-screen w-full">
@@ -219,16 +221,26 @@ export function AgentFlow() {
         >
           <Background />
           <Controls />
+          <Panel position="top-right">
+            <Button onClick={runFlow} disabled={isRunning} className="gap-2">
+              {isRunning ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Running...
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4" />
+                  Play
+                </>
+              )}
+            </Button>
+          </Panel>
         </ReactFlow>
       </div>
       <ResponsesSidebar
         entries={previewEntries}
         onClear={() => setPreviewEntries([])}
-        userInput={userInput}
-        onUserInputChange={setUserInput}
-        onRun={runFlow}
-        onReset={resetExecution}
-        isRunning={isRunning}
       />
     </div>
   );
