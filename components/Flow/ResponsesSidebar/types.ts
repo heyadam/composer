@@ -11,10 +11,3 @@ export interface PreviewEntry {
   error?: string;
   timestamp: number;
 }
-
-export interface PreviewPosition {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}

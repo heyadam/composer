@@ -5,7 +5,6 @@ import {
   ReactFlow,
   Background,
   Controls,
-  Panel,
   addEdge,
   useNodesState,
   useEdgesState,
@@ -20,10 +19,7 @@ import { initialNodes, initialEdges } from "@/lib/example-flow";
 import type { NodeType } from "@/types/flow";
 import { executeFlow } from "@/lib/execution/engine";
 import type { NodeExecutionState } from "@/lib/execution/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Play, RotateCcw, Loader2 } from "lucide-react";
-import { PreviewModal, type PreviewEntry } from "./PreviewModal";
+import { ResponsesSidebar, type PreviewEntry } from "./ResponsesSidebar";
 
 let id = 0;
 const getId = () => `node_${id++}`;
@@ -203,8 +199,8 @@ export function AgentFlow() {
   }, [nodes, edges, userInput, isRunning, updateNodeExecutionState, resetExecution]);
 
   return (
-    <div className="relative h-screen w-full">
-      <div ref={reactFlowWrapper} className="h-full w-full bg-muted/10">
+    <div className="flex h-screen w-full">
+      <div ref={reactFlowWrapper} className="flex-1 h-full bg-muted/10">
         <NodeSidebar />
         <ReactFlow
           nodes={nodes}
@@ -223,43 +219,17 @@ export function AgentFlow() {
         >
           <Background />
           <Controls />
-          
-          {/* Execution Controls */}
-          <Panel
-            position="top-center"
-            className="flex items-center gap-2 rounded-xl border bg-background/95 backdrop-blur p-2 shadow-sm"
-          >
-            <Input
-              value={userInput}
-              onChange={(e) => setUserInput(e.target.value)}
-              placeholder="Enter your input..."
-              className="w-[360px]"
-              disabled={isRunning}
-            />
-            <Button onClick={runFlow} disabled={isRunning} className="gap-2">
-              {isRunning ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Running...
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4" />
-                  Run Flow
-                </>
-              )}
-            </Button>
-            <Button onClick={resetExecution} variant="outline" size="icon" disabled={isRunning}>
-              <RotateCcw className="h-4 w-4" />
-            </Button>
-          </Panel>
-
         </ReactFlow>
-        <PreviewModal
-          entries={previewEntries}
-          onClear={() => setPreviewEntries([])}
-        />
       </div>
+      <ResponsesSidebar
+        entries={previewEntries}
+        onClear={() => setPreviewEntries([])}
+        userInput={userInput}
+        onUserInputChange={setUserInput}
+        onRun={runFlow}
+        onReset={resetExecution}
+        isRunning={isRunning}
+      />
     </div>
   );
 }
