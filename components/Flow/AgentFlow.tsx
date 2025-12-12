@@ -19,10 +19,12 @@ import "@xyflow/react/dist/style.css";
 import { nodeTypes } from "./nodes";
 import { edgeTypes } from "./edges/ColoredEdge";
 import { NodeSidebar } from "./NodeSidebar";
+import { AutopilotSidebar } from "./AutopilotSidebar";
 import { initialNodes, initialEdges } from "@/lib/example-flow";
 import type { NodeType } from "@/types/flow";
 import { executeFlow } from "@/lib/execution/engine";
 import type { NodeExecutionState } from "@/lib/execution/types";
+import type { FlowChanges, AddNodeAction, AddEdgeAction } from "@/lib/autopilot/types";
 import { ResponsesSidebar, type PreviewEntry } from "./ResponsesSidebar";
 
 let id = 0;
@@ -85,6 +87,43 @@ export function AgentFlow() {
   const addedPreviewIds = useRef<Set<string>>(new Set());
   const nodesRef = useRef(nodes);
   nodesRef.current = nodes;
+
+  // Autopilot sidebar state
+  const [autopilotOpen, setAutopilotOpen] = useState(false);
+
+  // Apply changes from autopilot
+  const applyAutopilotChanges = useCallback(
+    (changes: FlowChanges) => {
+      for (const action of changes.actions) {
+        if (action.type === "addNode") {
+          const nodeAction = action as AddNodeAction;
+          setNodes((nds) =>
+            nds.concat({
+              id: nodeAction.node.id,
+              type: nodeAction.node.type,
+              position: nodeAction.node.position,
+              data: nodeAction.node.data,
+            })
+          );
+        } else if (action.type === "addEdge") {
+          const edgeAction = action as AddEdgeAction;
+          setEdges((eds) =>
+            addEdge(
+              {
+                id: edgeAction.edge.id,
+                source: edgeAction.edge.source,
+                target: edgeAction.edge.target,
+                type: "colored",
+                data: edgeAction.edge.data,
+              },
+              eds
+            )
+          );
+        }
+      }
+    },
+    [setNodes, setEdges]
+  );
 
   const addPreviewEntry = useCallback(
     (entry: Omit<PreviewEntry, "id" | "timestamp">) => {
@@ -277,8 +316,16 @@ export function AgentFlow() {
 
   return (
     <div className="flex h-screen w-full">
+      {/* Autopilot Sidebar (left) */}
+      <AutopilotSidebar
+        nodes={nodes}
+        edges={edges}
+        onApplyChanges={applyAutopilotChanges}
+        isOpen={autopilotOpen}
+        onToggle={() => setAutopilotOpen(!autopilotOpen)}
+      />
       <div ref={reactFlowWrapper} className="flex-1 h-full bg-muted/10">
-        <NodeSidebar />
+        <NodeSidebar onOpenAutopilot={() => setAutopilotOpen(true)} autopilotOpen={autopilotOpen} />
         <ReactFlow
           nodes={nodes}
           edges={edges}
