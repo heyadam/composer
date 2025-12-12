@@ -34,6 +34,13 @@ const QUALITY_OPTIONS = [
   { value: "high", label: "High" },
 ];
 
+const PARTIAL_IMAGES_OPTIONS = [
+  { value: "0", label: "0 (None)" },
+  { value: "1", label: "1" },
+  { value: "2", label: "2" },
+  { value: "3", label: "3" },
+];
+
 export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
   const { updateNodeData } = useReactFlow();
 
@@ -157,7 +164,7 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
         <div className="flex items-center justify-between gap-2">
           <div className="text-[11px] text-muted-foreground">Quality</div>
           <Select
-            value={data.quality || "standard"}
+            value={data.quality || "low"}
             onValueChange={(quality) => updateNodeData(id, { quality })}
           >
             <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
@@ -165,6 +172,25 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
             </SelectTrigger>
             <SelectContent>
               {QUALITY_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-[11px] text-muted-foreground">Partials</div>
+          <Select
+            value={String(data.partialImages ?? 3)}
+            onValueChange={(val) => updateNodeData(id, { partialImages: Number(val) })}
+          >
+            <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PARTIAL_IMAGES_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value} className="text-xs">
                   {opt.label}
                 </SelectItem>

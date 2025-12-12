@@ -28,6 +28,7 @@ export const initialNodes: Node[] = [
       outputFormat: "webp",
       size: "1024x1024",
       quality: "low",
+      partialImages: 3,
     },
   },
   {

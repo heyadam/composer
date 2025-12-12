@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { streamText, generateText, type LanguageModel } from "ai";
+import { streamText, type LanguageModel } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { google } from "@ai-sdk/google";
 import { anthropic } from "@ai-sdk/anthropic";
+import OpenAI from "openai";
 
 function getModel(provider: string, model: string): LanguageModel {
   switch (provider) {
@@ -52,59 +53,75 @@ export async function POST(request: NextRequest) {
     }
 
     if (type === "image") {
-      const { prompt, outputFormat, size, quality, input } = body;
+      const { prompt, outputFormat, size, quality, partialImages, input } = body;
 
       // Combine optional prompt template with input
       const fullPrompt = prompt
         ? `${prompt}\n\nUser request: ${input}`
         : input;
 
-      const result = await generateText({
-        model: openai("gpt-5"),
-        prompt: `Generate an image based on this description: ${fullPrompt}`,
-        tools: {
-          image_generation: openai.tools.imageGeneration({
-            outputFormat: outputFormat || "webp",
-            size: size || "1024x1024",
+      const openaiClient = new OpenAI();
+      const mimeType = `image/${outputFormat || "webp"}`;
+
+      // Use OpenAI Responses API directly for streaming partial images
+      const stream = await openaiClient.responses.create({
+        model: "gpt-4.1",
+        input: `Generate an image based on this description: ${fullPrompt}`,
+        stream: true,
+        tools: [
+          {
+            type: "image_generation",
+            partial_images: partialImages ?? 3,
             quality: quality || "low",
-          }),
-        },
-        toolChoice: { type: "tool", toolName: "image_generation" },
+            size: size || "1024x1024",
+            output_format: outputFormat || "webp",
+          },
+        ],
       });
 
-      // Extract the generated image from tool results
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const toolResults = result.toolResults as any[];
-      console.log("Tool results:", JSON.stringify(toolResults, null, 2));
-
-      for (const toolResult of toolResults) {
-        if (toolResult.toolName === "image_generation") {
-          // The structure varies - try different paths
-          let base64Image: string | undefined;
-
-          if (typeof toolResult.result === "string") {
-            base64Image = toolResult.result;
-          } else if (toolResult.result?.result) {
-            base64Image = toolResult.result.result;
-          } else if (toolResult.output?.result) {
-            base64Image = toolResult.output.result;
+      // Stream partial images and final image as newline-delimited JSON
+      const encoder = new TextEncoder();
+      const readableStream = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const event of stream) {
+              if (event.type === "response.image_generation_call.partial_image") {
+                // Send partial image
+                const data = JSON.stringify({
+                  type: "partial",
+                  index: event.partial_image_index,
+                  value: event.partial_image_b64,
+                  mimeType,
+                });
+                controller.enqueue(encoder.encode(data + "\n"));
+              } else if (event.type === "response.output_item.done") {
+                // Check for final image in output item
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const item = event.item as any;
+                if (item?.type === "image_generation_call" && item?.result) {
+                  const data = JSON.stringify({
+                    type: "image",
+                    value: item.result,
+                    mimeType,
+                  });
+                  controller.enqueue(encoder.encode(data + "\n"));
+                }
+              }
+            }
+            controller.close();
+          } catch (error) {
+            console.error("Stream error:", error);
+            controller.error(error);
           }
+        },
+      });
 
-          if (base64Image) {
-            const mimeType = `image/${outputFormat || "webp"}`;
-            return NextResponse.json({
-              type: "image",
-              value: base64Image,
-              mimeType,
-            });
-          }
-        }
-      }
-
-      return NextResponse.json(
-        { error: "Image generation failed - no result returned" },
-        { status: 500 }
-      );
+      return new Response(readableStream, {
+        headers: {
+          "Content-Type": "application/x-ndjson",
+          "Transfer-Encoding": "chunked",
+        },
+      });
     }
 
     return NextResponse.json({ error: "Unknown execution type" }, { status: 400 });

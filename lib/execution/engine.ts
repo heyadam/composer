@@ -85,23 +85,71 @@ async function executeNode(
           outputFormat: node.data.outputFormat || "webp",
           size: node.data.size || "1024x1024",
           quality: node.data.quality || "low",
+          partialImages: node.data.partialImages ?? 3,
           input,
         }),
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Image generation failed");
+        const text = await response.text();
+        try {
+          const data = JSON.parse(text);
+          throw new Error(data.error || "Image generation failed");
+        } catch {
+          throw new Error("Image generation failed");
+        }
       }
 
-      const data = await response.json();
+      if (!response.body) {
+        throw new Error("No response body");
+      }
 
-      // Return structured JSON so downstream nodes receive image data
+      // Stream the response (newline-delimited JSON)
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let finalImage: { type: string; value: string; mimeType: string } | null = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const data = JSON.parse(line);
+            if (data.type === "partial" || data.type === "image") {
+              // Update with partial or final image
+              const imageOutput = JSON.stringify({
+                type: "image",
+                value: data.value,
+                mimeType: data.mimeType,
+              });
+              onStreamUpdate?.(imageOutput);
+
+              if (data.type === "image") {
+                finalImage = data;
+              }
+            }
+          } catch (e) {
+            console.error("Failed to parse image stream line:", e);
+          }
+        }
+      }
+
+      if (!finalImage) {
+        throw new Error("No final image received");
+      }
+
       return {
         output: JSON.stringify({
           type: "image",
-          value: data.value,
-          mimeType: data.mimeType,
+          value: finalImage.value,
+          mimeType: finalImage.mimeType,
         }),
       };
     }

@@ -34,6 +34,7 @@ export interface ImageNodeData extends Record<string, unknown>, ExecutionData {
   outputFormat?: "webp" | "png" | "jpeg";
   size?: "1024x1024" | "1024x1792" | "1792x1024";
   quality?: "auto" | "low" | "medium" | "high";
+  partialImages?: 0 | 1 | 2 | 3;
 }
 
 // Union type for all node data

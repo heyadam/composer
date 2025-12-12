@@ -26,9 +26,10 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 
 **Flow Editor** (`components/Flow/AgentFlow.tsx`): Main visual editor using @xyflow/react. Handles drag-and-drop node creation, edge connections, and flow execution controls.
 
-**Node Types** (`components/Flow/nodes/`): Three custom node components with editable labels:
+**Node Types** (`components/Flow/nodes/`): Four custom node components with editable labels:
 - `InputNode`: Entry point, receives user input
 - `PromptNode`: LLM prompt execution with multi-provider support
+- `ImageNode`: AI image generation using OpenAI Responses API with streaming partial images
 - `OutputNode`: Exit point, displays final result and sends to preview
 
 **Provider Configuration** (`lib/providers.ts`): Centralized config for AI providers and models:
@@ -61,7 +62,9 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 
 **Example Flow** (`lib/example-flow.ts`): Default flow configuration loaded on startup.
 
-**API Route** (`app/api/execute/route.ts`): Server-side execution handler for prompt nodes. Uses Vercel AI SDK with `streamText` for real-time streaming responses. Supports OpenAI, Google, and Anthropic providers with provider-specific options (verbosity, thinking).
+**API Route** (`app/api/execute/route.ts`): Server-side execution handler for prompt and image nodes:
+- Prompt nodes: Uses Vercel AI SDK with `streamText` for real-time streaming responses. Supports OpenAI, Google, and Anthropic providers with provider-specific options (verbosity, thinking).
+- Image nodes: Uses OpenAI SDK directly with Responses API for streaming partial images. Configurable quality, size, format, and partial image count (0-3).
 
 ### Type System
 
