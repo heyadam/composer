@@ -26,9 +26,9 @@ export async function POST(request: NextRequest) {
     // Build system prompt with current flow state
     const systemPrompt = buildSystemPrompt(flowSnapshot);
 
-    // Stream response from Claude Opus 4.5
+    // Stream response from Claude Sonnet 4.5
     const result = streamText({
-      model: anthropic("claude-opus-4-5"),
+      model: anthropic("claude-sonnet-4-5-20241022"),
       system: systemPrompt,
       messages: messages.map((msg) => ({
         role: msg.role,
