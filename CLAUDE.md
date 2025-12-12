@@ -28,6 +28,11 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 
 **Flow Editor** (`components/Flow/AgentFlow.tsx`): Main visual editor using @xyflow/react. Handles drag-and-drop node creation, edge connections, and flow execution controls.
 
+**Interaction Model** (Origami-style):
+- Normal mouse drag on canvas creates selection box to select multiple nodes
+- Hold spacebar + drag to pan the canvas (grab cursor)
+- Selected nodes show yellow border with animated glow
+
 **Node Types** (`components/Flow/nodes/`): Four custom node components with editable labels:
 - `InputNode`: Entry point, receives user input
 - `PromptNode`: LLM prompt execution with multi-provider support
@@ -48,11 +53,12 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 
 **NodeStatusBadge** (`components/Flow/nodes/NodeStatusBadge.tsx`): Visual indicator for node execution status (running/success/error).
 
-**Responses Sidebar** (`components/Flow/ResponsesSidebar/`): Fixed right sidebar that displays output node results:
-- `ResponsesSidebar.tsx`: Main container with run/reset controls
+**Responses Sidebar** (`components/Flow/ResponsesSidebar/`): Resizable right sidebar that displays output node results:
+- `ResponsesSidebar.tsx`: Main container with run/reset controls and drag-to-resize
 - `ResponsesHeader.tsx`: Header with action buttons
 - `ResponsesContent.tsx`: Scrollable content area for responses
 - Streams responses in real-time as they generate
+- Width persisted to localStorage (min: 240px, max: 800px)
 
 **Colored Edges** (`components/Flow/edges/ColoredEdge.tsx`): Custom edge component with data-type based coloring:
 - Cyan for string data

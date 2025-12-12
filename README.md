@@ -5,6 +5,7 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
 ## Features
 
 - **Visual Flow Editor**: Build AI workflows by connecting nodes in a React Flow canvas
+- **Origami-Style Controls**: Drag to select multiple nodes, hold spacebar to pan
 - **Node Types**:
   - **Input**: Entry point that receives user input
   - **Prompt**: Execute LLM prompts with multi-provider support
@@ -13,11 +14,12 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
 - **Multi-Provider Support**: Choose from OpenAI, Google Gemini, or Anthropic Claude models
 - **OpenAI-Specific Options**: Verbosity control (low/medium/high) and thinking mode for supported models
 - **Streaming Responses**: See AI responses and images appear in real-time
-- **Responses Sidebar**: Fixed sidebar shows output node results as they stream
+- **Resizable Responses Sidebar**: Drag-to-resize sidebar shows output node results as they stream
 - **Parallel Execution**: Branches execute independently, responses appear as each completes
 - **Color-Coded Edges**: Visual data flow with colored connections (cyan=string, purple=image, amber=response)
 - **Editable Labels**: Click any node title to rename it inline
 - **Execution Tracking**: Visual feedback showing node execution status (running/success/error)
+- **Selection Feedback**: Selected nodes show animated yellow glow
 
 ### Supported Models
 
