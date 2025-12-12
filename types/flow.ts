@@ -21,7 +21,11 @@ export interface OutputNodeData extends Record<string, unknown>, ExecutionData {
 export interface PromptNodeData extends Record<string, unknown>, ExecutionData {
   label: string;
   prompt: string;
+  provider?: string;
   model?: string;
+  // OpenAI-specific options
+  verbosity?: "low" | "medium" | "high";
+  thinking?: boolean;
 }
 
 // Union type for all node data

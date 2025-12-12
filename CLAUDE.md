@@ -13,7 +13,10 @@ npm run start    # Start production server
 
 ## Environment Setup
 
-Requires `OPENAI_API_KEY` environment variable for flow execution (prompt nodes use OpenAI API).
+Requires API keys for the AI providers you want to use:
+- `OPENAI_API_KEY` - For OpenAI models (GPT-5, GPT-5 Mini, GPT-5 Nano)
+- `GOOGLE_GENERATIVE_AI_API_KEY` - For Google Gemini models
+- `ANTHROPIC_API_KEY` - For Anthropic Claude models
 
 ## Architecture Overview
 
@@ -25,8 +28,13 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 
 **Node Types** (`components/Flow/nodes/`): Three custom node components with editable labels:
 - `InputNode`: Entry point, receives user input
-- `PromptNode`: LLM prompt execution (GPT-5.2, GPT-5 Mini, GPT-5 Nano)
+- `PromptNode`: LLM prompt execution with multi-provider support
 - `OutputNode`: Exit point, displays final result and sends to preview
+
+**Provider Configuration** (`lib/providers.ts`): Centralized config for AI providers and models:
+- OpenAI: GPT-5, GPT-5 Mini, GPT-5 Nano (with verbosity and thinking options)
+- Google: Gemini 2.5 Flash, Gemini 2.5 Pro, Gemini 2.0 Flash
+- Anthropic: Claude Sonnet 4.5, Claude 3.5 Haiku
 
 **NodeFrame** (`components/Flow/nodes/NodeFrame.tsx`): Shared wrapper for all nodes providing consistent styling, status badges, and inline title editing.
 
@@ -53,7 +61,7 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 
 **Example Flow** (`lib/example-flow.ts`): Default flow configuration loaded on startup.
 
-**API Route** (`app/api/execute/route.ts`): Server-side execution handler for prompt nodes. Uses Vercel AI SDK with `streamText` for real-time streaming responses.
+**API Route** (`app/api/execute/route.ts`): Server-side execution handler for prompt nodes. Uses Vercel AI SDK with `streamText` for real-time streaming responses. Supports OpenAI, Google, and Anthropic providers with provider-specific options (verbosity, thinking).
 
 ### Type System
 

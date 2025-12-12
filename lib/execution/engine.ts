@@ -38,7 +38,10 @@ async function executeNode(
         body: JSON.stringify({
           type: "prompt",
           prompt: prompt,
-          model: node.data.model || "gpt-4o",
+          provider: node.data.provider || "openai",
+          model: node.data.model || "gpt-5",
+          verbosity: node.data.verbosity,
+          thinking: node.data.thinking,
           input,
           context,
         }),

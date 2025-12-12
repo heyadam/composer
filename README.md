@@ -7,13 +7,23 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
 - **Visual Flow Editor**: Build AI workflows by connecting nodes in a React Flow canvas
 - **Node Types**:
   - **Input**: Entry point that receives user input
-  - **Prompt**: Execute LLM prompts with configurable models (GPT-5.2, GPT-5 Mini, GPT-5 Nano)
+  - **Prompt**: Execute LLM prompts with multi-provider support
   - **Output**: Exit point that displays results in the preview window
+- **Multi-Provider Support**: Choose from OpenAI, Google Gemini, or Anthropic Claude models
+- **OpenAI-Specific Options**: Verbosity control (low/medium/high) and thinking mode for supported models
 - **Streaming Responses**: See AI responses appear word-by-word in real-time
 - **Live Preview**: Floating preview modal shows output node results as they stream
 - **Parallel Execution**: Branches execute independently, responses appear as each completes
 - **Editable Labels**: Click any node title to rename it inline
 - **Execution Tracking**: Visual feedback showing node execution status (running/success/error)
+
+### Supported Models
+
+| Provider | Models |
+|----------|--------|
+| OpenAI | GPT-5, GPT-5 Mini, GPT-5 Nano |
+| Google | Gemini 2.5 Flash, Gemini 2.5 Pro, Gemini 2.0 Flash |
+| Anthropic | Claude Sonnet 4.5, Claude 3.5 Haiku |
 
 ## Getting Started
 

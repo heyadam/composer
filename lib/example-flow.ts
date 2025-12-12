@@ -12,9 +12,10 @@ export const initialNodes: Node[] = [
     type: "prompt",
     position: { x: 350, y: 0 },
     data: {
-      label: "GPT-5.2",
+      label: "GPT-5",
       prompt: "",
-      model: "gpt-5.2",
+      provider: "openai",
+      model: "gpt-5",
     },
   },
   {
@@ -24,6 +25,7 @@ export const initialNodes: Node[] = [
     data: {
       label: "GPT-5 Mini",
       prompt: "",
+      provider: "openai",
       model: "gpt-5-mini",
     },
   },

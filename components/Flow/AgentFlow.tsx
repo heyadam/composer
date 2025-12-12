@@ -27,7 +27,7 @@ const getId = () => `node_${id++}`;
 const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
   input: { label: "Input", inputValue: "" },
   output: { label: "Response" },
-  prompt: { label: "Prompt", prompt: "", model: "gpt-5.2" },
+  prompt: { label: "Prompt", prompt: "", provider: "openai", model: "gpt-5" },
 };
 
 export function AgentFlow() {

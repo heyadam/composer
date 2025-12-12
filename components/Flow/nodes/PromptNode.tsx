@@ -12,17 +12,28 @@ import {
 } from "@/components/ui/select";
 import { NodeFrame } from "./NodeFrame";
 import { cn } from "@/lib/utils";
+import { PROVIDERS, DEFAULT_PROVIDER, DEFAULT_MODEL, VERBOSITY_OPTIONS, THINKING_OPTIONS, type ProviderId } from "@/lib/providers";
 
 type PromptNodeType = Node<PromptNodeData, "prompt">;
 
-const MODELS = [
-  { value: "gpt-5.2", label: "GPT-5.2" },
-  { value: "gpt-5-mini", label: "GPT-5 Mini" },
-  { value: "gpt-5-nano", label: "GPT-5 Nano" },
-];
-
 export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
   const { updateNodeData } = useReactFlow();
+
+  const currentProvider = (data.provider || DEFAULT_PROVIDER) as ProviderId;
+  const providerConfig = PROVIDERS[currentProvider];
+  const currentModel = data.model || DEFAULT_MODEL;
+  const currentModelConfig = providerConfig.models.find((m) => m.value === currentModel);
+
+  const handleProviderChange = (provider: string) => {
+    const newProvider = provider as ProviderId;
+    const firstModel = PROVIDERS[newProvider].models[0];
+    updateNodeData(id, { provider: newProvider, model: firstModel.value, label: firstModel.label });
+  };
+
+  const handleModelChange = (model: string) => {
+    const modelConfig = providerConfig.models.find((m) => m.value === model);
+    updateNodeData(id, { model, label: modelConfig?.label || model });
+  };
 
   return (
     <NodeFrame
@@ -68,16 +79,35 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
         />
 
         <div className="flex items-center justify-between gap-2">
-          <div className="text-[11px] text-muted-foreground">Model</div>
+          <div className="text-[11px] text-muted-foreground">Provider</div>
           <Select
-            value={data.model || "gpt-5.2"}
-            onValueChange={(model) => updateNodeData(id, { model })}
+            value={currentProvider}
+            onValueChange={handleProviderChange}
           >
             <SelectTrigger className="h-7 text-xs nodrag w-[120px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {MODELS.map((m) => (
+              {Object.entries(PROVIDERS).map(([key, provider]) => (
+                <SelectItem key={key} value={key} className="text-xs">
+                  {provider.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-[11px] text-muted-foreground">Model</div>
+          <Select
+            value={currentModel}
+            onValueChange={handleModelChange}
+          >
+            <SelectTrigger className="h-7 text-xs nodrag w-[120px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {providerConfig.models.map((m) => (
                 <SelectItem key={m.value} value={m.value} className="text-xs">
                   {m.label}
                 </SelectItem>
@@ -85,6 +115,48 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
             </SelectContent>
           </Select>
         </div>
+
+        {currentModelConfig?.supportsVerbosity && (
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[11px] text-muted-foreground">Verbosity</div>
+            <Select
+              value={data.verbosity || "medium"}
+              onValueChange={(verbosity) => updateNodeData(id, { verbosity })}
+            >
+              <SelectTrigger className="h-7 text-xs nodrag w-[120px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {VERBOSITY_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {currentModelConfig?.supportsThinking && (
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[11px] text-muted-foreground">Thinking</div>
+            <Select
+              value={data.thinking ? "on" : "off"}
+              onValueChange={(val) => updateNodeData(id, { thinking: val === "on" })}
+            >
+              <SelectTrigger className="h-7 text-xs nodrag w-[120px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {THINKING_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       <Handle
