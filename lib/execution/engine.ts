@@ -96,14 +96,10 @@ export async function executeFlow(
   }
 
   const context: Record<string, unknown> = { userInput };
-  const currentNodes: { node: Node; input: string }[] = [{ node: startNode, input: userInput }];
-  let finalOutput = "";
+  const outputs: string[] = [];
 
-  // Process nodes in order
-  while (currentNodes.length > 0) {
-    const { node, input } = currentNodes.shift()!;
-
-    // Set node to running
+  // Recursive function to execute a node and its downstream nodes
+  async function executeNodeAndContinue(node: Node, input: string): Promise<void> {
     onNodeStateChange(node.id, { status: "running" });
 
     try {
@@ -122,43 +118,47 @@ export async function executeFlow(
         output: result.output,
       });
 
-      // If this is an output node, capture the final output
+      // If this is an output node, capture the output
       if (node.type === "output") {
-        finalOutput = result.output;
-        continue;
+        outputs.push(result.output);
+        return;
       }
 
-      // Find next nodes
+      // Find and execute next nodes in parallel
       const outgoingEdges = getOutgoingEdges(node.id, edges);
+      const nextPromises: Promise<void>[] = [];
 
       for (const edge of outgoingEdges) {
+        let shouldFollow = true;
+
         // For condition nodes, check the branch
         if (node.type === "condition") {
           const isTrue = result.branchResult;
           const edgeHandle = edge.sourceHandle;
+          shouldFollow = (edgeHandle === "true" && isTrue) || (edgeHandle === "false" && !isTrue);
+        }
 
-          // Only follow the matching branch
-          if ((edgeHandle === "true" && isTrue) || (edgeHandle === "false" && !isTrue)) {
-            const targetNode = getTargetNode(edge, nodes);
-            if (targetNode) {
-              currentNodes.push({ node: targetNode, input: result.output });
-            }
-          }
-        } else {
+        if (shouldFollow) {
           const targetNode = getTargetNode(edge, nodes);
           if (targetNode) {
-            currentNodes.push({ node: targetNode, input: result.output });
+            // Start executing the next node immediately (don't await)
+            nextPromises.push(executeNodeAndContinue(targetNode, result.output));
           }
         }
       }
+
+      // Wait for all downstream branches to complete
+      await Promise.all(nextPromises);
     } catch (error) {
       onNodeStateChange(node.id, {
         status: "error",
         error: error instanceof Error ? error.message : "Unknown error",
       });
-      throw error;
     }
   }
 
-  return finalOutput;
+  // Start execution from the start node
+  await executeNodeAndContinue(startNode, userInput);
+
+  return outputs[outputs.length - 1] || "";
 }

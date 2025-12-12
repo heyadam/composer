@@ -24,7 +24,7 @@ export const initialNodes: Node[] = [
     data: {
       label: "GPT-5-Nano",
       prompt: "",
-      model: "gpt-5-nano-2025-12-11",
+      model: "gpt-5-nano-2025-08-07",
     },
   },
   {
