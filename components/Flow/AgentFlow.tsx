@@ -5,7 +5,6 @@ import {
   ReactFlow,
   Background,
   Controls,
-  Panel,
   addEdge,
   useNodesState,
   useEdgesState,
@@ -21,8 +20,6 @@ import type { NodeType } from "@/types/flow";
 import { executeFlow } from "@/lib/execution/engine";
 import type { NodeExecutionState } from "@/lib/execution/types";
 import { ResponsesSidebar, type PreviewEntry } from "./ResponsesSidebar";
-import { Button } from "@/components/ui/button";
-import { Play, Loader2 } from "lucide-react";
 
 let id = 0;
 const getId = () => `node_${id++}`;
@@ -221,26 +218,13 @@ export function AgentFlow() {
         >
           <Background />
           <Controls />
-          <Panel position="top-right">
-            <Button onClick={runFlow} disabled={isRunning} className="gap-2">
-              {isRunning ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Running...
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4" />
-                  Play
-                </>
-              )}
-            </Button>
-          </Panel>
         </ReactFlow>
       </div>
       <ResponsesSidebar
         entries={previewEntries}
-        onClear={() => setPreviewEntries([])}
+        onRun={runFlow}
+        onReset={resetExecution}
+        isRunning={isRunning}
       />
     </div>
   );
