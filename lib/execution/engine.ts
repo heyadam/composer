@@ -82,29 +82,55 @@ async function executeNode(
         body: JSON.stringify({
           type: "image",
           prompt,
+          provider: node.data.provider || "openai",
+          model: node.data.model || "gpt-5",
+          // OpenAI-specific
           outputFormat: node.data.outputFormat || "webp",
           size: node.data.size || "1024x1024",
           quality: node.data.quality || "low",
           partialImages: node.data.partialImages ?? 3,
+          // Google-specific
+          aspectRatio: node.data.aspectRatio || "1:1",
           input,
         }),
       });
 
       if (!response.ok) {
         const text = await response.text();
+        console.error("Image generation API error response:", text);
         try {
           const data = JSON.parse(text);
+          console.error("Image generation error details:", data);
           throw new Error(data.error || "Image generation failed");
-        } catch {
+        } catch (parseError) {
+          console.error("Failed to parse error response:", parseError);
           throw new Error("Image generation failed");
         }
       }
 
+      // Check if response is JSON (Google) or streaming (OpenAI)
+      const contentType = response.headers.get("content-type") || "";
+
+      if (contentType.includes("application/json")) {
+        // Non-streaming JSON response (Google)
+        const data = await response.json();
+        if (data.type === "image" && data.value) {
+          const imageOutput = JSON.stringify({
+            type: "image",
+            value: data.value,
+            mimeType: data.mimeType,
+          });
+          onStreamUpdate?.(imageOutput);
+          return { output: imageOutput };
+        }
+        throw new Error(data.error || "No image generated");
+      }
+
+      // Streaming response (OpenAI)
       if (!response.body) {
         throw new Error("No response body");
       }
 
-      // Stream the response (newline-delimited JSON)
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";

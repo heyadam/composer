@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { streamText, type LanguageModel } from "ai";
+import { streamText, generateText, type LanguageModel } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { google } from "@ai-sdk/google";
 import { anthropic } from "@ai-sdk/anthropic";
 import OpenAI from "openai";
+import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 
 function getModel(provider: string, model: string): LanguageModel {
   switch (provider) {
@@ -53,19 +54,59 @@ export async function POST(request: NextRequest) {
     }
 
     if (type === "image") {
-      const { prompt, outputFormat, size, quality, partialImages, input } = body;
+      const { prompt, provider, model, outputFormat, size, quality, partialImages, aspectRatio, input } = body;
 
       // Combine optional prompt template with input
       const fullPrompt = prompt
         ? `${prompt}\n\nUser request: ${input}`
         : input;
 
+      // Handle Google Gemini image generation
+      if (provider === "google") {
+        try {
+          console.log("Google image generation request:", { model, fullPrompt, aspectRatio });
+          const result = await generateText({
+            model: google(model || "gemini-2.5-flash-image"),
+            prompt: fullPrompt,
+            providerOptions: {
+              google: {
+                responseModalities: ["IMAGE"],
+                imageConfig: {
+                  aspectRatio: aspectRatio || "1:1",
+                },
+              } satisfies GoogleGenerativeAIProviderOptions,
+            },
+          });
+
+          console.log("Google image generation result:", JSON.stringify(result, null, 2));
+
+          // Extract image from result.files
+          if (result.files && result.files.length > 0) {
+            const file = result.files[0];
+            return NextResponse.json({
+              type: "image",
+              value: file.base64,
+              mimeType: file.mediaType || "image/png",
+            });
+          }
+
+          return NextResponse.json({ error: "No image generated", debug: result }, { status: 500 });
+        } catch (googleError) {
+          console.error("Google image generation error:", googleError);
+          return NextResponse.json({
+            error: googleError instanceof Error ? googleError.message : "Google image generation failed",
+            debug: String(googleError)
+          }, { status: 500 });
+        }
+      }
+
+      // Handle OpenAI image generation (default)
       const openaiClient = new OpenAI();
       const mimeType = `image/${outputFormat || "webp"}`;
 
       // Use OpenAI Responses API directly for streaming partial images
       const stream = await openaiClient.responses.create({
-        model: "gpt-4.1",
+        model: model || "gpt-5",
         input: `Generate an image based on this description: ${fullPrompt}`,
         stream: true,
         tools: [

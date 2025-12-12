@@ -12,6 +12,13 @@ import {
 } from "@/components/ui/select";
 import { NodeFrame } from "./NodeFrame";
 import { cn } from "@/lib/utils";
+import {
+  IMAGE_PROVIDERS,
+  DEFAULT_IMAGE_PROVIDER,
+  DEFAULT_IMAGE_MODEL,
+  ASPECT_RATIO_OPTIONS,
+  type ImageProviderId,
+} from "@/lib/providers";
 
 type ImageNodeType = Node<ImageNodeData, "image">;
 
@@ -43,6 +50,22 @@ const PARTIAL_IMAGES_OPTIONS = [
 
 export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
   const { updateNodeData } = useReactFlow();
+
+  const currentProvider = (data.provider || DEFAULT_IMAGE_PROVIDER) as ImageProviderId;
+  const providerConfig = IMAGE_PROVIDERS[currentProvider];
+  const currentModel = data.model || DEFAULT_IMAGE_MODEL;
+  const currentModelConfig = providerConfig.models.find((m) => m.value === currentModel);
+
+  const handleProviderChange = (provider: string) => {
+    const newProvider = provider as ImageProviderId;
+    const firstModel = IMAGE_PROVIDERS[newProvider].models[0];
+    updateNodeData(id, { provider: newProvider, model: firstModel.value, label: firstModel.label });
+  };
+
+  const handleModelChange = (model: string) => {
+    const modelConfig = providerConfig.models.find((m) => m.value === model);
+    updateNodeData(id, { model, label: modelConfig?.label || model });
+  };
 
   // Parse image from executionOutput if it's JSON
   const renderFooter = () => {
@@ -124,18 +147,18 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
         />
 
         <div className="flex items-center justify-between gap-2">
-          <div className="text-[11px] text-muted-foreground">Format</div>
+          <div className="text-[11px] text-muted-foreground">Provider</div>
           <Select
-            value={data.outputFormat || "webp"}
-            onValueChange={(outputFormat) => updateNodeData(id, { outputFormat })}
+            value={currentProvider}
+            onValueChange={handleProviderChange}
           >
             <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {OUTPUT_FORMAT_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                  {opt.label}
+              {Object.entries(IMAGE_PROVIDERS).map(([key, provider]) => (
+                <SelectItem key={key} value={key} className="text-xs">
+                  {provider.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -143,61 +166,128 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
         </div>
 
         <div className="flex items-center justify-between gap-2">
-          <div className="text-[11px] text-muted-foreground">Size</div>
+          <div className="text-[11px] text-muted-foreground">Model</div>
           <Select
-            value={data.size || "1024x1024"}
-            onValueChange={(size) => updateNodeData(id, { size })}
+            value={currentModel}
+            onValueChange={handleModelChange}
           >
             <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {SIZE_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                  {opt.label}
+              {providerConfig.models.map((m) => (
+                <SelectItem key={m.value} value={m.value} className="text-xs">
+                  {m.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        <div className="flex items-center justify-between gap-2">
-          <div className="text-[11px] text-muted-foreground">Quality</div>
-          <Select
-            value={data.quality || "low"}
-            onValueChange={(quality) => updateNodeData(id, { quality })}
-          >
-            <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {QUALITY_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* OpenAI-specific options */}
+        {currentProvider === "openai" && (
+          <>
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[11px] text-muted-foreground">Format</div>
+              <Select
+                value={data.outputFormat || "webp"}
+                onValueChange={(outputFormat) => updateNodeData(id, { outputFormat })}
+              >
+                <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {OUTPUT_FORMAT_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        <div className="flex items-center justify-between gap-2">
-          <div className="text-[11px] text-muted-foreground">Partials</div>
-          <Select
-            value={String(data.partialImages ?? 3)}
-            onValueChange={(val) => updateNodeData(id, { partialImages: Number(val) })}
-          >
-            <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PARTIAL_IMAGES_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[11px] text-muted-foreground">Size</div>
+              <Select
+                value={data.size || "1024x1024"}
+                onValueChange={(size) => updateNodeData(id, { size })}
+              >
+                <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SIZE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[11px] text-muted-foreground">Quality</div>
+              <Select
+                value={data.quality || "low"}
+                onValueChange={(quality) => updateNodeData(id, { quality })}
+              >
+                <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {QUALITY_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {currentModelConfig?.supportsPartialImages && (
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[11px] text-muted-foreground">Partials</div>
+                <Select
+                  value={String(data.partialImages ?? 3)}
+                  onValueChange={(val) => updateNodeData(id, { partialImages: Number(val) })}
+                >
+                  <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PARTIAL_IMAGES_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Google-specific options */}
+        {currentProvider === "google" && (
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[11px] text-muted-foreground">Aspect</div>
+            <Select
+              value={data.aspectRatio || "1:1"}
+              onValueChange={(aspectRatio) => updateNodeData(id, { aspectRatio })}
+            >
+              <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ASPECT_RATIO_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       <Handle

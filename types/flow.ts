@@ -31,10 +31,15 @@ export interface PromptNodeData extends Record<string, unknown>, ExecutionData {
 export interface ImageNodeData extends Record<string, unknown>, ExecutionData {
   label: string;
   prompt?: string; // Optional additional instructions
+  provider?: string;
+  model?: string;
+  // OpenAI-specific options
   outputFormat?: "webp" | "png" | "jpeg";
   size?: "1024x1024" | "1024x1792" | "1792x1024";
   quality?: "auto" | "low" | "medium" | "high";
   partialImages?: 0 | 1 | 2 | 3;
+  // Google-specific options
+  aspectRatio?: string;
 }
 
 // Union type for all node data
