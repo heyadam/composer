@@ -20,7 +20,8 @@ function getTargetNode(edge: Edge, nodes: Node[]): Node | undefined {
 async function executeNode(
   node: Node,
   input: string,
-  context: Record<string, unknown>
+  context: Record<string, unknown>,
+  onStreamUpdate?: (output: string) => void
 ): Promise<{ output: string }> {
   switch (node.type) {
     case "input":
@@ -37,14 +38,36 @@ async function executeNode(
         body: JSON.stringify({
           type: "prompt",
           prompt: prompt,
-          model: node.data.model || "gpt-5.2-2025-12-11",
+          model: node.data.model || "gpt-4o",
           input,
           context,
         }),
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to execute prompt");
-      return { output: data.output };
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to execute prompt");
+      }
+
+      if (!response.body) {
+        throw new Error("No response body");
+      }
+
+      // Stream the response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullOutput = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        fullOutput += chunk;
+        onStreamUpdate?.(fullOutput);
+      }
+
+      return { output: fullOutput };
     }
 
     default:
@@ -66,16 +89,62 @@ export async function executeFlow(
   const context: Record<string, unknown> = { userInput };
   const outputs: string[] = [];
 
+  // Find downstream output nodes from a given node
+  function findDownstreamOutputNodes(nodeId: string): Node[] {
+    const outputNodes: Node[] = [];
+    const visited = new Set<string>();
+
+    function traverse(currentId: string) {
+      if (visited.has(currentId)) return;
+      visited.add(currentId);
+
+      const outgoing = getOutgoingEdges(currentId, edges);
+      for (const edge of outgoing) {
+        const target = getTargetNode(edge, nodes);
+        if (target) {
+          if (target.type === "output") {
+            outputNodes.push(target);
+          } else {
+            traverse(target.id);
+          }
+        }
+      }
+    }
+
+    traverse(nodeId);
+    return outputNodes;
+  }
+
   // Recursive function to execute a node and its downstream nodes
   async function executeNodeAndContinue(node: Node, input: string): Promise<void> {
     onNodeStateChange(node.id, { status: "running" });
+
+    // For prompt nodes, also mark downstream output nodes as running
+    // so they appear in preview immediately
+    const downstreamOutputs = node.type === "prompt" ? findDownstreamOutputNodes(node.id) : [];
+    for (const outputNode of downstreamOutputs) {
+      onNodeStateChange(outputNode.id, { status: "running" });
+    }
 
     try {
       // Small delay for visual feedback
       await new Promise((r) => setTimeout(r, 300));
 
-      // Execute the node
-      const result = await executeNode(node, input, context);
+      // Execute the node with streaming callback for prompt nodes
+      const result = await executeNode(node, input, context, (streamedOutput) => {
+        // Update prompt node
+        onNodeStateChange(node.id, {
+          status: "running",
+          output: streamedOutput,
+        });
+        // Also update downstream output nodes with streaming output
+        for (const outputNode of downstreamOutputs) {
+          onNodeStateChange(outputNode.id, {
+            status: "running",
+            output: streamedOutput,
+          });
+        }
+      });
 
       // Store output in context
       context[node.id] = result.output;
@@ -111,6 +180,13 @@ export async function executeFlow(
         status: "error",
         error: error instanceof Error ? error.message : "Unknown error",
       });
+      // Also mark downstream outputs as error
+      for (const outputNode of downstreamOutputs) {
+        onNodeStateChange(outputNode.id, {
+          status: "error",
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
     }
   }
 

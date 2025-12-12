@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { streamText } from "ai";
+import { openai } from "@ai-sdk/openai";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,15 +13,15 @@ export async function POST(request: NextRequest) {
       if (typeof prompt === "string" && prompt.trim().length > 0) {
         messages.push({ role: "system", content: prompt.trim() });
       }
+      messages.push({ role: "user", content: String(input ?? "") });
 
-      const completion = await openai.chat.completions.create({
-        model: model || "gpt-5.2-2025-12-11",
-        messages: messages.concat([{ role: "user", content: String(input ?? "") }]),
-        max_completion_tokens: 1000,
+      const result = streamText({
+        model: openai(model || "gpt-5.2"),
+        messages,
+        maxOutputTokens: 1000,
       });
 
-      const output = completion.choices[0]?.message?.content || "";
-      return NextResponse.json({ output });
+      return result.toTextStreamResponse();
     }
 
     return NextResponse.json({ error: "Unknown execution type" }, { status: 400 });

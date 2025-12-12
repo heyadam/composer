@@ -31,7 +31,7 @@ const getId = () => `node_${id++}`;
 const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
   input: { label: "Input" },
   output: { label: "Response" },
-  prompt: { label: "Prompt", prompt: "", model: "gpt-5.2-2025-12-11" },
+  prompt: { label: "Prompt", prompt: "", model: "gpt-5.2" },
 };
 
 export function AgentFlow() {
@@ -147,6 +147,13 @@ export function AgentFlow() {
               nodeLabel,
               nodeType: "output",
               status: "running",
+            });
+          }
+          // Update preview with streaming output while running
+          if (state.output) {
+            updatePreviewEntry(nodeId, {
+              status: "running",
+              output: state.output,
             });
           }
         } else {

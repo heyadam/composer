@@ -16,9 +16,9 @@ import { cn } from "@/lib/utils";
 type PromptNodeType = Node<PromptNodeData, "prompt">;
 
 const MODELS = [
-  { value: "gpt-5.2-2025-12-11", label: "GPT-5.2" },
-  { value: "gpt-5-mini-2025-08-07", label: "GPT-5 Mini" },
-  { value: "gpt-5-nano-2025-08-07", label: "GPT-5 Nano" },
+  { value: "gpt-5.2", label: "GPT-5.2" },
+  { value: "gpt-5-mini", label: "GPT-5 Mini" },
+  { value: "gpt-5-nano", label: "GPT-5 Nano" },
 ];
 
 export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
@@ -70,7 +70,7 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
         <div className="flex items-center justify-between gap-2">
           <div className="text-[11px] text-muted-foreground">Model</div>
           <Select
-            value={data.model || "gpt-5.2-2025-12-11"}
+            value={data.model || "gpt-5.2"}
             onValueChange={(model) => updateNodeData(id, { model })}
           >
             <SelectTrigger className="h-7 text-xs nodrag w-[120px]">

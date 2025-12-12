@@ -34,6 +34,7 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 - Always visible in top-right corner
 - Draggable and resizable with session persistence
 - Auto-grows with content, scrolls when exceeding max height
+- Streams responses in real-time as they generate
 
 **Execution Engine** (`lib/execution/engine.ts`): Recursive graph traversal that:
 1. Finds input node as start
@@ -43,7 +44,7 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 
 **Node Sidebar** (`components/Flow/NodeSidebar.tsx`): Collapsible node palette triggered by "Add Node" button. Nodes are drag-and-drop onto canvas.
 
-**API Route** (`app/api/execute/route.ts`): Server-side execution handler for prompt, tool, and condition node types. Uses OpenAI SDK directly.
+**API Route** (`app/api/execute/route.ts`): Server-side execution handler for prompt nodes. Uses Vercel AI SDK with `streamText` for real-time streaming responses.
 
 ### Type System
 
