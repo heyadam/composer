@@ -23,23 +23,27 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 
 **Flow Editor** (`components/Flow/AgentFlow.tsx`): Main visual editor using @xyflow/react. Handles drag-and-drop node creation, edge connections, and flow execution controls.
 
-**Node Types** (`components/Flow/nodes/`): Five custom node components:
+**Node Types** (`components/Flow/nodes/`): Five custom node components with editable labels:
 - `InputNode`: Entry point, receives user input
 - `ResponseNode` (OutputNode): Exit point, displays final result and sends to preview
-- `PromptNode`: LLM prompt execution (configurable model)
+- `PromptNode`: LLM prompt execution (GPT-5.2, GPT-5 Mini, GPT-5 Nano)
 - `ToolNode`: External tool calls (web_search, calculator, current_time)
 - `ConditionNode`: Branching logic with true/false outputs
+
+**NodeFrame** (`components/Flow/nodes/NodeFrame.tsx`): Shared wrapper for all nodes providing consistent styling, status badges, and inline title editing.
 
 **Preview Modal** (`components/Flow/PreviewModal/`): Floating preview window that displays Response node outputs:
 - Always visible in top-right corner
 - Draggable and resizable with session persistence
 - Auto-grows with content, scrolls when exceeding max height
 
-**Execution Engine** (`lib/execution/engine.ts`): Graph traversal that:
+**Execution Engine** (`lib/execution/engine.ts`): Recursive graph traversal that:
 1. Finds input node as start
-2. Executes nodes sequentially via `/api/execute`
+2. Executes parallel branches independently (responses appear as each completes)
 3. Handles condition branching by following matching edges
 4. Tracks execution state (running/success/error) per node
+
+**Node Sidebar** (`components/Flow/NodeSidebar.tsx`): Collapsible node palette triggered by "Add Node" button. Nodes are drag-and-drop onto canvas.
 
 **API Route** (`app/api/execute/route.ts`): Server-side execution handler for prompt, tool, and condition node types. Uses OpenAI SDK directly.
 

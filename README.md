@@ -12,6 +12,8 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
   - **Condition**: Branch logic with true/false paths
   - **Response**: Exit point that displays results in the preview window
 - **Live Preview**: Floating preview modal shows Response node outputs in real-time
+- **Parallel Execution**: Branches execute independently, responses appear as each completes
+- **Editable Labels**: Click any node title to rename it inline
 - **Execution Tracking**: Visual feedback showing node execution status (running/success/error)
 
 ## Getting Started
@@ -45,7 +47,7 @@ Open [http://localhost:3000](http://localhost:3000) to use the workflow builder.
 
 ## Usage
 
-1. Drag nodes from the sidebar onto the canvas
+1. Click "Add Node" and drag nodes onto the canvas
 2. Connect nodes by dragging from output handles to input handles
 3. Configure node properties (prompts, conditions, tools)
 4. Enter input text in the top bar
