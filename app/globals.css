@@ -170,6 +170,27 @@ html, body {
   animation: selected-glow 2s ease-in-out infinite !important;
 }
 
+/* Autopilot-added node glow effect - purple with animation */
+@keyframes autopilot-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(168, 85, 247, 0.4),
+      0 0 15px rgba(168, 85, 247, 0.3),
+      0 0 30px rgba(168, 85, 247, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(168, 85, 247, 0.6),
+      0 0 25px rgba(168, 85, 247, 0.5),
+      0 0 50px rgba(168, 85, 247, 0.25);
+  }
+}
+
+.react-flow__node.autopilot-added > div {
+  border-color: #a855f7 !important;
+  animation: autopilot-glow 2s ease-in-out infinite !important;
+}
+
 /* React Flow UI chrome - dark mode */
 .react-flow__controls {
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;

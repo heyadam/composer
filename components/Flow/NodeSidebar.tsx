@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { nodeDefinitions, type NodeType } from "@/types/flow";
-import { Keyboard, Square, MessageSquare, Plus, X, ImageIcon } from "lucide-react";
+import { Keyboard, Square, MessageSquare, Plus, X, ImageIcon, Sparkles } from "lucide-react";
 import type { DragEvent } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -13,7 +13,12 @@ const iconMap = {
   image: ImageIcon,
 };
 
-export function NodeSidebar() {
+interface NodeSidebarProps {
+  onOpenAutopilot?: () => void;
+  autopilotOpen?: boolean;
+}
+
+export function NodeSidebar({ onOpenAutopilot, autopilotOpen }: NodeSidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const onDragStart = (event: DragEvent<HTMLDivElement>, nodeType: NodeType) => {
@@ -23,8 +28,9 @@ export function NodeSidebar() {
 
   return (
     <>
-      {/* Add Node Button */}
-      <div className="absolute top-4 left-4 z-10">
+      {/* Buttons container */}
+      <div className="absolute top-4 left-4 z-10 flex gap-2">
+        {/* Add Node Button */}
         <Button
           onClick={() => setIsOpen(!isOpen)}
           size="sm"
@@ -33,6 +39,18 @@ export function NodeSidebar() {
           {isOpen ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
           {isOpen ? "Close" : "Add Node"}
         </Button>
+
+        {/* Autopilot Button */}
+        {onOpenAutopilot && !autopilotOpen && (
+          <Button
+            onClick={onOpenAutopilot}
+            size="sm"
+            className="gap-2 bg-purple-700 text-white hover:bg-purple-600 border-purple-600"
+          >
+            <Sparkles className="h-4 w-4" />
+            Autopilot
+          </Button>
+        )}
       </div>
 
       {/* Sliding Panel */}
