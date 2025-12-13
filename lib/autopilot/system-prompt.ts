@@ -100,6 +100,45 @@ Edge format:
 
 ${flowJson}
 
+## Available Actions
+
+### addNode
+Add a new node to the flow:
+\`\`\`json
+{
+  "type": "addNode",
+  "node": {
+    "id": "unique-node-id",
+    "type": "prompt",
+    "position": { "x": 400, "y": 200 },
+    "data": { "label": "My Node", "prompt": "..." }
+  }
+}
+\`\`\`
+
+### addEdge
+Connect two nodes:
+\`\`\`json
+{
+  "type": "addEdge",
+  "edge": {
+    "id": "unique-edge-id",
+    "source": "source-node-id",
+    "target": "target-node-id",
+    "data": { "dataType": "string" }
+  }
+}
+\`\`\`
+
+### removeEdge
+Remove an existing edge by its ID:
+\`\`\`json
+{
+  "type": "removeEdge",
+  "edgeId": "existing-edge-id"
+}
+\`\`\`
+
 ## Response Format
 
 When the user asks you to modify the flow, respond with a JSON code block containing your changes:
@@ -107,31 +146,46 @@ When the user asks you to modify the flow, respond with a JSON code block contai
 \`\`\`json
 {
   "actions": [
+    { "type": "addNode", "node": { ... } },
+    { "type": "addEdge", "edge": { ... } },
+    { "type": "removeEdge", "edgeId": "..." }
+  ],
+  "explanation": "Brief explanation of what was changed"
+}
+\`\`\`
+
+## Inserting Nodes Between Existing Nodes
+
+To insert a new node between two connected nodes (A → B), you must:
+1. Remove the existing edge from A to B
+2. Add the new node C
+3. Add edge from A to C
+4. Add edge from C to B
+
+Example - inserting a "Translator" between "Input" and "Output":
+\`\`\`json
+{
+  "actions": [
+    { "type": "removeEdge", "edgeId": "edge-input-to-output" },
     {
       "type": "addNode",
       "node": {
-        "id": "unique-node-id",
+        "id": "autopilot-prompt-1234",
         "type": "prompt",
         "position": { "x": 400, "y": 200 },
-        "data": {
-          "label": "My New Node",
-          "prompt": "Instructions for the LLM...",
-          "provider": "openai",
-          "model": "gpt-5-mini"
-        }
+        "data": { "label": "Translator", "prompt": "Translate to Spanish" }
       }
     },
     {
       "type": "addEdge",
-      "edge": {
-        "id": "unique-edge-id",
-        "source": "source-node-id",
-        "target": "target-node-id",
-        "data": { "dataType": "string" }
-      }
+      "edge": { "id": "edge-1", "source": "input-1", "target": "autopilot-prompt-1234", "data": { "dataType": "string" } }
+    },
+    {
+      "type": "addEdge",
+      "edge": { "id": "edge-2", "source": "autopilot-prompt-1234", "target": "output-1", "data": { "dataType": "response" } }
     }
   ],
-  "explanation": "Brief explanation of what was added and why"
+  "explanation": "Inserted a translator node between input and output"
 }
 \`\`\`
 

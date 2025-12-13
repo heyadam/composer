@@ -120,8 +120,6 @@ export function AgentFlow() {
                 id: edgeAction.edge.id,
                 source: edgeAction.edge.source,
                 target: edgeAction.edge.target,
-                sourceHandle: "output",
-                targetHandle: "input",
                 type: "colored",
                 data: edgeAction.edge.data,
               },
