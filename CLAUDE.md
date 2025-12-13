@@ -28,9 +28,9 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 
 **Flow Editor** (`components/Flow/AgentFlow.tsx`): Main visual editor using @xyflow/react. Handles drag-and-drop node creation, edge connections, and flow execution controls.
 
-**Interaction Model** (Origami-style):
-- Normal mouse drag on canvas creates selection box to select multiple nodes
-- Hold spacebar + drag to pan the canvas (grab cursor)
+**Interaction Model**:
+- Normal mouse drag on canvas pans the view
+- Hold spacebar + drag to create selection box (crosshair cursor)
 - Selected nodes show yellow border with animated glow
 
 **Node Types** (`components/Flow/nodes/`): Four custom node components with editable labels:

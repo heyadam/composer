@@ -8,7 +8,6 @@ import {
   addEdge,
   useNodesState,
   useEdgesState,
-  useKeyPress,
   SelectionMode,
   type OnConnect,
   type ReactFlowInstance,
@@ -45,43 +44,6 @@ export function AgentFlow() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
 
-  // Origami-style pan: hold space to pan with mouse
-  const spacePressed = useKeyPress("Space");
-
-  // Clear any in-progress selection when switching to pan mode
-  useEffect(() => {
-    if (spacePressed && reactFlowInstance.current) {
-      // Deselect all nodes and edges to clear selection rectangle
-      setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
-      setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
-    }
-  }, [spacePressed, setNodes, setEdges]);
-
-  // Track mouse state to show/hide selection rectangle via CSS class
-  useEffect(() => {
-    const pane = document.querySelector('.react-flow__pane');
-    if (!pane) return;
-
-    const onMouseDown = () => {
-      pane.classList.add('is-selecting');
-    };
-
-    const onMouseUp = () => {
-      pane.classList.remove('is-selecting');
-    };
-
-    pane.addEventListener('mousedown', onMouseDown);
-    pane.addEventListener('pointerdown', onMouseDown);
-    document.addEventListener('mouseup', onMouseUp);
-    document.addEventListener('pointerup', onMouseUp);
-
-    return () => {
-      pane.removeEventListener('mousedown', onMouseDown);
-      pane.removeEventListener('pointerdown', onMouseDown);
-      document.removeEventListener('mouseup', onMouseUp);
-      document.removeEventListener('pointerup', onMouseUp);
-    };
-  }, []);
 
   const [isRunning, setIsRunning] = useState(false);
   const [finalOutput, setFinalOutput] = useState<string | null>(null);
@@ -427,13 +389,11 @@ export function AgentFlow() {
           fitViewOptions={{ padding: 0.2 }}
           deleteKeyCode={["Backspace", "Delete"]}
           proOptions={{ hideAttribution: true }}
-          // Origami-style: normal mouse for select/drag, space+mouse for pan
-          // panOnDrag array: 0=left, 1=middle, 2=right mouse buttons
-          panOnDrag={spacePressed ? [0, 1, 2] : [1, 2]}
-          selectionOnDrag={!spacePressed}
-          selectionKeyCode={null}
+          // Pan by default, hold space to enable selection box
+          panOnDrag
+          selectionOnDrag={false}
+          selectionKeyCode="Space"
           selectionMode={SelectionMode.Partial}
-          className={spacePressed ? "cursor-grab" : ""}
         >
           <Background />
           <Controls />

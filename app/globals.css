@@ -218,47 +218,20 @@ html, body {
   @apply fill-gray-900/70;
 }
 
-/* Default cursor is pointer */
+/* Default cursor is normal, grab when panning */
 .react-flow__pane {
   cursor: default !important;
 }
 
-/* Crosshair cursor when actively selecting */
-.react-flow__pane.is-selecting {
-  cursor: crosshair !important;
-}
-
-/* Origami-style pan mode: grab cursor when space is held */
-.react-flow.cursor-grab,
-.react-flow.cursor-grab .react-flow__pane,
-.react-flow.cursor-grab .react-flow__node {
-  cursor: grab !important;
-}
-
-.react-flow.cursor-grab:active,
-.react-flow.cursor-grab:active .react-flow__pane,
-.react-flow.cursor-grab .react-flow__pane:active {
+.react-flow__pane:active {
   cursor: grabbing !important;
 }
 
-/* Hide selection rectangle when in pan mode */
-.react-flow.cursor-grab .react-flow__selection,
-.react-flow.cursor-grab .react-flow__nodesselection-rect,
-.react-flow.cursor-grab .react-flow__selectionpane-selection {
-  display: none !important;
-}
-
-/* Style the selection rectangle - hide by default, only show during active drag */
+/* Style the selection rectangle - only visible in selection mode */
 .react-flow__selection {
   background: rgba(96, 165, 250, 0.1) !important;
   border: 1px solid rgba(96, 165, 250, 0.5) !important;
-  opacity: 0 !important;
   pointer-events: none !important;
-}
-
-/* Show selection rectangle only when actively selecting (mouse held down) */
-.react-flow__pane.is-selecting .react-flow__selection {
-  opacity: 1 !important;
 }
 
 /* Hide the nodesselection rectangle (the box around selected nodes group) */

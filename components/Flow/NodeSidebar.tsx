@@ -25,8 +25,8 @@ export function NodeSidebar({ isOpen, onClose }: NodeSidebarProps) {
 
   return (
     <aside
-      className={`absolute top-4 left-4 z-10 w-64 border border-neutral-700 rounded-xl bg-neutral-800/95 backdrop-blur shadow-lg transition-all duration-200 ${
-        isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"
+      className={`absolute bottom-24 left-1/2 -translate-x-1/2 z-20 w-64 border border-neutral-700 rounded-xl bg-neutral-800/95 backdrop-blur shadow-lg transition-all duration-200 origin-bottom ${
+        isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-2 pointer-events-none"
       }`}
     >
       <div className="p-3 border-b border-neutral-700 flex items-center justify-between">
