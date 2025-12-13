@@ -12,14 +12,17 @@ import {
   type OnConnect,
   type ReactFlowInstance,
   type Connection,
+  type Edge,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 import { nodeTypes } from "./nodes";
 import { edgeTypes } from "./edges/ColoredEdge";
+import { ConnectionContext } from "./ConnectionContext";
 import { NodeSidebar } from "./NodeSidebar";
 import { AutopilotSidebar } from "./AutopilotSidebar";
 import { ActionBar } from "./ActionBar";
+import { AvyLogo } from "./AvyLogo";
 import { SaveFlowDialog } from "./SaveFlowDialog";
 import { initialNodes, initialEdges, defaultFlow } from "@/lib/example-flow";
 import type { NodeType } from "@/types/flow";
@@ -73,6 +76,10 @@ export function AgentFlow() {
   // API keys context
   const { keys: apiKeys, hasRequiredKey } = useApiKeys();
   const [keyError, setKeyError] = useState<string | null>(null);
+
+  // Connection drag state
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [connectingFromNodeId, setConnectingFromNodeId] = useState<string | null>(null);
 
   // Apply changes from autopilot
   const applyAutopilotChanges = useCallback(
@@ -201,8 +208,27 @@ export function AgentFlow() {
     }
   }, []);
 
+  // Keep a ref to edges for validation
+  const edgesRef = useRef(edges);
+  edgesRef.current = edges;
+
+  // Validate connections - prevent multiple edges to the same input
+  const isValidConnection = useCallback((connection: Edge | Connection) => {
+    // Check if target node already has an incoming edge
+    const targetHasEdge = edgesRef.current.some(
+      (edge) => edge.target === connection.target
+    );
+    return !targetHasEdge;
+  }, []);
+
   const onConnect: OnConnect = useCallback(
     (params: Connection) => {
+      // Prevent multiple edges to the same target node
+      const targetAlreadyConnected = edgesRef.current.some(
+        (edge) => edge.target === params.target
+      );
+      if (targetAlreadyConnected) return;
+
       const dataType = params.source ? getEdgeDataType(params.source) : "default";
       setEdges((eds) =>
         addEdge(
@@ -220,6 +246,16 @@ export function AgentFlow() {
 
   const onInit = useCallback((instance: ReactFlowInstance) => {
     reactFlowInstance.current = instance;
+  }, []);
+
+  const onConnectStart = useCallback((_: unknown, params: { nodeId: string | null }) => {
+    setIsConnecting(true);
+    setConnectingFromNodeId(params.nodeId);
+  }, []);
+
+  const onConnectEnd = useCallback(() => {
+    setIsConnecting(false);
+    setConnectingFromNodeId(null);
   }, []);
 
   const onDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
@@ -435,31 +471,40 @@ export function AgentFlow() {
       />
       <div ref={reactFlowWrapper} className="flex-1 h-full bg-muted/10 relative">
         <NodeSidebar isOpen={nodesPaletteOpen} onClose={() => setNodesPaletteOpen(false)} />
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={handleNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onInit={onInit}
-          onDragOver={onDragOver}
-          onDrop={onDrop}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          defaultEdgeOptions={{ type: "colored" }}
-          fitView
-          fitViewOptions={{ padding: 0.2 }}
-          deleteKeyCode={["Backspace", "Delete"]}
-          proOptions={{ hideAttribution: true }}
-          // Pan by default, hold space to enable selection box
-          panOnDrag
-          selectionOnDrag={false}
-          selectionKeyCode="Space"
-          selectionMode={SelectionMode.Partial}
-        >
-          <Background />
-          <Controls />
-        </ReactFlow>
+        <ConnectionContext.Provider value={{ isConnecting, connectingFromNodeId }}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={handleNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onConnectStart={onConnectStart}
+            onConnectEnd={onConnectEnd}
+            isValidConnection={isValidConnection}
+            onInit={onInit}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            defaultEdgeOptions={{ type: "colored" }}
+            fitView
+            fitViewOptions={{ padding: 0.2 }}
+            deleteKeyCode={["Backspace", "Delete"]}
+            proOptions={{ hideAttribution: true }}
+            // Pan by default, hold space to enable selection box
+            panOnDrag
+            selectionOnDrag={false}
+            selectionKeyCode="Space"
+            selectionMode={SelectionMode.Partial}
+          >
+            <Background />
+            <Controls />
+          </ReactFlow>
+        </ConnectionContext.Provider>
+        {/* Top center branding */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+          <AvyLogo />
+        </div>
         <ActionBar
           onToggleNodes={() => setNodesPaletteOpen(!nodesPaletteOpen)}
           onToggleAutopilot={() => setAutopilotOpen(!autopilotOpen)}

@@ -1,9 +1,10 @@
-# Avy - AI Agent Workflow Builder
+# Avy
 
 A visual workflow builder for creating AI agent pipelines using drag-and-drop nodes.
 
 ## Features
 
+- **3D Animated Logo**: Fluid sphere logo with rainbow shader effects and liquid deformation
 - **Visual Flow Editor**: Build AI workflows by connecting nodes in a React Flow canvas
 - **Origami-Style Controls**: Drag to select multiple nodes, hold spacebar to pan
 - **Node Types**:
@@ -17,6 +18,7 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
 - **Resizable Responses Sidebar**: Drag-to-resize sidebar shows output node results as they stream
 - **Parallel Execution**: Branches execute independently, responses appear as each completes
 - **Color-Coded Edges**: Visual data flow with colored connections (cyan=string, purple=image, amber=response)
+- **Smart Port Labels**: Color-coded input/output handles with labels that highlight during connections
 - **Editable Labels**: Click any node title to rename it inline
 - **Execution Tracking**: Visual feedback showing node execution status (running/success/error)
 - **Selection Feedback**: Selected nodes show animated yellow glow
@@ -92,6 +94,7 @@ Open [http://localhost:3000](http://localhost:3000) to use the workflow builder.
 
 - [Next.js 16](https://nextjs.org/) - React framework
 - [React Flow](https://reactflow.dev/) - Node-based flow editor
+- [React Three Fiber](https://docs.pmnd.rs/react-three-fiber) - 3D WebGL rendering for logo
 - [Vercel AI SDK](https://sdk.vercel.ai/) - Streaming LLM responses
 - [OpenAI SDK](https://platform.openai.com/docs/libraries) - Image generation with streaming
 - [Tailwind CSS v4](https://tailwindcss.com/) - Styling
