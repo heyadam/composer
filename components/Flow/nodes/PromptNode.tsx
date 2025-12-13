@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { NodeFrame } from "./NodeFrame";
-import { PortRow } from "./PortLabel";
+import { PortList } from "./PortLabel";
 import { cn } from "@/lib/utils";
 import { PROVIDERS, DEFAULT_PROVIDER, DEFAULT_MODEL, VERBOSITY_OPTIONS, THINKING_OPTIONS, type ProviderId } from "@/lib/providers";
 
@@ -46,10 +46,13 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
       status={data.executionStatus}
       className="w-[280px]"
       ports={
-        <PortRow
+        <PortList
           nodeId={id}
-          input={{ label: "prompt", colorClass: "cyan" }}
-          output={{ label: "string", colorClass: "cyan" }}
+          inputs={[
+            { id: "prompt", label: "prompt", colorClass: "cyan" },
+            { id: "system", label: "system", colorClass: "cyan", required: false },
+          ]}
+          outputs={[{ id: "output", label: "string", colorClass: "cyan" }]}
         />
       }
       footer={
@@ -68,7 +71,7 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
         <textarea
           value={typeof data.prompt === "string" ? data.prompt : ""}
           onChange={(e) => updateNodeData(id, { prompt: e.target.value })}
-          placeholder="System instructions (optional)…"
+          placeholder="System prompt (or connect to system input)…"
           className={cn(
             "nodrag w-full min-h-[84px] resize-y rounded-md border border-input bg-background/60 dark:bg-muted/40 px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
             "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"

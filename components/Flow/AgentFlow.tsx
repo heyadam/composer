@@ -81,6 +81,11 @@ export function AgentFlow() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectingFromNodeId, setConnectingFromNodeId] = useState<string | null>(null);
 
+  // Panning state for logo animation
+  const [isPanning, setIsPanning] = useState(false);
+  const [panDelta, setPanDelta] = useState({ x: 0, y: 0 });
+  const lastViewport = useRef<{ x: number; y: number } | null>(null);
+
   // Apply changes from autopilot
   const applyAutopilotChanges = useCallback(
     (changes: FlowChanges): AppliedChangesInfo => {
@@ -212,22 +217,29 @@ export function AgentFlow() {
   const edgesRef = useRef(edges);
   edgesRef.current = edges;
 
-  // Validate connections - prevent multiple edges to the same input
+  // Validate connections - prevent multiple edges to the same input handle
   const isValidConnection = useCallback((connection: Edge | Connection) => {
-    // Check if target node already has an incoming edge
-    const targetHasEdge = edgesRef.current.some(
-      (edge) => edge.target === connection.target
+    // Check if target handle already has an incoming edge
+    // Use "prompt" as default for backward compatibility
+    const targetHandle = connection.targetHandle || "prompt";
+    const handleHasEdge = edgesRef.current.some(
+      (edge) =>
+        edge.target === connection.target &&
+        (edge.targetHandle || "prompt") === targetHandle
     );
-    return !targetHasEdge;
+    return !handleHasEdge;
   }, []);
 
   const onConnect: OnConnect = useCallback(
     (params: Connection) => {
-      // Prevent multiple edges to the same target node
-      const targetAlreadyConnected = edgesRef.current.some(
-        (edge) => edge.target === params.target
+      // Prevent multiple edges to the same target handle
+      const targetHandle = params.targetHandle || "prompt";
+      const handleAlreadyConnected = edgesRef.current.some(
+        (edge) =>
+          edge.target === params.target &&
+          (edge.targetHandle || "prompt") === targetHandle
       );
-      if (targetAlreadyConnected) return;
+      if (handleAlreadyConnected) return;
 
       const dataType = params.source ? getEdgeDataType(params.source) : "default";
       setEdges((eds) =>
@@ -235,7 +247,11 @@ export function AgentFlow() {
           {
             ...params,
             type: "colored",
-            data: { dataType },
+            data: {
+              dataType,
+              sourceHandle: params.sourceHandle,
+              targetHandle: params.targetHandle,
+            },
           },
           eds
         )
@@ -496,6 +512,23 @@ export function AgentFlow() {
             selectionOnDrag={false}
             selectionKeyCode="Space"
             selectionMode={SelectionMode.Partial}
+            onMoveStart={() => {
+              setIsPanning(true);
+              lastViewport.current = null;
+            }}
+            onMove={(_, viewport) => {
+              if (lastViewport.current) {
+                const dx = viewport.x - lastViewport.current.x;
+                const dy = viewport.y - lastViewport.current.y;
+                setPanDelta({ x: dx, y: dy });
+              }
+              lastViewport.current = { x: viewport.x, y: viewport.y };
+            }}
+            onMoveEnd={() => {
+              setIsPanning(false);
+              setPanDelta({ x: 0, y: 0 });
+              lastViewport.current = null;
+            }}
           >
             <Background />
             <Controls />
@@ -503,7 +536,7 @@ export function AgentFlow() {
         </ConnectionContext.Provider>
         {/* Top center branding */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
-          <AvyLogo />
+          <AvyLogo isPanning={isPanning} panDelta={panDelta} />
         </div>
         <ActionBar
           onToggleNodes={() => setNodesPaletteOpen(!nodesPaletteOpen)}

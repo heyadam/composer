@@ -15,6 +15,13 @@ export function findStartNode(nodes: Node[]): Node | undefined {
 }
 
 /**
+ * Find ALL input nodes in the graph (for multi-input flows)
+ */
+export function findAllInputNodes(nodes: Node[]): Node[] {
+  return nodes.filter((n) => n.type === "input");
+}
+
+/**
  * Get all outgoing edges from a node
  */
 export function getOutgoingEdges(nodeId: string, edges: Edge[]): Edge[] {
@@ -185,4 +192,29 @@ export function getParentNodes(
   return incoming
     .map((edge) => getSourceNode(edge, nodes))
     .filter((node): node is Node => node !== undefined);
+}
+
+/**
+ * Collect all inputs for a node, grouped by target handle ID.
+ * Returns a map of handleId -> value from executed upstream nodes.
+ * For backward compatibility, edges without targetHandle default to "prompt".
+ */
+export function collectNodeInputs(
+  nodeId: string,
+  edges: Edge[],
+  executedOutputs: Record<string, string>
+): Record<string, string> {
+  const incoming = getIncomingEdges(nodeId, edges);
+  const inputs: Record<string, string> = {};
+
+  for (const edge of incoming) {
+    // Default to "prompt" for backward compatibility with existing edges
+    const handleId = edge.targetHandle || "prompt";
+    const sourceOutput = executedOutputs[edge.source];
+    if (sourceOutput !== undefined) {
+      inputs[handleId] = sourceOutput;
+    }
+  }
+
+  return inputs;
 }

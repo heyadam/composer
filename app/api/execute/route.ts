@@ -38,15 +38,21 @@ function getModel(provider: string, model: string, apiKeys?: ApiKeys): LanguageM
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { type, input, apiKeys } = body;
+    const { type, apiKeys } = body;
 
     if (type === "prompt") {
-      const { prompt, provider, model, verbosity, thinking } = body;
+      // Support both old format (input, prompt) and new format (inputs.prompt, inputs.system)
+      const { inputs, prompt: legacyPrompt, input: legacyInput, provider, model, verbosity, thinking } = body;
+
+      // Get prompt (user message) and system prompt from either format
+      const promptInput = inputs?.prompt ?? legacyInput ?? "";
+      const systemPrompt = inputs?.system ?? legacyPrompt ?? "";
+
       const messages: { role: "system" | "user"; content: string }[] = [];
-      if (typeof prompt === "string" && prompt.trim().length > 0) {
-        messages.push({ role: "system", content: prompt.trim() });
+      if (typeof systemPrompt === "string" && systemPrompt.trim().length > 0) {
+        messages.push({ role: "system", content: systemPrompt.trim() });
       }
-      messages.push({ role: "user", content: String(input ?? "") });
+      messages.push({ role: "user", content: String(promptInput) });
 
       // Build provider options for OpenAI
       const openaiOptions: Record<string, string> = {};

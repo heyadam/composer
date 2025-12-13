@@ -1,6 +1,23 @@
 import type { Node, Edge } from "@xyflow/react";
 import type { ExecutionStatus } from "@/lib/execution/types";
 
+// Port data types (for coloring and validation)
+export type PortDataType = "string" | "image" | "response";
+
+// Single port definition
+export interface PortDefinition {
+  id: string;           // Unique handle ID (e.g., "prompt", "system")
+  label: string;        // Display label
+  dataType: PortDataType;
+  required?: boolean;   // Defaults to true
+}
+
+// Node port schema
+export interface NodePortSchema {
+  inputs: PortDefinition[];
+  outputs: PortDefinition[];
+}
+
 // Base execution data added to all nodes
 interface ExecutionData {
   executionStatus?: ExecutionStatus;
@@ -101,3 +118,26 @@ export const nodeDefinitions: NodeDefinition[] = [
     color: "bg-blue-500/10 text-blue-700 dark:text-blue-300",
   },
 ];
+
+// Port schemas for each node type
+export const NODE_PORT_SCHEMAS: Record<NodeType, NodePortSchema> = {
+  input: {
+    inputs: [],
+    outputs: [{ id: "output", label: "string", dataType: "string" }],
+  },
+  output: {
+    inputs: [{ id: "input", label: "response", dataType: "response" }],
+    outputs: [],
+  },
+  prompt: {
+    inputs: [
+      { id: "prompt", label: "prompt", dataType: "string", required: true },
+      { id: "system", label: "system", dataType: "string", required: false },
+    ],
+    outputs: [{ id: "output", label: "string", dataType: "string" }],
+  },
+  image: {
+    inputs: [{ id: "prompt", label: "prompt", dataType: "string" }],
+    outputs: [{ id: "output", label: "image", dataType: "image" }],
+  },
+};

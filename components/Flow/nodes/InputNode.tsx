@@ -24,7 +24,7 @@ export function InputNode({ id, data }: NodeProps<InputNodeType>) {
       ports={
         <PortRow
           nodeId={id}
-          output={{ label: "string", colorClass: "cyan" }}
+          output={{ id: "output", label: "string", colorClass: "cyan" }}
         />
       }
     >

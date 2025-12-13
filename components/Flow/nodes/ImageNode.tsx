@@ -102,8 +102,8 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
       ports={
         <PortRow
           nodeId={id}
-          input={{ label: "prompt", colorClass: "cyan" }}
-          output={{ label: "image", colorClass: "purple" }}
+          input={{ id: "prompt", label: "prompt", colorClass: "cyan" }}
+          output={{ id: "output", label: "image", colorClass: "purple" }}
         />
       }
       footer={renderFooter()}

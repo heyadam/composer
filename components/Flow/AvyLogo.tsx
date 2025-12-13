@@ -4,6 +4,11 @@ import { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
+interface AvyLogoProps {
+  isPanning?: boolean;
+  panDelta?: { x: number; y: number };
+}
+
 const vertexShader = `
   varying vec2 vUv;
   varying vec3 vNormal;
@@ -11,6 +16,7 @@ const vertexShader = `
   varying vec3 vViewPosition;
 
   uniform float uTime;
+  uniform float uIntensity;
 
   // Simplex noise
   vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -82,18 +88,25 @@ const vertexShader = `
     vUv = uv;
     vNormal = normalize(normalMatrix * normal);
 
-    // Funky liquid displacement - more aggressive and bouncy
-    float noise1 = snoise(position * 2.5 + uTime * 0.8);
-    float noise2 = snoise(position * 3.5 - uTime * 0.6);
-    float noise3 = snoise(position * 1.5 + vec3(uTime * 0.5, uTime * 0.3, uTime * 0.4));
+    // Speed multiplier based on intensity (subtly faster when panning)
+    float speedMult = 1.0 + uIntensity * 0.3;
 
-    // Add pulsing effect
-    float pulse = sin(uTime * 2.0) * 0.02 + 1.0;
+    // Funky liquid displacement - slightly more active when panning
+    float noise1 = snoise(position * 2.5 + uTime * 0.8 * speedMult);
+    float noise2 = snoise(position * 3.5 - uTime * 0.6 * speedMult);
+    float noise3 = snoise(position * 1.5 + vec3(uTime * 0.5 * speedMult, uTime * 0.3 * speedMult, uTime * 0.4 * speedMult));
 
-    // Wobbly displacement
-    float wobble = sin(position.y * 4.0 + uTime * 3.0) * 0.03;
+    // Add pulsing effect - slightly stronger when panning
+    float pulseAmp = 0.02 + uIntensity * 0.02;
+    float pulse = sin(uTime * 2.0 * speedMult) * pulseAmp + 1.0;
 
-    vec3 displaced = position * pulse + normal * (noise1 * 0.12 + noise2 * 0.08 + noise3 * 0.06 + wobble);
+    // Wobbly displacement - slightly stronger when panning
+    float wobbleAmp = 0.03 + uIntensity * 0.006;
+    float wobble = sin(position.y * 4.0 + uTime * 3.0 * speedMult) * wobbleAmp;
+
+    // Displacement amplitude increases slightly with intensity
+    float dispMult = 1.0 + uIntensity * 0.4;
+    vec3 displaced = position * pulse + normal * (noise1 * 0.12 * dispMult + noise2 * 0.08 * dispMult + noise3 * 0.06 * dispMult + wobble);
     vPosition = displaced;
 
     vec4 mvPosition = modelViewMatrix * vec4(displaced, 1.0);
@@ -110,6 +123,7 @@ const fragmentShader = `
   varying vec3 vViewPosition;
 
   uniform float uTime;
+  uniform float uIntensity;
 
   // HSV to RGB conversion
   vec3 hsv2rgb(vec3 c) {
@@ -122,6 +136,9 @@ const fragmentShader = `
     vec3 viewDir = normalize(vViewPosition);
     vec3 normal = normalize(vNormal);
 
+    // Speed multiplier for color animation (subtle)
+    float speedMult = 1.0 + uIntensity * 0.3;
+
     // Fresnel for edge detection
     float fresnel = 1.0 - abs(dot(viewDir, normal));
 
@@ -130,8 +147,8 @@ const fragmentShader = `
     float edgeSoftness = 0.4;
     float edge = smoothstep(edgeWidth - edgeSoftness, edgeWidth + edgeSoftness * 0.3, fresnel);
 
-    // Rainbow hue shifting based on position and time
-    float hueShift = uTime * 0.15;
+    // Rainbow hue shifting based on position and time - slightly faster when panning
+    float hueShift = uTime * 0.15 * speedMult;
     float hue1 = fract(vPosition.x * 0.5 + vPosition.y * 0.3 + hueShift);
     float hue2 = fract(vPosition.z * 0.4 - vPosition.x * 0.2 + hueShift + 0.33);
 
@@ -144,15 +161,15 @@ const fragmentShader = `
     vec3 neonCyan = vec3(0.2, 1.0, 0.9);
     vec3 neonPurple = vec3(0.7, 0.2, 1.0);
 
-    // Swirling color mix
-    float swirl = sin(vPosition.x * 3.0 + vPosition.y * 2.0 + uTime * 1.5) * 0.5 + 0.5;
-    float swirl2 = cos(vPosition.z * 4.0 - uTime * 2.0) * 0.5 + 0.5;
+    // Swirling color mix - slightly faster when panning
+    float swirl = sin(vPosition.x * 3.0 + vPosition.y * 2.0 + uTime * 1.5 * speedMult) * 0.5 + 0.5;
+    float swirl2 = cos(vPosition.z * 4.0 - uTime * 2.0 * speedMult) * 0.5 + 0.5;
 
     // Mix rainbow with neon accents
     vec3 liquidColor = mix(color1, color2, swirl);
     liquidColor = mix(liquidColor, neonPink, swirl2 * 0.4);
-    liquidColor = mix(liquidColor, neonCyan, sin(uTime * 1.2 + vUv.x * 3.14) * 0.3);
-    liquidColor = mix(liquidColor, neonPurple, cos(uTime * 0.8 + vUv.y * 3.14) * 0.25);
+    liquidColor = mix(liquidColor, neonCyan, sin(uTime * 1.2 * speedMult + vUv.x * 3.14) * 0.3);
+    liquidColor = mix(liquidColor, neonPurple, cos(uTime * 0.8 * speedMult + vUv.y * 3.14) * 0.25);
 
     // Boost saturation
     liquidColor = pow(liquidColor, vec3(0.85));
@@ -168,32 +185,63 @@ const fragmentShader = `
     vec3 finalColor = mix(liquidColor, edgeColor, edge);
     float finalAlpha = max(interiorAlpha, edgeAlpha);
 
-    // Pulsing glow
-    float glowPulse = sin(uTime * 3.0) * 0.1 + 0.9;
+    // Pulsing glow - slightly faster when panning
+    float glowPulse = sin(uTime * 3.0 * speedMult) * 0.1 + 0.9;
     finalAlpha *= glowPulse;
     finalAlpha = clamp(finalAlpha + edge * 0.4, 0.0, 1.0);
+
+    // Subtle brightness boost when panning
+    finalColor *= (1.0 + uIntensity * 0.08);
 
     gl_FragColor = vec4(finalColor, finalAlpha);
   }
 `;
 
-function FluidSphere() {
+function FluidSphere({ isPanning, panDelta }: { isPanning?: boolean; panDelta?: { x: number; y: number } }) {
   const meshRef = useRef<THREE.Mesh>(null);
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const targetIntensity = useRef(0);
+  const currentIntensity = useRef(0);
+  const panRotationY = useRef(0);
+  const panRotationX = useRef(0);
 
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
+      uIntensity: { value: 0 },
     }),
     []
   );
 
-  useFrame((state) => {
-    if (meshRef.current) {
+  useFrame((state, delta) => {
+    if (meshRef.current && materialRef.current) {
       const t = state.clock.elapsedTime;
-      uniforms.uTime.value = t;
-      meshRef.current.rotation.y = t * 0.3;
-      meshRef.current.rotation.x = Math.sin(t * 0.2) * 0.3;
-      meshRef.current.rotation.z = Math.cos(t * 0.15) * 0.1;
+      materialRef.current.uniforms.uTime.value = t;
+
+      // Smoothly interpolate intensity towards target
+      targetIntensity.current = isPanning ? 1 : 0;
+      const lerpSpeed = isPanning ? 8 : 4; // Faster ramp up, slower ramp down
+      currentIntensity.current += (targetIntensity.current - currentIntensity.current) * Math.min(delta * lerpSpeed, 1);
+      materialRef.current.uniforms.uIntensity.value = currentIntensity.current;
+
+      // Add pan-direction rotation (pan delta affects rotation)
+      const panSensitivity = 0.008;
+      if (isPanning && panDelta) {
+        panRotationY.current += panDelta.x * panSensitivity;
+        panRotationX.current += panDelta.y * panSensitivity;
+      }
+      // Slowly decay pan rotation when not panning
+      panRotationY.current *= 0.98;
+      panRotationX.current *= 0.98;
+
+      // Base rotation plus pan-induced rotation
+      const baseRotY = t * 0.3;
+      const baseRotX = Math.sin(t * 0.2) * 0.3;
+      const baseRotZ = Math.cos(t * 0.15) * 0.1;
+
+      meshRef.current.rotation.y = baseRotY + panRotationY.current;
+      meshRef.current.rotation.x = baseRotX + panRotationX.current;
+      meshRef.current.rotation.z = baseRotZ;
     }
   });
 
@@ -201,6 +249,7 @@ function FluidSphere() {
     <mesh ref={meshRef}>
       <sphereGeometry args={[1, 128, 128]} />
       <shaderMaterial
+        ref={materialRef}
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}
         uniforms={uniforms}
@@ -212,7 +261,7 @@ function FluidSphere() {
   );
 }
 
-export function AvyLogo() {
+export function AvyLogo({ isPanning, panDelta }: AvyLogoProps) {
   return (
     <div className="flex items-center gap-2 pointer-events-none select-none">
       <div style={{ width: 48, height: 48 }}>
@@ -222,7 +271,7 @@ export function AvyLogo() {
           dpr={[2, 4]}
           style={{ background: "transparent" }}
         >
-          <FluidSphere />
+          <FluidSphere isPanning={isPanning} panDelta={panDelta} />
         </Canvas>
       </div>
       <span className="text-white font-medium text-xl tracking-wide">avy</span>

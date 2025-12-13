@@ -2,48 +2,65 @@ import type { Node, Edge } from "@xyflow/react";
 import type { NodeExecutionState } from "./types";
 import type { ApiKeys } from "@/lib/api-keys";
 import {
-  findStartNode,
+  findAllInputNodes,
   getOutgoingEdges,
   getTargetNode,
+  getIncomingEdges,
   findDownstreamOutputNodes,
+  collectNodeInputs,
 } from "./graph-utils";
 
 // Execute a single node
 async function executeNode(
   node: Node,
-  input: string,
+  inputs: Record<string, string>,
   context: Record<string, unknown>,
   apiKeys?: ApiKeys,
   onStreamUpdate?: (output: string) => void
 ): Promise<{ output: string }> {
   switch (node.type) {
     case "input":
-      return { output: input };
+      // Input node uses its stored inputValue or the first available input
+      return { output: inputs["prompt"] || inputs["input"] || "" };
 
     case "output":
-      return { output: input };
+      // Output node passes through its input
+      return { output: inputs["input"] || inputs["prompt"] || Object.values(inputs)[0] || "" };
 
     case "prompt": {
-      const prompt = typeof node.data?.prompt === "string" ? node.data.prompt : "";
+      // Get prompt input (the user message)
+      const promptInput = inputs["prompt"] || "";
+      // Check if system input handle has a connected edge
+      const hasSystemEdge = "system" in inputs;
+      // If system input is connected, use it (even if empty); otherwise fall back to textarea
+      const textareaPrompt = typeof node.data?.prompt === "string" ? node.data.prompt : "";
+      const effectiveSystemPrompt = hasSystemEdge ? inputs["system"] : textareaPrompt;
+
       const response = await fetch("/api/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "prompt",
-          prompt: prompt,
+          inputs: { prompt: promptInput, system: effectiveSystemPrompt },
           provider: node.data.provider || "openai",
           model: node.data.model || "gpt-5",
           verbosity: node.data.verbosity,
           thinking: node.data.thinking,
-          input,
           context,
           apiKeys,
         }),
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to execute prompt");
+        const text = await response.text();
+        let errorMessage = "Failed to execute prompt";
+        try {
+          const data = JSON.parse(text);
+          errorMessage = data.error || errorMessage;
+        } catch {
+          errorMessage = text || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       if (!response.body) {
@@ -69,6 +86,7 @@ async function executeNode(
 
     case "image": {
       const prompt = typeof node.data?.prompt === "string" ? node.data.prompt : "";
+      const promptInput = inputs["prompt"] || "";
 
       const response = await fetch("/api/execute", {
         method: "POST",
@@ -85,7 +103,7 @@ async function executeNode(
           partialImages: node.data.partialImages ?? 3,
           // Google-specific
           aspectRatio: node.data.aspectRatio || "1:1",
-          input,
+          input: promptInput,
           apiKeys,
         }),
       });
@@ -176,7 +194,7 @@ async function executeNode(
     }
 
     default:
-      return { output: input };
+      return { output: inputs["prompt"] || inputs["input"] || Object.values(inputs)[0] || "" };
   }
 }
 
@@ -186,25 +204,66 @@ export async function executeFlow(
   onNodeStateChange: (nodeId: string, state: NodeExecutionState) => void,
   apiKeys?: ApiKeys
 ): Promise<string> {
-  const startNode = findStartNode(nodes);
-  if (!startNode) {
+  const inputNodes = findAllInputNodes(nodes);
+  if (inputNodes.length === 0) {
     throw new Error("No input node found");
   }
 
-  // Get user input from the InputNode's data
-  const userInput = typeof startNode.data?.inputValue === "string"
-    ? startNode.data.inputValue
-    : "";
-
-  const context: Record<string, unknown> = { userInput };
+  const context: Record<string, unknown> = {};
+  // Track executed node outputs for collecting inputs
+  const executedOutputs: Record<string, string> = {};
+  // Track which nodes have been executed or are executing
+  const executedNodes = new Set<string>();
+  const executingNodes = new Set<string>();
+  // Track promises for nodes that are currently executing
+  const nodePromises: Record<string, Promise<void>> = {};
   const outputs: string[] = [];
 
-  // Recursive function to execute a node and its downstream nodes
-  async function executeNodeAndContinue(node: Node, input: string): Promise<void> {
+  // Check if all upstream dependencies are satisfied for a node
+  function areInputsReady(nodeId: string): boolean {
+    const incomingEdges = getIncomingEdges(nodeId, edges);
+    for (const edge of incomingEdges) {
+      if (!executedNodes.has(edge.source)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Execute a single node and trigger downstream nodes
+  async function executeNodeAndContinue(node: Node): Promise<void> {
+    // Skip if already executed or currently executing
+    if (executedNodes.has(node.id) || executingNodes.has(node.id)) {
+      // If currently executing, wait for it to complete
+      const existingPromise = nodePromises[node.id];
+      if (existingPromise) {
+        await existingPromise;
+      }
+      return;
+    }
+
+    // Wait for all upstream dependencies
+    if (!areInputsReady(node.id)) {
+      // Wait for upstream nodes to complete
+      const incomingEdges = getIncomingEdges(node.id, edges);
+      const upstreamPromises: Promise<void>[] = [];
+      for (const edge of incomingEdges) {
+        const upstreamPromise = nodePromises[edge.source];
+        if (upstreamPromise) {
+          upstreamPromises.push(upstreamPromise);
+        }
+      }
+      if (upstreamPromises.length > 0) {
+        await Promise.all(upstreamPromises);
+      }
+    }
+
+    // Mark as executing
+    executingNodes.add(node.id);
+
     onNodeStateChange(node.id, { status: "running" });
 
     // For prompt and image nodes, also mark downstream output nodes as running
-    // so they appear in preview immediately
     const shouldTrackDownstream = node.type === "prompt" || node.type === "image";
     const downstreamOutputs = shouldTrackDownstream
       ? findDownstreamOutputNodes(node.id, nodes, edges)
@@ -217,14 +276,24 @@ export async function executeFlow(
       // Small delay for visual feedback
       await new Promise((r) => setTimeout(r, 300));
 
-      // Execute the node with streaming callback for prompt nodes
-      const result = await executeNode(node, input, context, apiKeys, (streamedOutput) => {
-        // Update prompt node
+      // Collect inputs from all incoming edges
+      let inputs = collectNodeInputs(node.id, edges, executedOutputs);
+
+      // For input node, use its stored inputValue
+      if (node.type === "input") {
+        const nodeInput = typeof node.data?.inputValue === "string"
+          ? node.data.inputValue
+          : "";
+        inputs = { prompt: nodeInput };
+        context[`userInput_${node.id}`] = nodeInput;
+      }
+
+      // Execute the node with streaming callback
+      const result = await executeNode(node, inputs, context, apiKeys, (streamedOutput) => {
         onNodeStateChange(node.id, {
           status: "running",
           output: streamedOutput,
         });
-        // Also update downstream output nodes with streaming output
         for (const outputNode of downstreamOutputs) {
           onNodeStateChange(outputNode.id, {
             status: "running",
@@ -233,10 +302,12 @@ export async function executeFlow(
         }
       });
 
-      // Store output in context
+      // Store output
       context[node.id] = result.output;
+      executedOutputs[node.id] = result.output;
+      executedNodes.add(node.id);
+      executingNodes.delete(node.id);
 
-      // Set node to success
       onNodeStateChange(node.id, {
         status: "success",
         output: result.output,
@@ -248,26 +319,29 @@ export async function executeFlow(
         return;
       }
 
-      // Find and execute next nodes in parallel
+      // Find and execute downstream nodes
       const outgoingEdges = getOutgoingEdges(node.id, edges);
       const nextPromises: Promise<void>[] = [];
 
       for (const edge of outgoingEdges) {
         const targetNode = getTargetNode(edge, nodes);
-        if (targetNode) {
-          // Start executing the next node immediately (don't await)
-          nextPromises.push(executeNodeAndContinue(targetNode, result.output));
+        if (targetNode && !executedNodes.has(targetNode.id)) {
+          // Only execute if all inputs are ready
+          if (areInputsReady(targetNode.id)) {
+            const promise = executeNodeAndContinue(targetNode);
+            nodePromises[targetNode.id] = promise;
+            nextPromises.push(promise);
+          }
         }
       }
 
-      // Wait for all downstream branches to complete
       await Promise.all(nextPromises);
     } catch (error) {
+      executingNodes.delete(node.id);
       onNodeStateChange(node.id, {
         status: "error",
         error: error instanceof Error ? error.message : "Unknown error",
       });
-      // Also mark downstream outputs as error
       for (const outputNode of downstreamOutputs) {
         onNodeStateChange(outputNode.id, {
           status: "error",
@@ -277,8 +351,14 @@ export async function executeFlow(
     }
   }
 
-  // Start execution from the start node
-  await executeNodeAndContinue(startNode, userInput);
+  // Start execution from ALL input nodes in parallel
+  const startPromises = inputNodes.map((inputNode) => {
+    const promise = executeNodeAndContinue(inputNode);
+    nodePromises[inputNode.id] = promise;
+    return promise;
+  });
+
+  await Promise.all(startPromises);
 
   return outputs[outputs.length - 1] || "";
 }
