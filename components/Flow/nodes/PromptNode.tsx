@@ -1,6 +1,6 @@
 "use client";
 
-import { Handle, Position, useReactFlow, type NodeProps, type Node } from "@xyflow/react";
+import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import type { PromptNodeData } from "@/types/flow";
 import { MessageSquare } from "lucide-react";
 import {
@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { NodeFrame } from "./NodeFrame";
+import { PortRow } from "./PortLabel";
 import { cn } from "@/lib/utils";
 import { PROVIDERS, DEFAULT_PROVIDER, DEFAULT_MODEL, VERBOSITY_OPTIONS, THINKING_OPTIONS, type ProviderId } from "@/lib/providers";
 
@@ -43,7 +44,14 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
       iconClassName="bg-gray-500/10 text-gray-600 dark:text-gray-300"
       accentBorderClassName=""
       status={data.executionStatus}
-      className="w-[240px]"
+      className="w-[280px]"
+      ports={
+        <PortRow
+          nodeId={id}
+          input={{ label: "prompt", colorClass: "cyan" }}
+          output={{ label: "string", colorClass: "cyan" }}
+        />
+      }
       footer={
         data.executionError ? (
           <p className="text-xs text-destructive whitespace-pre-wrap line-clamp-4">
@@ -56,17 +64,6 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
         ) : null
       }
     >
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="!bg-gray-600 !w-2.5 !h-2.5 !border-2 !border-background !shadow-sm"
-      />
-      <div className="pointer-events-none absolute top-1/2 -translate-y-1/2 -left-12">
-        <span className="rounded-md bg-gray-600 px-1.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
-          string
-        </span>
-      </div>
-
       <div className="space-y-2">
         <textarea
           value={typeof data.prompt === "string" ? data.prompt : ""}
@@ -157,17 +154,6 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
             </Select>
           </div>
         )}
-      </div>
-
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="!bg-gray-600 !w-2.5 !h-2.5 !border-2 !border-background !shadow-sm"
-      />
-      <div className="pointer-events-none absolute top-1/2 -translate-y-1/2 -right-12">
-        <span className="rounded-md bg-gray-600 px-1.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
-          string
-        </span>
       </div>
     </NodeFrame>
   );

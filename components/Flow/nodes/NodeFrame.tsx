@@ -11,6 +11,7 @@ export function NodeFrame({
   iconClassName,
   accentBorderClassName,
   status,
+  ports,
   children,
   footer,
   className,
@@ -21,6 +22,7 @@ export function NodeFrame({
   iconClassName: string;
   accentBorderClassName: string;
   status?: ExecutionStatus;
+  ports?: ReactNode;
   children?: ReactNode;
   footer?: ReactNode;
   className?: string;
@@ -93,6 +95,8 @@ export function NodeFrame({
         </div>
         <NodeStatusBadge status={status} className="ml-2" />
       </div>
+
+      {ports ? <div className="border-b">{ports}</div> : null}
 
       {children ? <div className="px-3 py-2">{children}</div> : null}
 
