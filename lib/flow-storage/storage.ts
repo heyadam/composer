@@ -22,7 +22,7 @@ export function createSavedFlow(
 
   return {
     metadata: existingMetadata
-      ? { ...existingMetadata, updatedAt: now }
+      ? { ...existingMetadata, name, updatedAt: now }
       : createDefaultMetadata(name),
     nodes: sanitizeNodes(nodes),
     edges: sanitizeEdges(edges),
