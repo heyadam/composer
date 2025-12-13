@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState, useEffect, type DragEvent } from "react";
+import { useCallback, useRef, useState, type DragEvent } from "react";
 import {
   ReactFlow,
   Background,
@@ -20,13 +20,20 @@ import { edgeTypes } from "./edges/ColoredEdge";
 import { NodeSidebar } from "./NodeSidebar";
 import { AutopilotSidebar } from "./AutopilotSidebar";
 import { ActionBar } from "./ActionBar";
-import { initialNodes, initialEdges } from "@/lib/example-flow";
+import { SaveFlowDialog } from "./SaveFlowDialog";
+import { initialNodes, initialEdges, defaultFlow } from "@/lib/example-flow";
 import type { NodeType } from "@/types/flow";
 import { executeFlow } from "@/lib/execution/engine";
 import type { NodeExecutionState } from "@/lib/execution/types";
 import type { FlowChanges, AddNodeAction, AddEdgeAction, RemoveEdgeAction, AppliedChangesInfo } from "@/lib/autopilot/types";
 import { ResponsesSidebar, type PreviewEntry } from "./ResponsesSidebar";
 import { useApiKeys, type ProviderId } from "@/lib/api-keys";
+import {
+  createSavedFlow,
+  downloadFlow,
+  openFlowFilePicker,
+  type FlowMetadata,
+} from "@/lib/flow-storage";
 
 let id = 0;
 const getId = () => `node_${id++}`;
@@ -44,6 +51,11 @@ export function AgentFlow() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
 
+  // Flow metadata state
+  const [flowMetadata, setFlowMetadata] = useState<FlowMetadata | undefined>(
+    defaultFlow.metadata as FlowMetadata
+  );
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
   const [isRunning, setIsRunning] = useState(false);
   const [finalOutput, setFinalOutput] = useState<string | null>(null);
@@ -360,6 +372,56 @@ export function AgentFlow() {
     }
   }, [nodes, edges, isRunning, updateNodeExecutionState, resetExecution, hasRequiredKey, apiKeys]);
 
+  // Flow file operations
+  const handleNewFlow = useCallback(() => {
+    // Reset to default flow
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+    setFlowMetadata(defaultFlow.metadata as FlowMetadata);
+    resetExecution();
+    setAutopilotHighlightedIds(new Set());
+  }, [setNodes, setEdges, resetExecution]);
+
+  const handleSaveFlow = useCallback((name: string) => {
+    const flow = createSavedFlow(nodes, edges, name, flowMetadata);
+    setFlowMetadata(flow.metadata);
+    downloadFlow(flow);
+  }, [nodes, edges, flowMetadata]);
+
+  const handleOpenFlow = useCallback(async () => {
+    const result = await openFlowFilePicker();
+    if (result.success && result.flow) {
+      setNodes(result.flow.nodes);
+      setEdges(result.flow.edges);
+      setFlowMetadata(result.flow.metadata);
+      resetExecution();
+      setAutopilotHighlightedIds(new Set());
+
+      // Update node ID counter to avoid collisions
+      const maxId = result.flow.nodes.reduce((max, node) => {
+        const match = node.id.match(/node_(\d+)/);
+        if (match) {
+          return Math.max(max, parseInt(match[1], 10));
+        }
+        return max;
+      }, 0);
+      id = maxId + 1;
+
+      // Fit view to show loaded flow (with small delay for state to settle)
+      setTimeout(() => {
+        reactFlowInstance.current?.fitView({ padding: 0.2 });
+      }, 50);
+
+      // Show warnings if any
+      if (result.validation?.warnings.length) {
+        console.warn("Flow loaded with warnings:", result.validation.warnings);
+      }
+    } else if (result.error && result.error !== "File selection cancelled") {
+      console.error("Failed to open flow:", result.error);
+      alert(`Failed to open flow: ${result.error}`);
+    }
+  }, [setNodes, setEdges, resetExecution]);
+
   return (
     <div className="flex h-screen w-full">
       {/* Autopilot Sidebar (left) */}
@@ -404,6 +466,9 @@ export function AgentFlow() {
           onToggleResponses={() => setResponsesOpen(!responsesOpen)}
           onRun={runFlow}
           onReset={resetExecution}
+          onNewFlow={handleNewFlow}
+          onSaveFlow={() => setSaveDialogOpen(true)}
+          onOpenFlow={handleOpenFlow}
           nodesPaletteOpen={nodesPaletteOpen}
           autopilotOpen={autopilotOpen}
           responsesOpen={responsesOpen}
@@ -414,6 +479,12 @@ export function AgentFlow() {
         entries={previewEntries}
         keyError={keyError}
         isOpen={responsesOpen}
+      />
+      <SaveFlowDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        onSave={handleSaveFlow}
+        defaultName={flowMetadata?.name || "My Flow"}
       />
     </div>
   );

@@ -1,7 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Sparkles, PanelRight, Settings, RotateCcw, Play, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Sparkles,
+  PanelRight,
+  Settings,
+  RotateCcw,
+  Play,
+  Loader2,
+  Save,
+  FolderOpen,
+  FilePlus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -9,6 +20,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useApiKeys } from "@/lib/api-keys";
 import { SettingsDialogControlled } from "./SettingsDialogControlled";
 
@@ -18,6 +36,9 @@ interface ActionBarProps {
   onToggleResponses: () => void;
   onRun: () => void;
   onReset: () => void;
+  onNewFlow: () => void;
+  onSaveFlow: () => void;
+  onOpenFlow: () => void;
   nodesPaletteOpen: boolean;
   autopilotOpen: boolean;
   responsesOpen: boolean;
@@ -30,6 +51,9 @@ export function ActionBar({
   onToggleResponses,
   onRun,
   onReset,
+  onNewFlow,
+  onSaveFlow,
+  onOpenFlow,
   nodesPaletteOpen,
   autopilotOpen,
   responsesOpen,
@@ -71,7 +95,7 @@ export function ActionBar({
             {/* Divider */}
             <div className="w-px h-6 bg-neutral-700 mx-1" />
 
-            {/* Section 2: Autopilot & Responses */}
+            {/* Section 3: Autopilot & Responses */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -112,7 +136,7 @@ export function ActionBar({
               </TooltipContent>
             </Tooltip>
 
-            {/* Section 3: Settings */}
+            {/* Section 4: Settings */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -136,10 +160,59 @@ export function ActionBar({
               </TooltipContent>
             </Tooltip>
 
+            {/* Section 5: File Operations */}
+            <DropdownMenu>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 rounded-lg transition-colors text-neutral-400 hover:text-white hover:bg-neutral-800"
+                    >
+                      <FolderOpen className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-neutral-800 text-white border-neutral-700">
+                  File
+                </TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent
+                align="center"
+                side="top"
+                sideOffset={8}
+                className="bg-neutral-900 border-neutral-700 text-white min-w-[160px]"
+              >
+                <DropdownMenuItem
+                  onClick={onNewFlow}
+                  className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
+                >
+                  <FilePlus className="h-4 w-4 mr-2" />
+                  New Flow
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-neutral-700" />
+                <DropdownMenuItem
+                  onClick={onOpenFlow}
+                  className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Open...
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={onSaveFlow}
+                  className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save as...
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {/* Divider */}
             <div className="w-px h-6 bg-neutral-700 mx-1" />
 
-            {/* Section 4: Reset & Run */}
+            {/* Section 6: Reset & Run */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
