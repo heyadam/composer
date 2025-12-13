@@ -20,6 +20,7 @@ import { nodeTypes } from "./nodes";
 import { edgeTypes } from "./edges/ColoredEdge";
 import { NodeSidebar } from "./NodeSidebar";
 import { AutopilotSidebar } from "./AutopilotSidebar";
+import { ActionBar } from "./ActionBar";
 import { initialNodes, initialEdges } from "@/lib/example-flow";
 import type { NodeType } from "@/types/flow";
 import { executeFlow } from "@/lib/execution/engine";
@@ -89,9 +90,11 @@ export function AgentFlow() {
   const nodesRef = useRef(nodes);
   nodesRef.current = nodes;
 
-  // Autopilot sidebar state
+  // Sidebar and palette states
   const [autopilotOpen, setAutopilotOpen] = useState(false);
   const [autopilotHighlightedIds, setAutopilotHighlightedIds] = useState<Set<string>>(new Set());
+  const [nodesPaletteOpen, setNodesPaletteOpen] = useState(false);
+  const [responsesOpen, setResponsesOpen] = useState(true);
 
   // API keys context
   const { keys: apiKeys, hasRequiredKey } = useApiKeys();
@@ -406,8 +409,8 @@ export function AgentFlow() {
         isOpen={autopilotOpen}
         onToggle={() => setAutopilotOpen(!autopilotOpen)}
       />
-      <div ref={reactFlowWrapper} className="flex-1 h-full bg-muted/10">
-        <NodeSidebar onOpenAutopilot={() => setAutopilotOpen(true)} autopilotOpen={autopilotOpen} />
+      <div ref={reactFlowWrapper} className="flex-1 h-full bg-muted/10 relative">
+        <NodeSidebar isOpen={nodesPaletteOpen} onClose={() => setNodesPaletteOpen(false)} />
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -435,13 +438,22 @@ export function AgentFlow() {
           <Background />
           <Controls />
         </ReactFlow>
+        <ActionBar
+          onToggleNodes={() => setNodesPaletteOpen(!nodesPaletteOpen)}
+          onToggleAutopilot={() => setAutopilotOpen(!autopilotOpen)}
+          onToggleResponses={() => setResponsesOpen(!responsesOpen)}
+          onRun={runFlow}
+          onReset={resetExecution}
+          nodesPaletteOpen={nodesPaletteOpen}
+          autopilotOpen={autopilotOpen}
+          responsesOpen={responsesOpen}
+          isRunning={isRunning}
+        />
       </div>
       <ResponsesSidebar
         entries={previewEntries}
-        onRun={runFlow}
-        onReset={resetExecution}
-        isRunning={isRunning}
         keyError={keyError}
+        isOpen={responsesOpen}
       />
     </div>
   );

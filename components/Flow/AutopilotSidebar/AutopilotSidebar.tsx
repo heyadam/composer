@@ -89,33 +89,37 @@ export function AutopilotSidebar({
     };
   }, [isResizing, resize, stopResizing]);
 
-  if (!isOpen) {
-    return null;
-  }
-
   return (
     <div
-      ref={sidebarRef}
-      className="flex flex-col h-full border-r bg-background relative overflow-hidden"
-      style={{ width }}
+      className="h-full overflow-hidden transition-[width,min-width] duration-300 ease-out"
+      style={{
+        width: isOpen ? width : 0,
+        minWidth: isOpen ? width : 0,
+      }}
     >
-      <AutopilotHeader
-        onClear={clearHistory}
-        onClose={onToggle}
-        hasMessages={messages.length > 0}
-      />
-      <AutopilotChat
-        messages={messages}
-        isLoading={isLoading}
-        error={error}
-        onSendMessage={sendMessage}
-        onUndoChanges={undoChanges}
-      />
-      {/* Resize handle - on the right edge for left sidebar */}
       <div
-        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-500/50 active:bg-purple-500/70 transition-colors z-10"
-        onMouseDown={startResizing}
-      />
+        ref={sidebarRef}
+        className="flex flex-col h-full border-r bg-background relative overflow-hidden"
+        style={{ width, minWidth: width }}
+      >
+        <AutopilotHeader
+          onClear={clearHistory}
+          onClose={onToggle}
+          hasMessages={messages.length > 0}
+        />
+        <AutopilotChat
+          messages={messages}
+          isLoading={isLoading}
+          error={error}
+          onSendMessage={sendMessage}
+          onUndoChanges={undoChanges}
+        />
+        {/* Resize handle - on the right edge for left sidebar */}
+        <div
+          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-purple-500/50 active:bg-purple-500/70 transition-colors z-10"
+          onMouseDown={startResizing}
+        />
+      </div>
     </div>
   );
 }

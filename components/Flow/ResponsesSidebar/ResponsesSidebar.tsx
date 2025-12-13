@@ -12,18 +12,14 @@ const STORAGE_KEY = "responses-sidebar-width";
 
 interface ResponsesSidebarProps {
   entries: PreviewEntry[];
-  onRun: () => void;
-  onReset: () => void;
-  isRunning: boolean;
   keyError?: string | null;
+  isOpen: boolean;
 }
 
 export function ResponsesSidebar({
   entries,
-  onRun,
-  onReset,
-  isRunning,
   keyError,
+  isOpen,
 }: ResponsesSidebarProps) {
   const [width, setWidth] = useState(DEFAULT_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
@@ -86,17 +82,25 @@ export function ResponsesSidebar({
 
   return (
     <div
-      ref={sidebarRef}
-      className="flex flex-col h-full border-l bg-background relative"
-      style={{ width }}
+      className="h-full overflow-hidden transition-[width,min-width] duration-300 ease-out"
+      style={{
+        width: isOpen ? width : 0,
+        minWidth: isOpen ? width : 0,
+      }}
     >
-      {/* Resize handle */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-yellow-500/50 active:bg-yellow-500/70 transition-colors z-10"
-        onMouseDown={startResizing}
-      />
-      <ResponsesHeader onRun={onRun} onReset={onReset} isRunning={isRunning} keyError={keyError} />
-      <ResponsesContent entries={entries} />
+        ref={sidebarRef}
+        className="flex flex-col h-full border-l bg-background relative"
+        style={{ width, minWidth: width }}
+      >
+        {/* Resize handle */}
+        <div
+          className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-yellow-500/50 active:bg-yellow-500/70 transition-colors z-10"
+          onMouseDown={startResizing}
+        />
+        <ResponsesHeader keyError={keyError} />
+        <ResponsesContent entries={entries} />
+      </div>
     </div>
   );
 }
