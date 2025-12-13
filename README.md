@@ -20,6 +20,11 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
 - **Editable Labels**: Click any node title to rename it inline
 - **Execution Tracking**: Visual feedback showing node execution status (running/success/error)
 - **Selection Feedback**: Selected nodes show animated yellow glow
+- **AI Autopilot**: Natural language flow editing - describe changes and Claude builds them
+  - Add, connect, and insert nodes between existing ones
+  - Model selector (Sonnet 4.5 / Opus 4.5)
+  - Auto-apply with undo support
+  - Suggested prompts for quick starts
 
 ### Supported Models
 
@@ -69,12 +74,19 @@ Open [http://localhost:3000](http://localhost:3000) to use the workflow builder.
 
 ## Usage
 
+### Manual Flow Building
 1. Click "Add Node" and drag nodes onto the canvas
 2. Connect nodes by dragging from output handles to input handles
 3. Configure node properties (prompts, models, image settings)
 4. Enter input text in the Input node
 5. Click "Run" in the responses sidebar to execute the workflow
 6. View streaming results in the responses sidebar
+
+### AI Autopilot
+1. Click the Autopilot button (sparkles icon) to open the sidebar
+2. Describe what you want in natural language (e.g., "Add a translator node between input and output")
+3. Claude generates and auto-applies the changes
+4. Use "Undo" to revert if needed
 
 ## Tech Stack
 

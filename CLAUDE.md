@@ -75,6 +75,23 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 
 **Node Sidebar** (`components/Flow/NodeSidebar.tsx`): Collapsible node palette triggered by "Add Node" button. Nodes are drag-and-drop onto canvas.
 
+**Autopilot Sidebar** (`components/Flow/AutopilotSidebar/`): AI-powered chat interface for natural language flow editing:
+- `AutopilotSidebar.tsx`: Main container with resizable width (320-600px)
+- `AutopilotChat.tsx`: Chat UI with model selector (Sonnet/Opus 4.5) and suggested prompts
+- `AutopilotHeader.tsx`: Header with clear history button
+- Uses Claude to generate flow modifications from natural language descriptions
+- Supports actions: `addNode`, `addEdge`, `removeEdge`
+- Auto-applies changes with undo capability
+- New nodes highlighted with purple glow until interacted with
+
+**Autopilot System** (`lib/autopilot/`):
+- `types.ts`: Action types (AddNodeAction, AddEdgeAction, RemoveEdgeAction), FlowChanges, AutopilotMessage
+- `parser.ts`: Extracts and validates JSON actions from Claude's responses
+- `snapshot.ts`: Serializes current flow state for context
+- `system-prompt.ts`: Builds prompt with node types, edge rules, and insertion examples
+
+**Autopilot Hook** (`lib/hooks/useAutopilotChat.ts`): Manages conversation state, streaming responses, auto-apply, and undo functionality.
+
 **Example Flow** (`lib/example-flow.ts`): Default flow configuration loaded on startup.
 
 **API Route** (`app/api/execute/route.ts`): Server-side execution handler for prompt and image nodes:
