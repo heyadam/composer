@@ -1,6 +1,6 @@
 "use client";
 
-import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
+import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
 import type { PromptNodeData } from "@/types/flow";
 import { MessageSquare } from "lucide-react";
 import {
@@ -19,6 +19,12 @@ type PromptNodeType = Node<PromptNodeData, "prompt">;
 
 export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
   const { updateNodeData } = useReactFlow();
+  const edges = useEdges();
+
+  // Check if the system input handle is connected
+  const isSystemConnected = edges.some(
+    (edge) => edge.target === id && edge.targetHandle === "system"
+  );
 
   const currentProvider = (data.provider || DEFAULT_PROVIDER) as ProviderId;
   const providerConfig = PROVIDERS[currentProvider];
@@ -68,15 +74,26 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
       }
     >
       <div className="space-y-2">
-        <textarea
-          value={typeof data.prompt === "string" ? data.prompt : ""}
-          onChange={(e) => updateNodeData(id, { prompt: e.target.value })}
-          placeholder="System prompt (or connect to system input)…"
-          className={cn(
-            "nodrag w-full min-h-[84px] resize-y rounded-md border border-input bg-background/60 dark:bg-muted/40 px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
-            "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-          )}
-        />
+        {isSystemConnected ? (
+          <div
+            className={cn(
+              "nodrag w-full min-h-[84px] rounded-md border border-input bg-muted/50 dark:bg-muted/20 px-3 py-2 text-sm",
+              "flex items-center justify-center text-muted-foreground italic"
+            )}
+          >
+            Using connected system input
+          </div>
+        ) : (
+          <textarea
+            value={typeof data.prompt === "string" ? data.prompt : ""}
+            onChange={(e) => updateNodeData(id, { prompt: e.target.value })}
+            placeholder="System prompt (or connect to system input)…"
+            className={cn(
+              "nodrag w-full min-h-[84px] resize-y rounded-md border border-input bg-background/60 dark:bg-muted/40 px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
+              "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+            )}
+          />
+        )}
 
         <div className="flex items-center justify-between gap-2">
           <div className="text-[11px] text-muted-foreground">Provider</div>

@@ -1,5 +1,5 @@
 import type { Node, Edge } from "@xyflow/react";
-import defaultFlow from "@/lib/flows/default-flow.json";
+import defaultFlow from "@/lib/flows/starter.avy.json";
 
 // Export the default flow nodes and edges for initial state
 export const initialNodes: Node[] = defaultFlow.nodes as Node[];
