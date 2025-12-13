@@ -60,6 +60,20 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 - Streams responses in real-time as they generate
 - Width persisted to localStorage (min: 240px, max: 800px)
 
+**Avy Logo** (`components/Flow/AvyLogo.tsx`): Animated 3D fluid sphere logo using react-three-fiber. Features:
+- WebGL shader-based liquid deformation with simplex noise
+- Rainbow color shifting with neon accents (pink, cyan, purple)
+- White edge outline with Fresnel effect
+- Pulsing glow animation
+
+**Port Labels** (`components/Flow/nodes/PortLabel.tsx`): Unified port design component for all nodes:
+- Color-coded input/output handles (cyan=string, purple=image, amber=response)
+- Labels next to handles showing data type
+- Visual highlighting during edge creation (color activates when dragging)
+- Hover effects with scale animation
+
+**Connection Context** (`components/Flow/ConnectionContext.tsx`): React context tracking edge connection state, enabling port highlighting feedback when creating connections.
+
 **Colored Edges** (`components/Flow/edges/ColoredEdge.tsx`): Custom edge component with data-type based coloring:
 - Cyan for string data
 - Purple for image data
