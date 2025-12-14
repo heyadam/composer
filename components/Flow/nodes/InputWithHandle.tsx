@@ -19,6 +19,7 @@ interface InputWithHandleProps {
   required?: boolean;
   colorClass?: "cyan" | "purple" | "amber";
   handleOffset?: number; // Optional vertical offset for handle
+  isConnected?: boolean; // Whether the handle is connected
 }
 
 export function InputWithHandle({
@@ -29,6 +30,7 @@ export function InputWithHandle({
   required = true,
   colorClass = "cyan",
   handleOffset,
+  isConnected = false,
 }: InputWithHandleProps) {
   const { isConnecting } = useConnectionState();
 
@@ -38,7 +40,6 @@ export function InputWithHandle({
     amber: { dot: "!bg-amber-400", hoverDot: "hover:!bg-amber-400" },
   };
 
-  const isOptional = !required;
   const highlight = isConnecting;
 
   return (
@@ -51,8 +52,9 @@ export function InputWithHandle({
           "!w-3.5 !h-3.5 !border-2 !border-background !shadow-sm transition-all duration-200",
           highlight
             ? `${colorMap[colorClass].dot} !scale-110`
-            : `!bg-gray-500 ${colorMap[colorClass].hoverDot} hover:!scale-110`,
-          isOptional && "!border-dashed"
+            : isConnected
+            ? "!bg-white hover:!scale-110"
+            : "!bg-gray-500 hover:!scale-110"
         )}
         style={{
           left: HANDLE_LEFT_OFFSET,

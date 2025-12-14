@@ -1,6 +1,6 @@
 "use client";
 
-import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
+import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
 import type { OutputNodeData } from "@/types/flow";
 import { Square, ImageIcon } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
@@ -11,6 +11,10 @@ type OutputNodeType = Node<OutputNodeData, "output">;
 
 export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
   const { updateNodeData } = useReactFlow();
+  const edges = useEdges();
+
+  // Check if input is connected
+  const isInputConnected = edges.some((edge) => edge.target === id && edge.targetHandle === "input");
 
   const renderFooter = () => {
     if (data.executionError) {
@@ -56,7 +60,7 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
       ports={
         <PortRow
           nodeId={id}
-          input={{ id: "input", label: "response", colorClass: "amber" }}
+          input={{ id: "input", label: "response", colorClass: "amber", isConnected: isInputConnected }}
         />
       }
       footer={renderFooter()}

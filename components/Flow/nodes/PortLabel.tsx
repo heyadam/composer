@@ -11,11 +11,13 @@ interface PortRowProps {
     label: string;
     colorClass: "cyan" | "purple" | "amber";
     required?: boolean; // Defaults to true
+    isConnected?: boolean; // Whether the input handle is connected
   };
   output?: {
     id?: string;        // Handle ID for React Flow
     label: string;
     colorClass: "cyan" | "purple" | "amber";
+    isConnected?: boolean; // Whether the output handle is connected
   };
 }
 
@@ -46,8 +48,9 @@ export function PortRow({ nodeId, input, output }: PortRowProps) {
               "!w-3.5 !h-3.5 !border-2 !border-background !shadow-sm transition-all duration-200",
               inputHighlight
                 ? `${colorMap[input.colorClass].dot} !scale-110`
-                : `!bg-gray-500 ${colorMap[input.colorClass].hoverDot} hover:!scale-110`,
-              isOptional && "!border-dashed"
+                : input.isConnected
+                ? "!bg-white hover:!scale-110"
+                : "!bg-gray-500 hover:!scale-110"
             )}
           />
           <span
@@ -75,7 +78,9 @@ export function PortRow({ nodeId, input, output }: PortRowProps) {
               "!w-3.5 !h-3.5 !border-2 !border-background !shadow-sm transition-all duration-200",
               outputHighlight
                 ? `${colorMap[output.colorClass].dot} !scale-110`
-                : `!bg-gray-500 ${colorMap[output.colorClass].hoverDot} hover:!scale-110`
+                : output.isConnected
+                ? "!bg-white hover:!scale-110"
+                : "!bg-gray-500 hover:!scale-110"
             )}
           />
           <span
@@ -100,6 +105,7 @@ interface PortConfig {
   label: string;
   colorClass: "cyan" | "purple" | "amber";
   required?: boolean;
+  isConnected?: boolean;
 }
 
 interface PortListProps {
@@ -125,6 +131,7 @@ export function PortList({ nodeId, inputs = [], outputs = [] }: PortListProps) {
                   label: inputs[index].label,
                   colorClass: inputs[index].colorClass,
                   required: inputs[index].required,
+                  isConnected: inputs[index].isConnected,
                 }
               : undefined
           }
@@ -134,6 +141,7 @@ export function PortList({ nodeId, inputs = [], outputs = [] }: PortListProps) {
                   id: outputs[index].id,
                   label: outputs[index].label,
                   colorClass: outputs[index].colorClass,
+                  isConnected: outputs[index].isConnected,
                 }
               : undefined
           }

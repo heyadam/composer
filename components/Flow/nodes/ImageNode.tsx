@@ -1,6 +1,6 @@
 "use client";
 
-import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
+import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
 import type { ImageNodeData } from "@/types/flow";
 import { ImageIcon } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
@@ -25,6 +25,11 @@ type ImageNodeType = Node<ImageNodeData, "image">;
 
 export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
   const { updateNodeData } = useReactFlow();
+  const edges = useEdges();
+
+  // Check if input/output are connected
+  const isPromptConnected = edges.some((edge) => edge.target === id && edge.targetHandle === "prompt");
+  const isOutputConnected = edges.some((edge) => edge.source === id && edge.sourceHandle === "output");
 
   const currentProvider = (data.provider || DEFAULT_IMAGE_PROVIDER) as ImageProviderId;
   const currentModel = data.model || DEFAULT_IMAGE_MODEL;
@@ -83,8 +88,8 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
       ports={
         <PortRow
           nodeId={id}
-          input={{ id: "prompt", label: "prompt", colorClass: "cyan" }}
-          output={{ id: "output", label: "image", colorClass: "purple" }}
+          input={{ id: "prompt", label: "prompt", colorClass: "cyan", isConnected: isPromptConnected }}
+          output={{ id: "output", label: "image", colorClass: "purple", isConnected: isOutputConnected }}
         />
       }
       footer={renderFooter()}

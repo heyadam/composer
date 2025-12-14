@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
+import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
 import type { ImageInputNodeData } from "@/types/flow";
 import { Upload, X } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
@@ -17,7 +17,11 @@ type ImageInputNodeType = Node<ImageInputNodeData, "image-input">;
 
 export function ImageInputNode({ id, data }: NodeProps<ImageInputNodeType>) {
   const { updateNodeData } = useReactFlow();
+  const edges = useEdges();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check if output is connected
+  const isOutputConnected = edges.some((edge) => edge.source === id && edge.sourceHandle === "output");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -59,7 +63,7 @@ export function ImageInputNode({ id, data }: NodeProps<ImageInputNodeType>) {
       ports={
         <PortRow
           nodeId={id}
-          output={{ id: "output", label: "image", colorClass: "purple" }}
+          output={{ id: "output", label: "image", colorClass: "purple", isConnected: isOutputConnected }}
         />
       }
     >

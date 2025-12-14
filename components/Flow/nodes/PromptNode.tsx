@@ -24,6 +24,9 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
   const isSystemConnected = edges.some(
     (edge) => edge.target === id && edge.targetHandle === "system"
   );
+  const isOutputConnected = edges.some(
+    (edge) => edge.source === id && edge.sourceHandle === "output"
+  );
 
   const currentProvider = (data.provider || DEFAULT_PROVIDER) as ProviderId;
   const currentModel = data.model || DEFAULT_MODEL;
@@ -41,7 +44,7 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
       ports={
         <PortRow
           nodeId={id}
-          output={{ id: "output", label: "string", colorClass: "cyan" }}
+          output={{ id: "output", label: "string", colorClass: "cyan", isConnected: isOutputConnected }}
         />
       }
       footer={
@@ -62,6 +65,7 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
           id="prompt"
           label="User Prompt"
           colorClass="cyan"
+          isConnected={isPromptConnected}
         >
           <textarea
             value={isPromptConnected ? "" : (data.userPrompt ?? "")}
@@ -83,6 +87,7 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
           label="System Instructions"
           colorClass="cyan"
           required={false}
+          isConnected={isSystemConnected}
         >
           <textarea
             value={isSystemConnected ? "" : (data.systemPrompt ?? "")}
