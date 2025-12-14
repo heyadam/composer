@@ -106,25 +106,25 @@ export interface NodeDefinition {
 export const nodeDefinitions: NodeDefinition[] = [
   {
     type: "input",
-    label: "Input",
+    label: "Input Text",
     description: "Entry point for the flow",
     color: "bg-purple-500/10 text-purple-700 dark:text-purple-300",
   },
   {
     type: "image-input",
-    label: "Image Input",
+    label: "Input Image",
     description: "Upload an image file",
     color: "bg-purple-500/10 text-purple-700 dark:text-purple-300",
   },
   {
     type: "prompt",
-    label: "Text",
+    label: "AI Text",
     description: "LLM text generation",
     color: "bg-gray-500/10 text-gray-700 dark:text-gray-300",
   },
   {
     type: "image",
-    label: "Image",
+    label: "AI Image",
     description: "Generate images with AI",
     color: "bg-gray-500/10 text-gray-700 dark:text-gray-300",
   },

@@ -20,7 +20,7 @@ import "@xyflow/react/dist/style.css";
 import { nodeTypes } from "./nodes";
 import { edgeTypes } from "./edges/ColoredEdge";
 import { ConnectionContext } from "./ConnectionContext";
-import { NodeSidebar } from "./NodeSidebar";
+import { NodeToolbar } from "./NodeToolbar";
 import { AutopilotSidebar } from "./AutopilotSidebar";
 import { ActionBar } from "./ActionBar";
 import { AvyLogo } from "./AvyLogo";
@@ -59,11 +59,11 @@ const updateIdCounter = (nodes: Node[]) => {
 updateIdCounter(initialNodes);
 
 const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
-  input: { label: "Input", inputValue: "" },
-  "image-input": { label: "Image Input" },
+  input: { label: "Input Text", inputValue: "" },
+  "image-input": { label: "Input Image" },
   output: { label: "Response" },
-  prompt: { label: "Text", prompt: "", provider: "openai", model: "gpt-5" },
-  image: { label: "Image Generator", prompt: "", outputFormat: "webp", size: "1024x1024", quality: "low", partialImages: 3 },
+  prompt: { label: "AI Text", prompt: "", provider: "openai", model: "gpt-5" },
+  image: { label: "AI Image", prompt: "", outputFormat: "webp", size: "1024x1024", quality: "low", partialImages: 3 },
 };
 
 export function AgentFlow() {
@@ -106,8 +106,6 @@ export function AgentFlow() {
 
   // Panning state for logo animation
   const [isPanning, setIsPanning] = useState(false);
-  const [panDelta, setPanDelta] = useState({ x: 0, y: 0 });
-  const lastViewport = useRef<{ x: number; y: number } | null>(null);
 
   // Apply changes from autopilot
   const applyAutopilotChanges = useCallback(
@@ -328,6 +326,36 @@ export function AgentFlow() {
       setNodes((nds) => nds.concat(newNode));
     },
     [setNodes]
+  );
+
+  // Get the center of the current viewport in flow coordinates
+  const getViewportCenter = useCallback(() => {
+    if (!reactFlowInstance.current || !reactFlowWrapper.current) {
+      return { x: 0, y: 0 };
+    }
+    const { width, height } = reactFlowWrapper.current.getBoundingClientRect();
+    return reactFlowInstance.current.screenToFlowPosition({
+      x: width / 2,
+      y: height / 2,
+    });
+  }, []);
+
+  // Add a node at the center of the viewport (for toolbar click-to-add)
+  const handleAddNodeAtCenter = useCallback(
+    (nodeType: NodeType) => {
+      const position = getViewportCenter();
+      const newNode = {
+        id: getId(),
+        type: nodeType,
+        position: {
+          x: position.x - 100, // Center horizontally (assuming ~200px node width)
+          y: position.y - 50, // Center vertically (assuming ~100px node height)
+        },
+        data: { ...defaultNodeData[nodeType] },
+      };
+      setNodes((nds) => nds.concat(newNode));
+    },
+    [getViewportCenter, setNodes]
   );
 
   const updateNodeExecutionState = useCallback(
@@ -552,7 +580,11 @@ export function AgentFlow() {
         onToggle={() => setAutopilotOpen(!autopilotOpen)}
       />
       <div ref={reactFlowWrapper} className="flex-1 h-full bg-muted/10 relative">
-        <NodeSidebar isOpen={nodesPaletteOpen} onClose={() => setNodesPaletteOpen(false)} />
+        <NodeToolbar
+          isOpen={nodesPaletteOpen}
+          onClose={() => setNodesPaletteOpen(false)}
+          onAddNode={handleAddNodeAtCenter}
+        />
         <ConnectionContext.Provider value={{ isConnecting, connectingFromNodeId }}>
           <ReactFlow
             nodes={nodes}
@@ -578,23 +610,8 @@ export function AgentFlow() {
             selectionOnDrag={false}
             selectionKeyCode="Space"
             selectionMode={SelectionMode.Partial}
-            onMoveStart={() => {
-              setIsPanning(true);
-              lastViewport.current = null;
-            }}
-            onMove={(_, viewport) => {
-              if (lastViewport.current) {
-                const dx = viewport.x - lastViewport.current.x;
-                const dy = viewport.y - lastViewport.current.y;
-                setPanDelta({ x: dx, y: dy });
-              }
-              lastViewport.current = { x: viewport.x, y: viewport.y };
-            }}
-            onMoveEnd={() => {
-              setIsPanning(false);
-              setPanDelta({ x: 0, y: 0 });
-              lastViewport.current = null;
-            }}
+            onMoveStart={() => setIsPanning(true)}
+            onMoveEnd={() => setIsPanning(false)}
           >
             <Background
               variant={bgSettings.variant}
@@ -608,7 +625,7 @@ export function AgentFlow() {
         </ConnectionContext.Provider>
         {/* Top center branding */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
-          <AvyLogo isPanning={isPanning} panDelta={panDelta} />
+          <AvyLogo isPanning={isPanning} />
         </div>
         <ActionBar
           onToggleNodes={() => setNodesPaletteOpen(!nodesPaletteOpen)}

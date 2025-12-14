@@ -78,6 +78,7 @@ export function ActionBar({
                   variant="ghost"
                   size="icon"
                   onClick={onToggleNodes}
+                  data-node-toolbar-toggle
                   className={`h-10 w-10 rounded-lg transition-colors ${
                     nodesPaletteOpen
                       ? "bg-neutral-700 text-white"
