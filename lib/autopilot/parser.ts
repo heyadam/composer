@@ -13,23 +13,12 @@ export function parseFlowChanges(response: string): FlowChanges | null {
     const jsonStr = match[1].trim();
     try {
       const parsed = JSON.parse(jsonStr);
-      console.log("[Parser] Found JSON block:", parsed);
 
       // Validate structure
       if (isValidFlowChanges(parsed)) {
-        console.log("[Parser] Valid FlowChanges structure");
         return parsed;
-      } else {
-        console.log("[Parser] Invalid FlowChanges structure - checking why...");
-        if (!Array.isArray((parsed as Record<string, unknown>).actions)) {
-          console.log("[Parser] - actions is not an array");
-        }
-        if (typeof (parsed as Record<string, unknown>).explanation !== "string") {
-          console.log("[Parser] - explanation is not a string");
-        }
       }
-    } catch (e) {
-      console.log("[Parser] JSON parse error:", e);
+    } catch {
       // Continue to next match if JSON parsing fails
       continue;
     }
@@ -62,7 +51,6 @@ function isValidFlowChanges(obj: unknown): obj is FlowChanges {
   // Validate each action
   for (const action of candidate.actions) {
     if (!isValidFlowAction(action)) {
-      console.log("[Parser] Invalid action:", action);
       return false;
     }
   }
@@ -110,17 +98,24 @@ function isValidAddNodeAction(action: Record<string, unknown>): boolean {
   );
 }
 
+const VALID_DATA_TYPES = ["string", "image", "response"] as const;
+
 function isValidAddEdgeAction(action: Record<string, unknown>): boolean {
   const edge = action.edge as Record<string, unknown> | undefined;
   if (!edge) return false;
 
+  const data = edge.data as Record<string, unknown> | undefined;
+  if (!data || typeof data !== "object") return false;
+
+  const dataType = data.dataType;
+  if (typeof dataType !== "string" || !VALID_DATA_TYPES.includes(dataType as typeof VALID_DATA_TYPES[number])) {
+    return false;
+  }
+
   return (
     typeof edge.id === "string" &&
     typeof edge.source === "string" &&
-    typeof edge.target === "string" &&
-    typeof edge.data === "object" &&
-    edge.data !== null &&
-    typeof (edge.data as Record<string, unknown>).dataType === "string"
+    typeof edge.target === "string"
   );
 }
 

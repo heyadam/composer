@@ -39,8 +39,8 @@ LLM text generation node. Processes input and generates text output.
 
 **Available Models:**
 - OpenAI: \`gpt-5.2\` (best), \`gpt-5-mini\` (balanced), \`gpt-5-nano\` (fast)
-- Google: \`gemini-2.5-pro\` (best), \`gemini-2.5-flash\` (fast)
-- Anthropic: \`claude-opus-4-5\` (best), \`claude-sonnet-4-5\` (balanced)
+- Google: \`gemini-2.5-pro\` (best), \`gemini-2.5-flash\` (fast), \`gemini-3-pro-preview\` (latest)
+- Anthropic: \`claude-opus-4-5\` (most capable), \`claude-sonnet-4-5\` (best for agents), \`claude-haiku-4-5\` (fast)
 
 ### 3. image
 AI image generation node. Takes text input and generates an image.
@@ -58,8 +58,8 @@ AI image generation node. Takes text input and generates an image.
 \`\`\`
 
 **Available Image Models:**
-- OpenAI: \`gpt-image-1\`
-- Google: \`gemini-2.5-flash-image\`, \`gemini-3-pro-image-preview\`
+- OpenAI: \`gpt-image-1\` (best), \`dall-e-3\` (higher quality)
+- Google: \`gemini-2.5-flash-image\` (fast), \`gemini-3-pro-image-preview\` (high quality)
 
 ### 4. output
 Exit point that displays results. Can be named to describe what it shows (e.g., "Summary", "Image Result").
@@ -209,8 +209,8 @@ Example - inserting a "Translator" between "Input" and "Output":
    - Prefer minimal, focused changes
 
 5. **Defaults**:
-   - Default to OpenAI gpt-5-mini for prompt nodes unless user specifies
-   - Default to Google gemini-2.5-flash-image for image nodes
+   - Default to Anthropic claude-sonnet-4-5 for prompt nodes unless user specifies
+   - Default to Google gemini-2.5-flash-image for image nodes (for image generation)
 
 6. **Clarification**: If the user's request is ambiguous, ask clarifying questions instead of guessing. Just respond with your question in plain text (no JSON).
 

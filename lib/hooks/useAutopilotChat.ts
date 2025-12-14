@@ -24,7 +24,11 @@ export function useAutopilotChat({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const messagesRef = useRef<AutopilotMessage[]>([]);
   const { keys: apiKeys } = useApiKeys();
+
+  // Keep messagesRef in sync with messages state
+  messagesRef.current = messages;
 
   const sendMessage = useCallback(
     async (content: string, model: AutopilotModel = "claude-sonnet-4-5") => {
@@ -33,24 +37,17 @@ export function useAutopilotChat({
       setError(null);
       setIsLoading(true);
 
-      // Add user message
+      // Add user message with unique ID
+      const userMessageId = crypto.randomUUID();
       const userMessage: AutopilotMessage = {
-        id: `msg-${Date.now()}`,
+        id: userMessageId,
         role: "user",
         content: content.trim(),
         timestamp: Date.now(),
       };
 
-      // Prepare messages for API (without metadata)
-      const apiMessages = [
-        ...messages.map((m) => ({ role: m.role, content: m.content })),
-        { role: "user" as const, content: content.trim() },
-      ];
-
-      setMessages((prev) => [...prev, userMessage]);
-
-      // Create placeholder for assistant message
-      const assistantMessageId = `msg-${Date.now() + 1}`;
+      // Create placeholder for assistant message with unique ID
+      const assistantMessageId = crypto.randomUUID();
       const assistantMessage: AutopilotMessage = {
         id: assistantMessageId,
         role: "assistant",
@@ -58,7 +55,13 @@ export function useAutopilotChat({
         timestamp: Date.now(),
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      // Prepare messages for API using ref to get current state (avoids stale closure)
+      const apiMessages = [
+        ...messagesRef.current.map((m) => ({ role: m.role, content: m.content })),
+        { role: "user" as const, content: content.trim() },
+      ];
+
+      setMessages((prev) => [...prev, userMessage, assistantMessage]);
 
       try {
         // Create abort controller for cancellation
@@ -110,16 +113,11 @@ export function useAutopilotChat({
 
         // Parse flow changes from completed response
         const changes = parseFlowChanges(fullOutput);
-        console.log("[Autopilot] Parsed changes:", changes);
 
         // Auto-apply changes if any
         let appliedInfo: AppliedChangesInfo | undefined;
         if (changes) {
-          console.log("[Autopilot] Applying changes...");
           appliedInfo = onApplyChanges(changes);
-          console.log("[Autopilot] Applied:", appliedInfo);
-        } else {
-          console.log("[Autopilot] No changes parsed from response");
         }
 
         // Update message with parsed changes and applied info
@@ -161,12 +159,12 @@ export function useAutopilotChat({
         abortControllerRef.current = null;
       }
     },
-    [messages, nodes, edges, isLoading, onApplyChanges, apiKeys]
+    [nodes, edges, isLoading, onApplyChanges, apiKeys]
   );
 
   const undoChanges = useCallback(
     (messageId: string) => {
-      const message = messages.find((m) => m.id === messageId);
+      const message = messagesRef.current.find((m) => m.id === messageId);
       if (message?.applied && message.appliedInfo) {
         onUndoChanges(message.appliedInfo);
 
@@ -178,7 +176,7 @@ export function useAutopilotChat({
         );
       }
     },
-    [messages, onUndoChanges]
+    [onUndoChanges]
   );
 
   const clearHistory = useCallback(() => {
