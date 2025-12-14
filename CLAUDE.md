@@ -40,7 +40,7 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 - `OutputNode`: Exit point, displays final result and sends to preview
 
 **InputWithHandle** (`components/Flow/nodes/InputWithHandle.tsx`): Reusable component combining input fields with connection handles:
-- Shows disabled textarea with "Using connected input" when handle is wired
+- Shows disabled textarea with "Connected" placeholder when handle is wired
 - Color-coded handles (cyan/purple/amber) with connection highlighting
 - Used by PromptNode for user prompt and system instructions inputs
 
@@ -130,5 +130,7 @@ Flow types in `types/flow.ts` define node data interfaces with execution state t
 ### UI Components
 
 Uses shadcn/ui components in `components/ui/` with Tailwind CSS v4. Import alias `@/*` maps to project root.
+
+**Content Design**: When adding or modifying UI text (labels, placeholders, descriptions, tooltips, button text), follow the standards in `CONTENT_DESIGN.md`. This ensures consistent tone and formatting across the application.
 
 **AI Elements**: Use the AI Elements MCP (`mcp__ai-elements__get_ai_elements_components` and `mcp__ai-elements__get_ai_elements_component`) to discover and add UI components. AI Elements registry is configured at `@ai-elements` for components from `https://registry.ai-sdk.dev/`.
