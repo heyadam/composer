@@ -86,23 +86,89 @@ export async function POST(request: NextRequest) {
     }
 
     if (type === "image") {
-      const { prompt, provider, model, outputFormat, size, quality, partialImages, aspectRatio, input } = body;
+      const { prompt, provider, model, outputFormat, size, quality, partialImages, aspectRatio, input, imageInput } = body;
 
       // Combine optional prompt template with input
       const fullPrompt = prompt
         ? `${prompt}\n\nUser request: ${input}`
         : input;
 
-      // Handle Google Gemini image generation
+      // Check if we have a source image for image-to-image editing
+      const isImageEdit = !!imageInput;
+      let parsedImageInput: { value: string; mimeType: string } | null = null;
+      if (isImageEdit) {
+        try {
+          const parsed = JSON.parse(imageInput);
+          if (!parsed.value || typeof parsed.value !== "string") {
+            return NextResponse.json({ error: "Invalid image input: missing or invalid base64 value" }, { status: 400 });
+          }
+          parsedImageInput = {
+            value: parsed.value,
+            mimeType: parsed.mimeType || "image/png",
+          };
+        } catch (e) {
+          console.error("Failed to parse imageInput:", e);
+          return NextResponse.json({ error: "Invalid image input format" }, { status: 400 });
+        }
+      }
+
+      // Handle Google Gemini image generation/editing
       if (provider === "google") {
         try {
-          console.log("Google image generation request:", { model, fullPrompt, aspectRatio });
+          console.log("Google image request:", { model, fullPrompt, aspectRatio, isImageEdit });
           const google = createGoogleGenerativeAI({
             apiKey: apiKeys?.google || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
           });
+
+          // For image editing, use messages format with multimodal content
+          if (isImageEdit && parsedImageInput) {
+            const result = await generateText({
+              model: google(model || "gemini-2.5-flash-image"),
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "text",
+                      text: fullPrompt || "Edit this image to improve its quality",
+                    },
+                    {
+                      type: "image",
+                      image: Buffer.from(parsedImageInput.value, "base64"),
+                      mediaType: parsedImageInput.mimeType,
+                    },
+                  ],
+                },
+              ],
+              providerOptions: {
+                google: {
+                  responseModalities: ["IMAGE"],
+                  imageConfig: {
+                    aspectRatio: aspectRatio || "1:1",
+                  },
+                } satisfies GoogleGenerativeAIProviderOptions,
+              },
+            });
+
+            console.log("Google image edit result:", JSON.stringify(result, null, 2));
+
+            // Extract image from result.files
+            if (result.files && result.files.length > 0) {
+              const file = result.files[0];
+              return NextResponse.json({
+                type: "image",
+                value: file.base64,
+                mimeType: file.mediaType || "image/png",
+              });
+            }
+
+            return NextResponse.json({ error: "No image generated", debug: result }, { status: 500 });
+          }
+
+          // For text-to-image generation, use simple prompt
           const result = await generateText({
             model: google(model || "gemini-2.5-flash-image"),
-            prompt: fullPrompt,
+            prompt: fullPrompt || "Generate an image",
             providerOptions: {
               google: {
                 responseModalities: ["IMAGE"],
@@ -113,7 +179,7 @@ export async function POST(request: NextRequest) {
             },
           });
 
-          console.log("Google image generation result:", JSON.stringify(result, null, 2));
+          console.log("Google image result:", JSON.stringify(result, null, 2));
 
           // Extract image from result.files
           if (result.files && result.files.length > 0) {
@@ -127,7 +193,7 @@ export async function POST(request: NextRequest) {
 
           return NextResponse.json({ error: "No image generated", debug: result }, { status: 500 });
         } catch (googleError) {
-          console.error("Google image generation error:", googleError);
+          console.error("Google image error:", googleError);
           return NextResponse.json({
             error: googleError instanceof Error ? googleError.message : "Google image generation failed",
             debug: String(googleError)
@@ -135,26 +201,38 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Handle OpenAI image generation (default)
+      // Handle OpenAI image generation/editing (default)
       const openaiClient = new OpenAI({
         apiKey: apiKeys?.openai || process.env.OPENAI_API_KEY,
       });
       const mimeType = `image/${outputFormat || "webp"}`;
 
+      // Build input text based on whether we're editing or generating
+      const inputText = isImageEdit
+        ? `Edit this image: ${fullPrompt || "Enhance and improve the image quality"}`
+        : `Generate an image based on this description: ${fullPrompt}`;
+
+      // Build image_generation tool config - include image for editing
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const imageGenTool: any = {
+        type: "image_generation",
+        partial_images: partialImages ?? 3,
+        quality: quality || "low",
+        size: size || "1024x1024",
+        output_format: outputFormat || "webp",
+      };
+
+      // Add source image for image-to-image editing
+      if (isImageEdit && parsedImageInput) {
+        imageGenTool.image = parsedImageInput.value;
+      }
+
       // Use OpenAI Responses API directly for streaming partial images
       const stream = await openaiClient.responses.create({
         model: model || "gpt-5",
-        input: `Generate an image based on this description: ${fullPrompt}`,
+        input: inputText,
         stream: true,
-        tools: [
-          {
-            type: "image_generation",
-            partial_images: partialImages ?? 3,
-            quality: quality || "low",
-            size: size || "1024x1024",
-            output_format: outputFormat || "webp",
-          },
-        ],
+        tools: [imageGenTool],
       });
 
       // Stream partial images and final image as newline-delimited JSON

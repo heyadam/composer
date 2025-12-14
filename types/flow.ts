@@ -49,6 +49,7 @@ export interface PromptNodeData extends Record<string, unknown>, ExecutionData {
 export interface ImageNodeData extends Record<string, unknown>, ExecutionData {
   label: string;
   prompt?: string; // Optional additional instructions
+  imageInput?: string; // Inline uploaded image for editing (runtime only, not persisted)
   provider?: string;
   model?: string;
   // OpenAI-specific options
@@ -176,7 +177,10 @@ export const NODE_PORT_SCHEMAS: Record<NodeType, NodePortSchema> = {
     outputs: [{ id: "output", label: "string", dataType: "string" }],
   },
   image: {
-    inputs: [{ id: "prompt", label: "prompt", dataType: "string" }],
+    inputs: [
+      { id: "image", label: "image", dataType: "image", required: false },
+      { id: "prompt", label: "prompt", dataType: "string", required: false },
+    ],
     outputs: [{ id: "output", label: "image", dataType: "image" }],
   },
   magic: {

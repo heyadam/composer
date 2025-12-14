@@ -15,6 +15,7 @@ export interface DebugInfo {
     thinking?: boolean;
     // Image-specific
     imagePrompt?: string;
+    hasSourceImage?: boolean;
     size?: string;
     quality?: string;
     aspectRatio?: string;

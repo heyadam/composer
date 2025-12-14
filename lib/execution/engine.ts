@@ -137,6 +137,8 @@ async function executeNode(
 
       const prompt = typeof node.data?.prompt === "string" ? node.data.prompt : "";
       const promptInput = inputs["prompt"] || "";
+      // Get source image from connected input or inline upload
+      const imageInput = inputs["image"] || (node.data.imageInput as string) || "";
       const provider = (node.data.provider as string) || "openai";
       const model = (node.data.model as string) || "gpt-5";
 
@@ -157,6 +159,7 @@ async function executeNode(
         partialImages,
         aspectRatio,
         input: promptInput,
+        imageInput, // Source image for image-to-image editing
         apiKeys,
       };
 
@@ -167,6 +170,7 @@ async function executeNode(
           provider,
           model,
           imagePrompt: prompt + (promptInput ? ` | Input: ${promptInput}` : ""),
+          hasSourceImage: !!imageInput,
           size,
           quality,
           aspectRatio,
@@ -174,7 +178,7 @@ async function executeNode(
           partialImages,
         },
         streamChunksReceived: 0,
-        rawRequestBody: JSON.stringify({ ...requestBody, apiKeys: "[REDACTED]" }, null, 2),
+        rawRequestBody: JSON.stringify({ ...requestBody, apiKeys: "[REDACTED]", imageInput: imageInput ? "[BASE64_IMAGE]" : undefined }, null, 2),
       };
 
       const response = await fetch("/api/execute", {
