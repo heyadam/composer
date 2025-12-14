@@ -2,7 +2,6 @@ import type { Node, Edge } from "@xyflow/react";
 import type { NodeExecutionState, DebugInfo } from "./types";
 import type { ApiKeys } from "@/lib/api-keys";
 import {
-  findAllInputNodes,
   getOutgoingEdges,
   getTargetNode,
   getIncomingEdges,
@@ -27,6 +26,10 @@ async function executeNode(
     case "input":
       // Input node uses its stored inputValue or the first available input
       return { output: inputs["prompt"] || inputs["input"] || "" };
+
+    case "image-input":
+      // Image input node returns its uploaded image data
+      return { output: (node.data.uploadedImage as string) || "" };
 
     case "output":
       // Output node passes through its input
@@ -284,14 +287,18 @@ export async function executeFlow(
   onNodeStateChange: (nodeId: string, state: NodeExecutionState) => void,
   apiKeys?: ApiKeys
 ): Promise<string> {
-  // Only execute input nodes that have outgoing edges (are actually connected to the flow)
-  const allInputNodes = findAllInputNodes(nodes);
-  const inputNodes = allInputNodes.filter((node) =>
-    getOutgoingEdges(node.id, edges).length > 0
-  );
+  // Find all root nodes (nodes with no incoming edges) that are connected to the flow
+  // This allows starting from Input nodes, ImageInput nodes, or standalone PromptNodes
+  const rootNodes = nodes.filter((node) => {
+    const hasIncoming = getIncomingEdges(node.id, edges).length > 0;
+    const hasOutgoing = getOutgoingEdges(node.id, edges).length > 0;
+    // Root node: no incoming edges, but has outgoing edges (connected to flow)
+    // Also include output nodes with incoming edges as they're endpoints
+    return (!hasIncoming && hasOutgoing) || (node.type === "output" && !hasIncoming);
+  });
 
-  if (inputNodes.length === 0) {
-    throw new Error("No connected input node found");
+  if (rootNodes.length === 0) {
+    throw new Error("No connected nodes found to execute");
   }
 
   const context: Record<string, unknown> = {};
@@ -438,10 +445,10 @@ export async function executeFlow(
     }
   }
 
-  // Start execution from ALL input nodes in parallel
-  const startPromises = inputNodes.map((inputNode) => {
-    const promise = executeNodeAndContinue(inputNode);
-    nodePromises[inputNode.id] = promise;
+  // Start execution from ALL root nodes in parallel
+  const startPromises = rootNodes.map((rootNode) => {
+    const promise = executeNodeAndContinue(rootNode);
+    nodePromises[rootNode.id] = promise;
     return promise;
   });
 

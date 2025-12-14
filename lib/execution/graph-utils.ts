@@ -11,14 +11,15 @@ import type { Node, Edge } from "@xyflow/react";
  * Find the starting node (input node) in the graph
  */
 export function findStartNode(nodes: Node[]): Node | undefined {
-  return nodes.find((n) => n.type === "input");
+  return nodes.find((n) => n.type === "input" || n.type === "image-input");
 }
 
 /**
  * Find ALL input nodes in the graph (for multi-input flows)
+ * Includes both text input and image input nodes
  */
 export function findAllInputNodes(nodes: Node[]): Node[] {
-  return nodes.filter((n) => n.type === "input");
+  return nodes.filter((n) => n.type === "input" || n.type === "image-input");
 }
 
 /**

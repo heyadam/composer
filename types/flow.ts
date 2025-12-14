@@ -60,27 +60,37 @@ export interface ImageNodeData extends Record<string, unknown>, ExecutionData {
   aspectRatio?: string;
 }
 
+export interface ImageInputNodeData extends Record<string, unknown>, ExecutionData {
+  label: string;
+  // Note: uploadedImage is stored in runtime state only (not persisted to JSON)
+  // Users must re-upload images when reloading the flow
+  uploadedImage?: string; // Stringified ImageData JSON, runtime only
+}
+
 // Union type for all node data
 export type AgentNodeData =
   | InputNodeData
   | OutputNodeData
   | PromptNodeData
-  | ImageNodeData;
+  | ImageNodeData
+  | ImageInputNodeData;
 
 // Custom node types
-export type NodeType = "input" | "output" | "prompt" | "image";
+export type NodeType = "input" | "output" | "prompt" | "image" | "image-input";
 
 // Typed nodes
 export type InputNode = Node<InputNodeData, "input">;
 export type OutputNode = Node<OutputNodeData, "output">;
 export type PromptNode = Node<PromptNodeData, "prompt">;
 export type ImageNode = Node<ImageNodeData, "image">;
+export type ImageInputNode = Node<ImageInputNodeData, "image-input">;
 
 export type AgentNode =
   | InputNode
   | OutputNode
   | PromptNode
-  | ImageNode;
+  | ImageNode
+  | ImageInputNode;
 
 // Edge type
 export type AgentEdge = Edge;
@@ -98,6 +108,12 @@ export const nodeDefinitions: NodeDefinition[] = [
     type: "input",
     label: "Input",
     description: "Entry point for the flow",
+    color: "bg-purple-500/10 text-purple-700 dark:text-purple-300",
+  },
+  {
+    type: "image-input",
+    label: "Image Input",
+    description: "Upload an image file",
     color: "bg-purple-500/10 text-purple-700 dark:text-purple-300",
   },
   {
@@ -125,6 +141,10 @@ export const NODE_PORT_SCHEMAS: Record<NodeType, NodePortSchema> = {
   input: {
     inputs: [],
     outputs: [{ id: "output", label: "string", dataType: "string" }],
+  },
+  "image-input": {
+    inputs: [],
+    outputs: [{ id: "output", label: "image", dataType: "image" }],
   },
   output: {
     inputs: [{ id: "input", label: "response", dataType: "response" }],

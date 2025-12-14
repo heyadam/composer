@@ -43,6 +43,7 @@ const getId = () => `node_${id++}`;
 
 const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
   input: { label: "Input", inputValue: "" },
+  "image-input": { label: "Image Input" },
   output: { label: "Response" },
   prompt: { label: "Text", prompt: "", provider: "openai", model: "gpt-5" },
   image: { label: "Image Generator", prompt: "", outputFormat: "webp", size: "1024x1024", quality: "low", partialImages: 3 },
@@ -206,6 +207,7 @@ export function AgentFlow() {
 
     switch (sourceNode.type) {
       case "image":
+      case "image-input":
         return "image";
       case "input":
       case "prompt":

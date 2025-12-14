@@ -1,12 +1,13 @@
 "use client";
 
 import { nodeDefinitions, type NodeType } from "@/types/flow";
-import { Keyboard, Square, MessageSquare, ImageIcon, X } from "lucide-react";
+import { Keyboard, Square, MessageSquare, ImageIcon, X, Upload } from "lucide-react";
 import type { DragEvent } from "react";
 import { Button } from "@/components/ui/button";
 
 const iconMap = {
   input: Keyboard,
+  "image-input": Upload,
   output: Square,
   prompt: MessageSquare,
   image: ImageIcon,
