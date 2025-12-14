@@ -52,7 +52,7 @@ export function PortRow({ nodeId, input, output }: PortRowProps) {
           />
           <span
             className={cn(
-              "text-sm font-medium text-muted-foreground transition-all duration-200",
+              "text-xs font-medium text-muted-foreground transition-all duration-200",
               inputHighlight && "text-foreground",
               isOptional && "opacity-60"
             )}
@@ -80,7 +80,7 @@ export function PortRow({ nodeId, input, output }: PortRowProps) {
           />
           <span
             className={cn(
-              "text-sm font-medium text-muted-foreground transition-all duration-200",
+              "text-xs font-medium text-muted-foreground transition-all duration-200",
               outputHighlight && "text-foreground"
             )}
           >

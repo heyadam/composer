@@ -34,7 +34,7 @@ export function ConfigSelect({
 }: ConfigSelectProps) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className="text-xs font-medium text-muted-foreground">{label}</div>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className={`h-7 text-xs nodrag ${width}`}>
           <SelectValue />

@@ -52,7 +52,7 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
       iconClassName="bg-blue-500/10 text-blue-600 dark:text-blue-300"
       accentBorderClassName="border-blue-500"
       status={data.executionStatus}
-      className="min-w-[240px]"
+      className="w-[280px]"
       ports={
         <PortRow
           nodeId={id}
