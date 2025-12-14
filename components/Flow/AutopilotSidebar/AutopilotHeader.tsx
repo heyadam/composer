@@ -27,7 +27,7 @@ export function AutopilotHeader({
             size="icon"
             className="h-7 w-7"
             onClick={onClear}
-            title="Clear chat"
+            title="Clear"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
@@ -37,7 +37,7 @@ export function AutopilotHeader({
           size="icon"
           className="h-7 w-7"
           onClick={onClose}
-          title="Close sidebar"
+          title="Close"
         >
           <X className="h-3.5 w-3.5" />
         </Button>

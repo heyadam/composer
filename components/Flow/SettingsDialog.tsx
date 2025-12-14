@@ -103,12 +103,12 @@ export function SettingsDialog() {
           <TabsContent value="api" className="space-y-4 pt-4">
             {!isDevMode && !hasAnyKey && (
               <p className="text-sm text-amber-500 font-medium">
-                Configure at least 1 API key to use avy.
+                Add at least one API key to get started
               </p>
             )}
             {isDevMode && (
               <p className="text-sm text-green-500">
-                Development mode: Using keys from environment variables.
+                Using environment variables
               </p>
             )}
 
@@ -198,7 +198,7 @@ export function SettingsDialog() {
 
             {!isDevMode && (
               <p className="text-xs text-muted-foreground border-t pt-4">
-                API keys are stored locally in your browser.
+                Keys are stored locally in your browser
               </p>
             )}
           </TabsContent>
@@ -287,7 +287,7 @@ export function SettingsDialog() {
             </div>
 
             <p className="text-xs text-muted-foreground border-t pt-4">
-              Settings are saved automatically.
+              Changes are saved automatically
             </p>
           </TabsContent>
         </Tabs>

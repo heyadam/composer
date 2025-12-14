@@ -70,7 +70,7 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
           <textarea
             value={isPromptConnected ? "" : (data.userPrompt ?? "")}
             onChange={(e) => updateNodeData(id, { userPrompt: e.target.value })}
-            placeholder={isPromptConnected ? "Using connected input" : "Enter user message..."}
+            placeholder={isPromptConnected ? "Connected" : "Enter prompt..."}
             disabled={isPromptConnected}
             className={cn(
               "nodrag w-full min-h-[60px] resize-y rounded-md border border-input px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
@@ -92,7 +92,7 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
           <textarea
             value={isSystemConnected ? "" : (data.systemPrompt ?? "")}
             onChange={(e) => updateNodeData(id, { systemPrompt: e.target.value })}
-            placeholder={isSystemConnected ? "Using connected input" : "Enter system instructions..."}
+            placeholder={isSystemConnected ? "Connected" : "Enter instructions..."}
             disabled={isSystemConnected}
             className={cn(
               "nodrag w-full min-h-[60px] resize-y rounded-md border border-input px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",

@@ -37,7 +37,7 @@ export function InputNode({ id, data }: NodeProps<InputNodeType>) {
       <textarea
         value={data.inputValue || ""}
         onChange={(e) => updateNodeData(id, { inputValue: e.target.value })}
-        placeholder="Enter your input..."
+        placeholder="Enter text..."
         className={cn(
           "nodrag w-full min-h-[84px] resize-y rounded-md border border-input bg-background/60 dark:bg-muted/40 px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
           "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"

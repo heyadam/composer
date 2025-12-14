@@ -33,7 +33,7 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
         return (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <ImageIcon className="h-3.5 w-3.5" />
-            <span>Image output (see sidebar)</span>
+            <span>Image (view in sidebar)</span>
           </div>
         );
       }
@@ -46,7 +46,7 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
     }
 
     return (
-      <p className="text-xs text-muted-foreground">Final result is shown here.</p>
+      <p className="text-xs text-muted-foreground">Output appears here</p>
     );
   };
 

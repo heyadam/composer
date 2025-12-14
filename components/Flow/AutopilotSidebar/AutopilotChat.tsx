@@ -29,10 +29,10 @@ const MODELS: { id: AutopilotModel; name: string }[] = [
 ];
 
 const SUGGESTED_PROMPTS = [
-  "Add a prompt node that summarizes the input",
-  "Create an image generation pipeline",
-  "Add a node that translates text to Spanish",
-  "Build a chain that analyzes sentiment",
+  "Summarize the input text",
+  "Generate an image from text",
+  "Translate text to Spanish",
+  "Analyze sentiment of input",
 ];
 
 interface AutopilotChatProps {
@@ -71,9 +71,9 @@ export function AutopilotChat({
               <Sparkles className="h-8 w-8" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-medium text-sm">Flow Autopilot</h3>
+              <h3 className="font-medium text-sm">Autopilot</h3>
               <p className="text-muted-foreground text-xs">
-                Describe what you want to add to your flow.
+                Describe what to build
               </p>
             </div>
             <div className="flex flex-col gap-2 w-full max-w-[280px]">
@@ -162,7 +162,7 @@ export function AutopilotChat({
           }}
         >
           <PromptInputTextarea
-            placeholder="Describe nodes to add..."
+            placeholder="Describe what to build..."
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             className="min-h-[60px] text-sm"

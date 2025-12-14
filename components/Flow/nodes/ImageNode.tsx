@@ -153,7 +153,7 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
         >
           {isImageConnected ? (
             <div className="text-xs text-muted-foreground italic px-3 py-2 border border-dashed border-input rounded-md bg-muted/20">
-              Using connected image
+              Connected
             </div>
           ) : uploadedImageData ? (
             <div className="relative group">
@@ -184,7 +184,7 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
               )}
             >
               <Upload className="h-4 w-4" />
-              <span>Upload base image</span>
+              <span>Upload image</span>
             </button>
           )}
         </InputWithHandle>
@@ -193,7 +193,7 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
         <textarea
           value={typeof data.prompt === "string" ? data.prompt : ""}
           onChange={(e) => updateNodeData(id, { prompt: e.target.value })}
-          placeholder="Edit instructions (optional)…"
+          placeholder="Describe the image..."
           className={cn(
             "nodrag w-full min-h-[60px] resize-y rounded-md border border-input bg-background/60 dark:bg-muted/40 px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
             "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"

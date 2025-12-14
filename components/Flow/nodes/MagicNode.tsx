@@ -120,7 +120,7 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
         {/* Transformation description input with handle */}
         <InputWithHandle
           id="transform"
-          label="Describe transformation"
+          label="Transformation"
           colorClass="cyan"
           required={false}
           isConnected={isTransformConnected}
@@ -128,7 +128,7 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
           <textarea
             value={isTransformConnected ? "" : (data.transformPrompt ?? "")}
             onChange={(e) => updateNodeData(id, { transformPrompt: e.target.value })}
-            placeholder={isTransformConnected ? "Using connected input" : "e.g., 'make uppercase', 'add input1 and input2'"}
+            placeholder={isTransformConnected ? "Connected" : "Describe transformation..."}
             disabled={isTransformConnected}
             className={cn(
               "nodrag w-full min-h-[60px] resize-y rounded-md border border-input px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
@@ -201,7 +201,7 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
         {/* Info when connected */}
         {isTransformConnected && (
           <p className="text-xs text-muted-foreground italic">
-            Code will be generated dynamically at runtime from connected input.
+            Code will be generated at runtime from connected input.
           </p>
         )}
       </div>

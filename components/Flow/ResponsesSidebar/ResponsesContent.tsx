@@ -43,7 +43,7 @@ export function ResponsesContent({ entries }: ResponsesContentProps) {
     return (
       <div className="flex-1 flex items-center justify-center p-4">
         <p className="text-sm text-muted-foreground text-center">
-          Run a flow to see output here
+          Run flow to see output
         </p>
       </div>
     );
@@ -100,7 +100,7 @@ export function ResponsesContent({ entries }: ResponsesContentProps) {
               <div className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">
-                  {entry.sourceType === "image" ? "Generating image..." : "Processing..."}
+                  {entry.sourceType === "image" ? "Generating..." : "Processing..."}
                 </p>
               </div>
             ) : null}

@@ -33,8 +33,8 @@ export function NodeSidebar({ isOpen, onClose }: NodeSidebarProps) {
     >
       <div className="p-3 border-b border-neutral-700 flex items-center justify-between">
         <div>
-          <div className="text-sm font-semibold text-white">Node Palette</div>
-          <div className="text-xs text-neutral-400 mt-0.5">Drag nodes onto the canvas</div>
+          <div className="text-sm font-semibold text-white">Add Node</div>
+          <div className="text-xs text-neutral-400 mt-0.5">Drag to canvas</div>
         </div>
         <Button
           variant="ghost"

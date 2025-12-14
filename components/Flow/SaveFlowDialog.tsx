@@ -49,20 +49,20 @@ function SaveFlowDialogContent({
       <DialogHeader>
         <DialogTitle>Save Flow</DialogTitle>
         <DialogDescription className="text-neutral-400">
-          Enter a name for your flow. It will be saved as a JSON file.
+          Choose a name for your flow
         </DialogDescription>
       </DialogHeader>
       <div className="grid gap-4 py-4">
         <div className="grid gap-2">
           <label htmlFor="name" className="text-sm font-medium text-neutral-300">
-            Flow Name
+            Name
           </label>
           <Input
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="My Flow"
+            placeholder="Enter name..."
             className="bg-neutral-800 border-neutral-600 text-white placeholder:text-neutral-500 focus:border-neutral-500"
             autoFocus
           />

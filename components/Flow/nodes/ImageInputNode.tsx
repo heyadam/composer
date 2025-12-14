@@ -106,7 +106,7 @@ export function ImageInputNode({ id, data }: NodeProps<ImageInputNodeType>) {
           )}
         >
           <Upload className="h-6 w-6" />
-          <span>Click to upload image</span>
+          <span>Upload image</span>
         </button>
       )}
     </NodeFrame>
