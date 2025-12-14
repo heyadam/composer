@@ -64,6 +64,7 @@ const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
   output: { label: "Response" },
   prompt: { label: "AI Text", prompt: "", provider: "openai", model: "gpt-5" },
   image: { label: "AI Image", prompt: "", outputFormat: "webp", size: "1024x1024", quality: "low", partialImages: 3 },
+  magic: { label: "Magic", transformPrompt: "", codeExpanded: false },
 };
 
 export function AgentFlow() {

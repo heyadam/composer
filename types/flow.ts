@@ -67,16 +67,26 @@ export interface ImageInputNodeData extends Record<string, unknown>, ExecutionDa
   uploadedImage?: string; // Stringified ImageData JSON, runtime only
 }
 
+export interface MagicNodeData extends Record<string, unknown>, ExecutionData {
+  label: string;
+  transformPrompt?: string;    // User's natural language transformation description
+  generatedCode?: string;      // Cached generated JavaScript code
+  codeExpanded?: boolean;      // Whether code view is expanded
+  isGenerating?: boolean;      // Loading state for generation
+  generationError?: string;    // Error from code generation
+}
+
 // Union type for all node data
 export type AgentNodeData =
   | InputNodeData
   | OutputNodeData
   | PromptNodeData
   | ImageNodeData
-  | ImageInputNodeData;
+  | ImageInputNodeData
+  | MagicNodeData;
 
 // Custom node types
-export type NodeType = "input" | "output" | "prompt" | "image" | "image-input";
+export type NodeType = "input" | "output" | "prompt" | "image" | "image-input" | "magic";
 
 // Typed nodes
 export type InputNode = Node<InputNodeData, "input">;
@@ -84,13 +94,15 @@ export type OutputNode = Node<OutputNodeData, "output">;
 export type PromptNode = Node<PromptNodeData, "prompt">;
 export type ImageNode = Node<ImageNodeData, "image">;
 export type ImageInputNode = Node<ImageInputNodeData, "image-input">;
+export type MagicNode = Node<MagicNodeData, "magic">;
 
 export type AgentNode =
   | InputNode
   | OutputNode
   | PromptNode
   | ImageNode
-  | ImageInputNode;
+  | ImageInputNode
+  | MagicNode;
 
 // Edge type
 export type AgentEdge = Edge;
@@ -134,6 +146,12 @@ export const nodeDefinitions: NodeDefinition[] = [
     description: "Exit point for the flow",
     color: "bg-blue-500/10 text-blue-700 dark:text-blue-300",
   },
+  {
+    type: "magic",
+    label: "Magic",
+    description: "AI-generated code transform",
+    color: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
+  },
 ];
 
 // Port schemas for each node type
@@ -160,5 +178,13 @@ export const NODE_PORT_SCHEMAS: Record<NodeType, NodePortSchema> = {
   image: {
     inputs: [{ id: "prompt", label: "prompt", dataType: "string" }],
     outputs: [{ id: "output", label: "image", dataType: "image" }],
+  },
+  magic: {
+    inputs: [
+      { id: "transform", label: "transform", dataType: "string", required: false },
+      { id: "input1", label: "input1", dataType: "string", required: false },
+      { id: "input2", label: "input2", dataType: "string", required: false },
+    ],
+    outputs: [{ id: "output", label: "output", dataType: "string" }],
   },
 };

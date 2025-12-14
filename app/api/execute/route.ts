@@ -202,6 +202,100 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (type === "magic-generate") {
+      const { prompt } = body;
+
+      if (!prompt) {
+        return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
+      }
+
+      const anthropic = createAnthropic({
+        apiKey: apiKeys?.anthropic || process.env.ANTHROPIC_API_KEY,
+      });
+
+      const systemPrompt = `You are a code generator. Generate a JavaScript function body that transforms inputs.
+
+The function will receive two variables:
+- input1: string | number | null (first input value)
+- input2: string | number | null (second input value)
+
+RULES:
+1. Output ONLY the function body code (no function declaration, no comments, no explanation)
+2. The code MUST start with "return" and return a single value (string or number)
+3. Use only pure JavaScript - no external libraries, no fetch, no async/await
+4. Handle null/undefined inputs gracefully
+5. Keep code concise (1-3 lines max)
+
+EXAMPLES:
+User: "make uppercase"
+Output: return String(input1 || '').toUpperCase();
+
+User: "add the two numbers"
+Output: return Number(input1 || 0) + Number(input2 || 0);
+
+User: "concatenate with a space"
+Output: return String(input1 || '') + ' ' + String(input2 || '');
+
+User: "extract first word"
+Output: return String(input1 || '').split(/\\s+/)[0] || '';
+
+User: "multiply by 2"
+Output: return Number(input1 || 0) * 2;`;
+
+      try {
+        const result = await generateText({
+          model: anthropic("claude-sonnet-4-5-20250929"),
+          system: systemPrompt,
+          prompt: prompt,
+          maxOutputTokens: 500,
+        });
+
+        // Extract just the code, removing markdown fences if present
+        let code = result.text.trim();
+        if (code.startsWith("```")) {
+          code = code.replace(/^```(?:javascript|js)?\n?/, "").replace(/\n?```$/, "");
+        }
+
+        // Basic validation - must have return statement
+        if (!code.includes("return")) {
+          return NextResponse.json(
+            { error: "Generated code must contain a return statement" },
+            { status: 422 }
+          );
+        }
+
+        // Check for forbidden patterns
+        const forbiddenPatterns = [
+          /\beval\s*\(/,
+          /\bFunction\s*\(/,
+          /\bfetch\s*\(/,
+          /\bXMLHttpRequest\b/,
+          /\bimport\s*\(/,
+          /\brequire\s*\(/,
+          /\bprocess\b/,
+          /\bwindow\b/,
+          /\bdocument\b/,
+        ];
+
+        for (const pattern of forbiddenPatterns) {
+          if (pattern.test(code)) {
+            return NextResponse.json(
+              { error: "Generated code contains unsafe patterns" },
+              { status: 422 }
+            );
+          }
+        }
+
+        return NextResponse.json({ code });
+      } catch (genError) {
+        console.error("[API] magic-generate error:", genError);
+        return NextResponse.json(
+          { error: genError instanceof Error ? genError.message : "Code generation failed" },
+          { status: 500 }
+        );
+      }
+    }
+
     return NextResponse.json({ error: "Unknown execution type" }, { status: 400 });
   } catch (error) {
     console.error("Execution error:", error);
