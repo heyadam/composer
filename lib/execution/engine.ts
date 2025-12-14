@@ -276,6 +276,38 @@ async function executeNode(
       };
     }
 
+    case "magic": {
+      const generatedCode = node.data.generatedCode as string | undefined;
+
+      if (!generatedCode) {
+        throw new Error("No code generated. Click 'Generate Code' first.");
+      }
+
+      try {
+        // Create function from generated code
+        // The code should be a function body that starts with "return"
+        const fn = new Function("input1", "input2", `"use strict"; ${generatedCode}`);
+
+        // Parse inputs - they can be strings or numbers
+        const parseInput = (value: string | undefined): string | number | null => {
+          if (value === undefined || value === "") return null;
+          // Try to parse as number
+          const num = Number(value);
+          return isNaN(num) ? value : num;
+        };
+
+        const input1 = parseInput(inputs["input1"]);
+        const input2 = parseInput(inputs["input2"]);
+
+        // Execute the function
+        const result = fn(input1, input2);
+
+        return { output: String(result ?? "") };
+      } catch (err) {
+        throw new Error(`Code execution error: ${err instanceof Error ? err.message : "Unknown error"}`);
+      }
+    }
+
     default:
       return { output: inputs["prompt"] || inputs["input"] || Object.values(inputs)[0] || "" };
   }

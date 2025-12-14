@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { nodeDefinitions, type NodeType } from "@/types/flow";
-import { Keyboard, Square, MessageSquare, ImageIcon, Upload } from "lucide-react";
+import { Keyboard, Square, MessageSquare, ImageIcon, Upload, Sparkles } from "lucide-react";
 
 const iconMap: Record<NodeType, typeof Keyboard> = {
   input: Keyboard,
@@ -10,6 +10,7 @@ const iconMap: Record<NodeType, typeof Keyboard> = {
   output: Square,
   prompt: MessageSquare,
   image: ImageIcon,
+  magic: Sparkles,
 };
 
 interface NodeToolbarProps {
