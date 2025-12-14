@@ -37,6 +37,7 @@ import {
   openFlowFilePicker,
   type FlowMetadata,
 } from "@/lib/flow-storage";
+import { useBackgroundSettings } from "@/lib/hooks/useBackgroundSettings";
 
 let id = 0;
 const getId = () => `node_${id++}`;
@@ -79,6 +80,9 @@ export function AgentFlow() {
   // API keys context
   const { keys: apiKeys, hasRequiredKey } = useApiKeys();
   const [keyError, setKeyError] = useState<string | null>(null);
+
+  // Background settings
+  const { settings: bgSettings } = useBackgroundSettings();
 
   // Connection drag state
   const [isConnecting, setIsConnecting] = useState(false);
@@ -582,7 +586,13 @@ export function AgentFlow() {
               lastViewport.current = null;
             }}
           >
-            <Background />
+            <Background
+              variant={bgSettings.variant}
+              color={bgSettings.color}
+              gap={bgSettings.gap}
+              size={bgSettings.size}
+              style={{ backgroundColor: bgSettings.bgColor }}
+            />
             <Controls />
           </ReactFlow>
         </ConnectionContext.Provider>
