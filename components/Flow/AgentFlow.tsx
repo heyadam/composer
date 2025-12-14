@@ -193,6 +193,28 @@ export function AgentFlow() {
     [onNodesChange, autopilotHighlightedIds, setNodes]
   );
 
+  // Helper to clear all autopilot highlights
+  const clearAutopilotHighlights = useCallback(() => {
+    if (autopilotHighlightedIds.size === 0) return;
+
+    setNodes((nds) =>
+      nds.map((n) =>
+        autopilotHighlightedIds.has(n.id) ? { ...n, className: undefined } : n
+      )
+    );
+    setAutopilotHighlightedIds(new Set());
+  }, [autopilotHighlightedIds, setNodes]);
+
+  // Clear highlights when clicking on canvas
+  const handlePaneClick = useCallback(() => {
+    clearAutopilotHighlights();
+  }, [clearAutopilotHighlights]);
+
+  // Clear highlights when clicking on any node
+  const handleNodeClick = useCallback(() => {
+    clearAutopilotHighlights();
+  }, [clearAutopilotHighlights]);
+
   const addPreviewEntry = useCallback(
     (entry: Omit<PreviewEntry, "id" | "timestamp">) => {
       setPreviewEntries((prev) => [
@@ -612,6 +634,8 @@ export function AgentFlow() {
             selectionMode={SelectionMode.Partial}
             onMoveStart={() => setIsPanning(true)}
             onMoveEnd={() => setIsPanning(false)}
+            onPaneClick={handlePaneClick}
+            onNodeClick={handleNodeClick}
           >
             <Background
               variant={bgSettings.variant}
