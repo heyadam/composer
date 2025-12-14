@@ -1,5 +1,5 @@
 import type { Node, Edge } from "@xyflow/react";
-import type { NodeExecutionState } from "./types";
+import type { NodeExecutionState, DebugInfo } from "./types";
 import type { ApiKeys } from "@/lib/api-keys";
 import {
   findAllInputNodes,
@@ -10,14 +10,19 @@ import {
   collectNodeInputs,
 } from "./graph-utils";
 
+interface ExecuteNodeResult {
+  output: string;
+  debugInfo?: DebugInfo;
+}
+
 // Execute a single node
 async function executeNode(
   node: Node,
   inputs: Record<string, string>,
   context: Record<string, unknown>,
   apiKeys?: ApiKeys,
-  onStreamUpdate?: (output: string) => void
-): Promise<{ output: string }> {
+  onStreamUpdate?: (output: string, debugInfo?: DebugInfo) => void
+): Promise<ExecuteNodeResult> {
   switch (node.type) {
     case "input":
       // Input node uses its stored inputValue or the first available input
@@ -28,6 +33,9 @@ async function executeNode(
       return { output: inputs["input"] || inputs["prompt"] || Object.values(inputs)[0] || "" };
 
     case "prompt": {
+      const startTime = Date.now();
+      let streamChunksReceived = 0;
+
       // Get prompt input (the user message)
       const promptInput = inputs["prompt"] || "";
       // Check if system input handle has a connected edge
@@ -36,19 +44,39 @@ async function executeNode(
       const textareaPrompt = typeof node.data?.prompt === "string" ? node.data.prompt : "";
       const effectiveSystemPrompt = hasSystemEdge ? inputs["system"] : textareaPrompt;
 
+      const provider = (node.data.provider as string) || "openai";
+      const model = (node.data.model as string) || "gpt-5";
+
+      const requestBody = {
+        type: "prompt" as const,
+        inputs: { prompt: promptInput, system: effectiveSystemPrompt },
+        provider,
+        model,
+        verbosity: node.data.verbosity,
+        thinking: node.data.thinking,
+        context,
+        apiKeys,
+      };
+
+      const debugInfo: DebugInfo = {
+        startTime,
+        request: {
+          type: "prompt",
+          provider,
+          model,
+          userPrompt: promptInput,
+          systemPrompt: effectiveSystemPrompt,
+          verbosity: node.data.verbosity as string | undefined,
+          thinking: node.data.thinking as boolean | undefined,
+        },
+        streamChunksReceived: 0,
+        rawRequestBody: JSON.stringify({ ...requestBody, apiKeys: "[REDACTED]" }, null, 2),
+      };
+
       const response = await fetch("/api/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "prompt",
-          inputs: { prompt: promptInput, system: effectiveSystemPrompt },
-          provider: node.data.provider || "openai",
-          model: node.data.model || "gpt-5",
-          verbosity: node.data.verbosity,
-          thinking: node.data.thinking,
-          context,
-          apiKeys,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -60,10 +88,12 @@ async function executeNode(
         } catch {
           errorMessage = text || errorMessage;
         }
+        debugInfo.endTime = Date.now();
         throw new Error(errorMessage);
       }
 
       if (!response.body) {
+        debugInfo.endTime = Date.now();
         throw new Error("No response body");
       }
 
@@ -78,39 +108,71 @@ async function executeNode(
 
         const chunk = decoder.decode(value);
         fullOutput += chunk;
-        onStreamUpdate?.(fullOutput);
+        streamChunksReceived++;
+        debugInfo.streamChunksReceived = streamChunksReceived;
+        onStreamUpdate?.(fullOutput, debugInfo);
       }
 
-      return { output: fullOutput };
+      debugInfo.endTime = Date.now();
+      return { output: fullOutput, debugInfo };
     }
 
     case "image": {
+      const startTime = Date.now();
+      let streamChunksReceived = 0;
+
       const prompt = typeof node.data?.prompt === "string" ? node.data.prompt : "";
       const promptInput = inputs["prompt"] || "";
+      const provider = (node.data.provider as string) || "openai";
+      const model = (node.data.model as string) || "gpt-5";
+
+      const outputFormat = (node.data.outputFormat as string) || "webp";
+      const size = (node.data.size as string) || "1024x1024";
+      const quality = (node.data.quality as string) || "low";
+      const partialImages = (node.data.partialImages as number) ?? 3;
+      const aspectRatio = (node.data.aspectRatio as string) || "1:1";
+
+      const requestBody = {
+        type: "image" as const,
+        prompt,
+        provider,
+        model,
+        outputFormat,
+        size,
+        quality,
+        partialImages,
+        aspectRatio,
+        input: promptInput,
+        apiKeys,
+      };
+
+      const debugInfo: DebugInfo = {
+        startTime,
+        request: {
+          type: "image",
+          provider,
+          model,
+          imagePrompt: prompt + (promptInput ? ` | Input: ${promptInput}` : ""),
+          size,
+          quality,
+          aspectRatio,
+          outputFormat,
+          partialImages,
+        },
+        streamChunksReceived: 0,
+        rawRequestBody: JSON.stringify({ ...requestBody, apiKeys: "[REDACTED]" }, null, 2),
+      };
 
       const response = await fetch("/api/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "image",
-          prompt,
-          provider: node.data.provider || "openai",
-          model: node.data.model || "gpt-5",
-          // OpenAI-specific
-          outputFormat: node.data.outputFormat || "webp",
-          size: node.data.size || "1024x1024",
-          quality: node.data.quality || "low",
-          partialImages: node.data.partialImages ?? 3,
-          // Google-specific
-          aspectRatio: node.data.aspectRatio || "1:1",
-          input: promptInput,
-          apiKeys,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
         const text = await response.text();
         console.error("Image generation API error response:", text);
+        debugInfo.endTime = Date.now();
         try {
           const data = JSON.parse(text);
           console.error("Image generation error details:", data);
@@ -127,20 +189,22 @@ async function executeNode(
       if (contentType.includes("application/json")) {
         // Non-streaming JSON response (Google)
         const data = await response.json();
+        debugInfo.endTime = Date.now();
         if (data.type === "image" && data.value) {
           const imageOutput = JSON.stringify({
             type: "image",
             value: data.value,
             mimeType: data.mimeType,
           });
-          onStreamUpdate?.(imageOutput);
-          return { output: imageOutput };
+          onStreamUpdate?.(imageOutput, debugInfo);
+          return { output: imageOutput, debugInfo };
         }
         throw new Error(data.error || "No image generated");
       }
 
       // Streaming response (OpenAI)
       if (!response.body) {
+        debugInfo.endTime = Date.now();
         throw new Error("No response body");
       }
 
@@ -162,13 +226,15 @@ async function executeNode(
           try {
             const data = JSON.parse(line);
             if (data.type === "partial" || data.type === "image") {
+              streamChunksReceived++;
+              debugInfo.streamChunksReceived = streamChunksReceived;
               // Update with partial or final image
               const imageOutput = JSON.stringify({
                 type: "image",
                 value: data.value,
                 mimeType: data.mimeType,
               });
-              onStreamUpdate?.(imageOutput);
+              onStreamUpdate?.(imageOutput, debugInfo);
 
               if (data.type === "image") {
                 finalImage = data;
@@ -180,6 +246,8 @@ async function executeNode(
         }
       }
 
+      debugInfo.endTime = Date.now();
+
       if (!finalImage) {
         throw new Error("No final image received");
       }
@@ -190,6 +258,7 @@ async function executeNode(
           value: finalImage.value,
           mimeType: finalImage.mimeType,
         }),
+        debugInfo,
       };
     }
 
@@ -289,10 +358,11 @@ export async function executeFlow(
       }
 
       // Execute the node with streaming callback
-      const result = await executeNode(node, inputs, context, apiKeys, (streamedOutput) => {
+      const result = await executeNode(node, inputs, context, apiKeys, (streamedOutput, debugInfo) => {
         onNodeStateChange(node.id, {
           status: "running",
           output: streamedOutput,
+          debugInfo,
         });
         for (const outputNode of downstreamOutputs) {
           onNodeStateChange(outputNode.id, {
@@ -311,6 +381,7 @@ export async function executeFlow(
       onNodeStateChange(node.id, {
         status: "success",
         output: result.output,
+        debugInfo: result.debugInfo,
       });
 
       // If this is an output node, capture the output

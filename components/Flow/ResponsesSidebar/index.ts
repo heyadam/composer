@@ -1,2 +1,2 @@
 export { ResponsesSidebar } from "./ResponsesSidebar";
-export type { PreviewEntry } from "./types";
+export type { PreviewEntry, DebugEntry } from "./types";

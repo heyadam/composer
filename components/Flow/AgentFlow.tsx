@@ -29,7 +29,7 @@ import type { NodeType } from "@/types/flow";
 import { executeFlow } from "@/lib/execution/engine";
 import type { NodeExecutionState } from "@/lib/execution/types";
 import type { FlowChanges, AddNodeAction, AddEdgeAction, RemoveEdgeAction, AppliedChangesInfo } from "@/lib/autopilot/types";
-import { ResponsesSidebar, type PreviewEntry } from "./ResponsesSidebar";
+import { ResponsesSidebar, type PreviewEntry, type DebugEntry } from "./ResponsesSidebar";
 import { useApiKeys, type ProviderId } from "@/lib/api-keys";
 import {
   createSavedFlow,
@@ -63,6 +63,8 @@ export function AgentFlow() {
   const [isRunning, setIsRunning] = useState(false);
   const [finalOutput, setFinalOutput] = useState<string | null>(null);
   const [previewEntries, setPreviewEntries] = useState<PreviewEntry[]>([]);
+  const [debugEntries, setDebugEntries] = useState<DebugEntry[]>([]);
+  const [activeResponseTab, setActiveResponseTab] = useState<"responses" | "debug">("responses");
   const addedPreviewIds = useRef<Set<string>>(new Set());
   const nodesRef = useRef(nodes);
   nodesRef.current = nodes;
@@ -325,6 +327,46 @@ export function AgentFlow() {
         )
       );
 
+      // Handle debug entries for prompt/image nodes
+      if (state.debugInfo) {
+        const targetNode = nodesRef.current.find((n) => n.id === nodeId);
+        const nodeLabel = (targetNode?.data as { label?: string })?.label || "Unknown";
+        const nodeType = targetNode?.type as NodeType || "prompt";
+
+        setDebugEntries((prev) => {
+          const existingIndex = prev.findIndex((e) => e.nodeId === nodeId);
+          const debugEntry: DebugEntry = {
+            id: `debug-${nodeId}-${state.debugInfo!.startTime}`,
+            nodeId,
+            nodeLabel,
+            nodeType,
+            startTime: state.debugInfo!.startTime,
+            endTime: state.debugInfo!.endTime,
+            durationMs: state.debugInfo!.endTime
+              ? state.debugInfo!.endTime - state.debugInfo!.startTime
+              : undefined,
+            request: state.debugInfo!.request,
+            response: state.output
+              ? {
+                  output: state.output,
+                  isStreaming: state.status === "running",
+                  streamChunksReceived: state.debugInfo!.streamChunksReceived,
+                }
+              : undefined,
+            status: state.status,
+            error: state.error,
+            rawRequestBody: state.debugInfo!.rawRequestBody,
+          };
+
+          if (existingIndex >= 0) {
+            const updated = [...prev];
+            updated[existingIndex] = debugEntry;
+            return updated;
+          }
+          return [...prev, debugEntry];
+        });
+      }
+
       // Handle preview for output/response nodes
       const targetNode = nodesRef.current.find((n) => n.id === nodeId);
       if (targetNode?.type === "output") {
@@ -382,6 +424,7 @@ export function AgentFlow() {
     );
     setFinalOutput(null);
     setPreviewEntries([]);
+    setDebugEntries([]);
     addedPreviewIds.current.clear();
   }, [setNodes]);
 
@@ -555,6 +598,9 @@ export function AgentFlow() {
       </div>
       <ResponsesSidebar
         entries={previewEntries}
+        debugEntries={debugEntries}
+        activeTab={activeResponseTab}
+        onTabChange={setActiveResponseTab}
         keyError={keyError}
         isOpen={responsesOpen}
       />

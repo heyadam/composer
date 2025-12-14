@@ -3,7 +3,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { ResponsesHeader } from "./ResponsesHeader";
 import { ResponsesContent } from "./ResponsesContent";
-import type { PreviewEntry } from "./types";
+import { DebugContent } from "./DebugContent";
+import type { PreviewEntry, DebugEntry } from "./types";
 
 const MIN_WIDTH = 240;
 const MAX_WIDTH = 800;
@@ -12,12 +13,18 @@ const STORAGE_KEY = "responses-sidebar-width";
 
 interface ResponsesSidebarProps {
   entries: PreviewEntry[];
+  debugEntries: DebugEntry[];
+  activeTab: "responses" | "debug";
+  onTabChange: (tab: "responses" | "debug") => void;
   keyError?: string | null;
   isOpen: boolean;
 }
 
 export function ResponsesSidebar({
   entries,
+  debugEntries,
+  activeTab,
+  onTabChange,
   keyError,
   isOpen,
 }: ResponsesSidebarProps) {
@@ -98,8 +105,18 @@ export function ResponsesSidebar({
           className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-yellow-500/50 active:bg-yellow-500/70 transition-colors z-10"
           onMouseDown={startResizing}
         />
-        <ResponsesHeader keyError={keyError} />
-        <ResponsesContent entries={entries} />
+        <ResponsesHeader
+          keyError={keyError}
+          activeTab={activeTab}
+          onTabChange={onTabChange}
+          responsesCount={entries.length}
+          debugCount={debugEntries.length}
+        />
+        {activeTab === "responses" ? (
+          <ResponsesContent entries={entries} />
+        ) : (
+          <DebugContent entries={debugEntries} />
+        )}
       </div>
     </div>
   );
