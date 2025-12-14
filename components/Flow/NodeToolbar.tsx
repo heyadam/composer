@@ -69,10 +69,10 @@ export function NodeToolbar({ isOpen, onClose, onAddNode }: NodeToolbarProps) {
             <button
               key={node.type}
               onClick={() => onAddNode(node.type)}
-              className="flex items-center gap-2 px-3 py-2 rounded-full text-neutral-300 hover:bg-neutral-700 hover:text-white transition-colors"
+              className="flex items-center gap-2 px-3 py-2 rounded-full text-neutral-300 hover:bg-neutral-700 hover:text-white transition-colors whitespace-nowrap"
             >
-              <Icon className={`h-4 w-4 ${node.color.split(' ').filter(c => c.startsWith('text-')).join(' ')}`} />
-              <span className="text-sm font-medium">{node.label}</span>
+              <Icon className={`h-4 w-4 shrink-0 ${node.color.split(' ').filter(c => c.startsWith('text-')).join(' ')}`} />
+              <span className="text-xs font-medium">{node.label}</span>
             </button>
           );
         })}

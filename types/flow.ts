@@ -129,6 +129,12 @@ export const nodeDefinitions: NodeDefinition[] = [
     color: "bg-purple-500/10 text-purple-700 dark:text-purple-300",
   },
   {
+    type: "magic",
+    label: "Magic",
+    description: "AI-generated code transform",
+    color: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
+  },
+  {
     type: "prompt",
     label: "AI Text",
     description: "LLM text generation",
@@ -145,12 +151,6 @@ export const nodeDefinitions: NodeDefinition[] = [
     label: "Response",
     description: "Exit point for the flow",
     color: "bg-blue-500/10 text-blue-700 dark:text-blue-300",
-  },
-  {
-    type: "magic",
-    label: "Magic",
-    description: "AI-generated code transform",
-    color: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
   },
 ];
 
