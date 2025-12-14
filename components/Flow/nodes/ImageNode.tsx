@@ -3,15 +3,10 @@
 import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import type { ImageNodeData } from "@/types/flow";
 import { ImageIcon } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
+import { ProviderModelSelector } from "./ProviderModelSelector";
+import { ConfigSelect } from "./ConfigSelect";
 import { cn } from "@/lib/utils";
 import {
   IMAGE_PROVIDERS,
@@ -32,22 +27,9 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
   const { updateNodeData } = useReactFlow();
 
   const currentProvider = (data.provider || DEFAULT_IMAGE_PROVIDER) as ImageProviderId;
-  const providerConfig = IMAGE_PROVIDERS[currentProvider];
   const currentModel = data.model || DEFAULT_IMAGE_MODEL;
-  const currentModelConfig = providerConfig.models.find((m) => m.value === currentModel);
+  const currentModelConfig = IMAGE_PROVIDERS[currentProvider].models.find((m) => m.value === currentModel);
 
-  const handleProviderChange = (provider: string) => {
-    const newProvider = provider as ImageProviderId;
-    const firstModel = IMAGE_PROVIDERS[newProvider].models[0];
-    updateNodeData(id, { provider: newProvider, model: firstModel.value, label: firstModel.label });
-  };
-
-  const handleModelChange = (model: string) => {
-    const modelConfig = providerConfig.models.find((m) => m.value === model);
-    updateNodeData(id, { model, label: modelConfig?.label || model });
-  };
-
-  // Render image footer using shared utilities
   const renderFooter = () => {
     if (data.executionError) {
       return (
@@ -79,7 +61,6 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
           </div>
         );
       }
-      // Not image data, show as text
       return (
         <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4">
           {data.executionOutput}
@@ -119,147 +100,58 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
           )}
         />
 
-        <div className="flex items-center justify-between gap-2">
-          <div className="text-[11px] text-muted-foreground">Provider</div>
-          <Select
-            value={currentProvider}
-            onValueChange={handleProviderChange}
-          >
-            <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(IMAGE_PROVIDERS).map(([key, provider]) => (
-                <SelectItem key={key} value={key} className="text-xs">
-                  {provider.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex items-center justify-between gap-2">
-          <div className="text-[11px] text-muted-foreground">Model</div>
-          <Select
-            value={currentModel}
-            onValueChange={handleModelChange}
-          >
-            <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {providerConfig.models.map((m) => (
-                <SelectItem key={m.value} value={m.value} className="text-xs">
-                  {m.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <ProviderModelSelector
+          providers={IMAGE_PROVIDERS}
+          currentProvider={currentProvider}
+          currentModel={currentModel}
+          onProviderChange={(provider, model, label) => {
+            updateNodeData(id, { provider, model, label });
+          }}
+          onModelChange={(model, label) => {
+            updateNodeData(id, { model, label });
+          }}
+        />
 
         {/* OpenAI-specific options */}
         {currentProvider === "openai" && (
           <>
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-[11px] text-muted-foreground">Format</div>
-              <Select
-                value={data.outputFormat || "webp"}
-                onValueChange={(outputFormat) => updateNodeData(id, { outputFormat })}
-              >
-                <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {OUTPUT_FORMAT_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-[11px] text-muted-foreground">Size</div>
-              <Select
-                value={data.size || "1024x1024"}
-                onValueChange={(size) => updateNodeData(id, { size })}
-              >
-                <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SIZE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-[11px] text-muted-foreground">Quality</div>
-              <Select
-                value={data.quality || "low"}
-                onValueChange={(quality) => updateNodeData(id, { quality })}
-              >
-                <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {QUALITY_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
+            <ConfigSelect
+              label="Format"
+              value={data.outputFormat || "webp"}
+              options={OUTPUT_FORMAT_OPTIONS}
+              onChange={(outputFormat) => updateNodeData(id, { outputFormat })}
+            />
+            <ConfigSelect
+              label="Size"
+              value={data.size || "1024x1024"}
+              options={SIZE_OPTIONS}
+              onChange={(size) => updateNodeData(id, { size })}
+            />
+            <ConfigSelect
+              label="Quality"
+              value={data.quality || "low"}
+              options={QUALITY_OPTIONS}
+              onChange={(quality) => updateNodeData(id, { quality })}
+            />
             {currentModelConfig?.supportsPartialImages && (
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-[11px] text-muted-foreground">Partials</div>
-                <Select
-                  value={String(data.partialImages ?? 3)}
-                  onValueChange={(val) => updateNodeData(id, { partialImages: Number(val) })}
-                >
-                  <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PARTIAL_IMAGES_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <ConfigSelect
+                label="Partials"
+                value={String(data.partialImages ?? 3)}
+                options={PARTIAL_IMAGES_OPTIONS}
+                onChange={(val) => updateNodeData(id, { partialImages: Number(val) })}
+              />
             )}
           </>
         )}
 
         {/* Google-specific options */}
         {currentProvider === "google" && (
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-[11px] text-muted-foreground">Aspect</div>
-            <Select
-              value={data.aspectRatio || "1:1"}
-              onValueChange={(aspectRatio) => updateNodeData(id, { aspectRatio })}
-            >
-              <SelectTrigger className="h-7 text-xs nodrag w-[100px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ASPECT_RATIO_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <ConfigSelect
+            label="Aspect"
+            value={data.aspectRatio || "1:1"}
+            options={ASPECT_RATIO_OPTIONS}
+            onChange={(aspectRatio) => updateNodeData(id, { aspectRatio })}
+          />
         )}
       </div>
     </NodeFrame>
