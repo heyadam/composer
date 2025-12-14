@@ -13,6 +13,7 @@ import {
   type ReactFlowInstance,
   type Connection,
   type Edge,
+  type Node,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -41,6 +42,21 @@ import { useBackgroundSettings } from "@/lib/hooks/useBackgroundSettings";
 
 let id = 0;
 const getId = () => `node_${id++}`;
+
+// Update ID counter based on existing nodes to avoid collisions
+const updateIdCounter = (nodes: Node[]) => {
+  const maxId = nodes.reduce((max, node) => {
+    const match = node.id.match(/node_(\d+)/);
+    if (match) {
+      return Math.max(max, parseInt(match[1], 10));
+    }
+    return max;
+  }, -1);
+  id = maxId + 1;
+};
+
+// Initialize counter based on initial nodes
+updateIdCounter(initialNodes);
 
 const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
   input: { label: "Input", inputValue: "" },
@@ -488,6 +504,7 @@ export function AgentFlow() {
     setFlowMetadata(defaultFlow.metadata as FlowMetadata);
     resetExecution();
     setAutopilotHighlightedIds(new Set());
+    updateIdCounter(initialNodes);
   }, [setNodes, setEdges, resetExecution]);
 
   const handleSaveFlow = useCallback((name: string) => {
@@ -506,14 +523,7 @@ export function AgentFlow() {
       setAutopilotHighlightedIds(new Set());
 
       // Update node ID counter to avoid collisions
-      const maxId = result.flow.nodes.reduce((max, node) => {
-        const match = node.id.match(/node_(\d+)/);
-        if (match) {
-          return Math.max(max, parseInt(match[1], 10));
-        }
-        return max;
-      }, 0);
-      id = maxId + 1;
+      updateIdCounter(result.flow.nodes);
 
       // Fit view to show loaded flow (with small delay for state to settle)
       setTimeout(() => {
