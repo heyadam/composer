@@ -37,7 +37,8 @@ export interface OutputNodeData extends Record<string, unknown>, ExecutionData {
 
 export interface PromptNodeData extends Record<string, unknown>, ExecutionData {
   label: string;
-  prompt: string;
+  userPrompt?: string;    // User message (when not connected)
+  systemPrompt?: string;  // System instructions (when not connected)
   provider?: string;
   model?: string;
   // OpenAI-specific options

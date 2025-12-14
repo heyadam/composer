@@ -9,9 +9,10 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
 - **Origami-Style Controls**: Drag to select multiple nodes, hold spacebar to pan
 - **Node Types**:
   - **Input**: Entry point that receives user input
-  - **Prompt**: Execute LLM prompts with multi-provider support
+  - **Prompt**: Execute LLM prompts with dual inputs (user prompt + system instructions) and multi-provider support
   - **Image**: AI image generation with OpenAI and Google Gemini
   - **Output**: Exit point that displays results in the responses sidebar
+- **Smart Input Fields**: Textareas disable with "Using connected input" when handles are wired
 - **Multi-Provider Support**: Choose from OpenAI, Google Gemini, or Anthropic Claude models
 - **OpenAI-Specific Options**: Verbosity control (low/medium/high) and thinking mode for supported models
 - **Streaming Responses**: See AI responses and images appear in real-time

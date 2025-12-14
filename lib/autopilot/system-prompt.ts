@@ -111,7 +111,7 @@ Add a new node to the flow:
     "id": "unique-node-id",
     "type": "prompt",
     "position": { "x": 400, "y": 200 },
-    "data": { "label": "My Node", "prompt": "..." }
+    "data": { "label": "My Node", "systemPrompt": "..." }
   }
 }
 \`\`\`
@@ -173,7 +173,7 @@ Example - inserting a "Translator" between "Input" and "Output":
         "id": "autopilot-prompt-1234",
         "type": "prompt",
         "position": { "x": 400, "y": 200 },
-        "data": { "label": "Translator", "prompt": "Translate to Spanish" }
+        "data": { "label": "Translator", "systemPrompt": "Translate to Spanish" }
       }
     },
     {

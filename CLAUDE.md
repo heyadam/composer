@@ -35,9 +35,14 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 
 **Node Types** (`components/Flow/nodes/`): Four custom node components with editable labels:
 - `InputNode`: Entry point, receives user input
-- `PromptNode`: LLM prompt execution with multi-provider support
+- `PromptNode`: LLM prompt execution with dual inputs (user prompt + system instructions), multi-provider support
 - `ImageNode`: AI image generation (OpenAI with streaming partial images, Google Gemini)
 - `OutputNode`: Exit point, displays final result and sends to preview
+
+**InputWithHandle** (`components/Flow/nodes/InputWithHandle.tsx`): Reusable component combining input fields with connection handles:
+- Shows disabled textarea with "Using connected input" when handle is wired
+- Color-coded handles (cyan/purple/amber) with connection highlighting
+- Used by PromptNode for user prompt and system instructions inputs
 
 **Provider Configuration** (`lib/providers.ts`): Centralized config for AI providers and models. Supports OpenAI, Google, and Anthropic with provider-specific options (verbosity, thinking).
 
@@ -115,6 +120,12 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 ### Type System
 
 Flow types in `types/flow.ts` define node data interfaces with execution state tracking (`ExecutionStatus`, `executionOutput`, `executionError`).
+
+**PromptNodeData fields**:
+- `userPrompt`: User message content (used when prompt input not connected)
+- `systemPrompt`: System instructions (used when system input not connected)
+- `provider`, `model`: AI provider and model selection
+- `verbosity`, `thinking`: Provider-specific options
 
 ### UI Components
 

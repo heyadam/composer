@@ -36,13 +36,15 @@ async function executeNode(
       const startTime = Date.now();
       let streamChunksReceived = 0;
 
-      // Get prompt input (the user message)
-      const promptInput = inputs["prompt"] || "";
-      // Check if system input handle has a connected edge
+      // Get prompt input (the user message) - from connection or inline textarea
+      const hasPromptEdge = "prompt" in inputs;
+      const inlineUserPrompt = typeof node.data?.userPrompt === "string" ? node.data.userPrompt : "";
+      const promptInput = hasPromptEdge ? inputs["prompt"] : inlineUserPrompt;
+
+      // Get system prompt - from connection or inline textarea
       const hasSystemEdge = "system" in inputs;
-      // If system input is connected, use it (even if empty); otherwise fall back to textarea
-      const textareaPrompt = typeof node.data?.prompt === "string" ? node.data.prompt : "";
-      const effectiveSystemPrompt = hasSystemEdge ? inputs["system"] : textareaPrompt;
+      const inlineSystemPrompt = typeof node.data?.systemPrompt === "string" ? node.data.systemPrompt : "";
+      const effectiveSystemPrompt = hasSystemEdge ? inputs["system"] : inlineSystemPrompt;
 
       const provider = (node.data.provider as string) || "openai";
       const model = (node.data.model as string) || "gpt-5";

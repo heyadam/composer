@@ -34,7 +34,7 @@
       },
       "data": {
         "label": "GPT-5 Nano",
-        "prompt": "Write a simple prompt for image generation",
+        "systemPrompt": "Write a simple prompt for image generation",
         "provider": "openai",
         "model": "gpt-5-nano"
       },

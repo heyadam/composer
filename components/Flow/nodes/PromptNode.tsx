@@ -11,7 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { NodeFrame } from "./NodeFrame";
-import { PortList } from "./PortLabel";
+import { PortRow } from "./PortLabel";
+import { InputWithHandle } from "./InputWithHandle";
 import { cn } from "@/lib/utils";
 import { PROVIDERS, DEFAULT_PROVIDER, DEFAULT_MODEL, VERBOSITY_OPTIONS, THINKING_OPTIONS, type ProviderId } from "@/lib/providers";
 
@@ -21,7 +22,11 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
   const { updateNodeData } = useReactFlow();
   const edges = useEdges();
 
-  // Check if the system input handle is connected
+  // Check which input handles are connected
+  // Note: edges without targetHandle default to the primary "prompt" input
+  const isPromptConnected = edges.some(
+    (edge) => edge.target === id && (edge.targetHandle === "prompt" || !edge.targetHandle)
+  );
   const isSystemConnected = edges.some(
     (edge) => edge.target === id && edge.targetHandle === "system"
   );
@@ -52,13 +57,9 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
       status={data.executionStatus}
       className="w-[280px]"
       ports={
-        <PortList
+        <PortRow
           nodeId={id}
-          inputs={[
-            { id: "prompt", label: "prompt", colorClass: "cyan" },
-            { id: "system", label: "system", colorClass: "cyan", required: false },
-          ]}
-          outputs={[{ id: "output", label: "string", colorClass: "cyan" }]}
+          output={{ id: "output", label: "string", colorClass: "cyan" }}
         />
       }
       footer={
@@ -73,107 +74,130 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
         ) : null
       }
     >
-      <div className="space-y-2">
-        {isSystemConnected ? (
-          <div
-            className={cn(
-              "nodrag w-full min-h-[84px] rounded-md border border-input bg-muted/50 dark:bg-muted/20 px-3 py-2 text-sm",
-              "flex items-center justify-center text-muted-foreground italic"
-            )}
-          >
-            Using connected system input
-          </div>
-        ) : (
+      <div className="space-y-4">
+        {/* User Prompt Input */}
+        <InputWithHandle
+          id="prompt"
+          label="User Prompt"
+          colorClass="cyan"
+        >
           <textarea
-            value={typeof data.prompt === "string" ? data.prompt : ""}
-            onChange={(e) => updateNodeData(id, { prompt: e.target.value })}
-            placeholder="System prompt (or connect to system input)…"
+            value={isPromptConnected ? "" : (data.userPrompt ?? "")}
+            onChange={(e) => updateNodeData(id, { userPrompt: e.target.value })}
+            placeholder={isPromptConnected ? "Using connected input" : "Enter user message..."}
+            disabled={isPromptConnected}
             className={cn(
-              "nodrag w-full min-h-[84px] resize-y rounded-md border border-input bg-background/60 dark:bg-muted/40 px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
-              "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              "nodrag w-full min-h-[60px] resize-y rounded-md border border-input px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
+              isPromptConnected
+                ? "bg-muted/50 dark:bg-muted/20 cursor-not-allowed placeholder:italic placeholder:text-muted-foreground"
+                : "bg-background/60 dark:bg-muted/40 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             )}
           />
-        )}
+        </InputWithHandle>
 
-        <div className="flex items-center justify-between gap-2">
-          <div className="text-[11px] text-muted-foreground">Provider</div>
-          <Select
-            value={currentProvider}
-            onValueChange={handleProviderChange}
-          >
-            <SelectTrigger className="h-7 text-xs nodrag w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(PROVIDERS).map(([key, provider]) => (
-                <SelectItem key={key} value={key} className="text-xs">
-                  {provider.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* System Prompt Input */}
+        <InputWithHandle
+          id="system"
+          label="System Instructions"
+          colorClass="cyan"
+          required={false}
+        >
+          <textarea
+            value={isSystemConnected ? "" : (data.systemPrompt ?? "")}
+            onChange={(e) => updateNodeData(id, { systemPrompt: e.target.value })}
+            placeholder={isSystemConnected ? "Using connected input" : "Enter system instructions..."}
+            disabled={isSystemConnected}
+            className={cn(
+              "nodrag w-full min-h-[60px] resize-y rounded-md border border-input px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
+              isSystemConnected
+                ? "bg-muted/50 dark:bg-muted/20 cursor-not-allowed placeholder:italic placeholder:text-muted-foreground"
+                : "bg-background/60 dark:bg-muted/40 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+            )}
+          />
+        </InputWithHandle>
 
-        <div className="flex items-center justify-between gap-2">
-          <div className="text-[11px] text-muted-foreground">Model</div>
-          <Select
-            value={currentModel}
-            onValueChange={handleModelChange}
-          >
-            <SelectTrigger className="h-7 text-xs nodrag w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {providerConfig.models.map((m) => (
-                <SelectItem key={m.value} value={m.value} className="text-xs">
-                  {m.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {currentModelConfig?.supportsVerbosity && (
+        {/* Configuration */}
+        <div className="space-y-2 pt-2 border-t">
           <div className="flex items-center justify-between gap-2">
-            <div className="text-[11px] text-muted-foreground">Verbosity</div>
+            <div className="text-[11px] text-muted-foreground">Provider</div>
             <Select
-              value={data.verbosity || "medium"}
-              onValueChange={(verbosity) => updateNodeData(id, { verbosity })}
+              value={currentProvider}
+              onValueChange={handleProviderChange}
             >
               <SelectTrigger className="h-7 text-xs nodrag w-[120px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {VERBOSITY_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                    {opt.label}
+                {Object.entries(PROVIDERS).map(([key, provider]) => (
+                  <SelectItem key={key} value={key} className="text-xs">
+                    {provider.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-        )}
 
-        {currentModelConfig?.supportsThinking && (
           <div className="flex items-center justify-between gap-2">
-            <div className="text-[11px] text-muted-foreground">Thinking</div>
+            <div className="text-[11px] text-muted-foreground">Model</div>
             <Select
-              value={data.thinking ? "on" : "off"}
-              onValueChange={(val) => updateNodeData(id, { thinking: val === "on" })}
+              value={currentModel}
+              onValueChange={handleModelChange}
             >
               <SelectTrigger className="h-7 text-xs nodrag w-[120px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {THINKING_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                    {opt.label}
+                {providerConfig.models.map((m) => (
+                  <SelectItem key={m.value} value={m.value} className="text-xs">
+                    {m.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-        )}
+
+          {currentModelConfig?.supportsVerbosity && (
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[11px] text-muted-foreground">Verbosity</div>
+              <Select
+                value={data.verbosity || "medium"}
+                onValueChange={(verbosity) => updateNodeData(id, { verbosity })}
+              >
+                <SelectTrigger className="h-7 text-xs nodrag w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {VERBOSITY_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {currentModelConfig?.supportsThinking && (
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[11px] text-muted-foreground">Thinking</div>
+              <Select
+                value={data.thinking ? "on" : "off"}
+                onValueChange={(val) => updateNodeData(id, { thinking: val === "on" })}
+              >
+                <SelectTrigger className="h-7 text-xs nodrag w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {THINKING_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
       </div>
     </NodeFrame>
   );
