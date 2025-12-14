@@ -5,7 +5,8 @@ import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react
 import type { MagicNodeData } from "@/types/flow";
 import { Sparkles, ChevronDown, ChevronRight, RefreshCw, AlertCircle, Loader2 } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
-import { PortList } from "./PortLabel";
+import { PortRow } from "./PortLabel";
+import { InputWithHandle } from "./InputWithHandle";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,9 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Check connections
+  const isTransformConnected = edges.some(
+    (edge) => edge.target === id && edge.targetHandle === "transform"
+  );
   const isInput1Connected = edges.some(
     (edge) => edge.target === id && edge.targetHandle === "input1"
   );
@@ -88,16 +92,17 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
       status={data.executionStatus}
       className="w-[280px]"
       ports={
-        <PortList
-          nodeId={id}
-          inputs={[
-            { id: "input1", label: "input1", colorClass: "cyan", required: false, isConnected: isInput1Connected },
-            { id: "input2", label: "input2", colorClass: "cyan", required: false, isConnected: isInput2Connected },
-          ]}
-          outputs={[
-            { id: "output", label: "output", colorClass: "cyan", isConnected: isOutputConnected },
-          ]}
-        />
+        <>
+          <PortRow
+            nodeId={id}
+            input={{ id: "input1", label: "input1", colorClass: "cyan", required: false, isConnected: isInput1Connected }}
+          />
+          <PortRow
+            nodeId={id}
+            input={{ id: "input2", label: "input2", colorClass: "cyan", required: false, isConnected: isInput2Connected }}
+            output={{ id: "output", label: "output", colorClass: "cyan", isConnected: isOutputConnected }}
+          />
+        </>
       }
       footer={
         data.executionError ? (
@@ -112,30 +117,37 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
       }
     >
       <div className="space-y-3">
-        {/* Transformation description textarea */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            Describe transformation
-          </label>
+        {/* Transformation description input with handle */}
+        <InputWithHandle
+          id="transform"
+          label="Describe transformation"
+          colorClass="cyan"
+          required={false}
+          isConnected={isTransformConnected}
+        >
           <textarea
-            value={data.transformPrompt ?? ""}
+            value={isTransformConnected ? "" : (data.transformPrompt ?? "")}
             onChange={(e) => updateNodeData(id, { transformPrompt: e.target.value })}
-            placeholder="e.g., 'make uppercase', 'add input1 and input2', 'extract first word'"
+            placeholder={isTransformConnected ? "Using connected input" : "e.g., 'make uppercase', 'add input1 and input2'"}
+            disabled={isTransformConnected}
             className={cn(
               "nodrag w-full min-h-[60px] resize-y rounded-md border border-input px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
-              "bg-background/60 dark:bg-muted/40 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              isTransformConnected
+                ? "bg-muted/50 dark:bg-muted/20 cursor-not-allowed placeholder:italic placeholder:text-muted-foreground"
+                : "bg-background/60 dark:bg-muted/40 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             )}
           />
-        </div>
+        </InputWithHandle>
 
-        {/* Generate button */}
-        <Button
-          size="sm"
-          variant={hasError ? "destructive" : hasCode ? "outline" : "default"}
-          className="w-full"
-          onClick={handleGenerate}
-          disabled={isGenerating || !data.transformPrompt?.trim()}
-        >
+        {/* Generate button - only shown when not connected */}
+        {!isTransformConnected && (
+          <Button
+            size="sm"
+            variant={hasError ? "destructive" : hasCode ? "outline" : "default"}
+            className="w-full"
+            onClick={handleGenerate}
+            disabled={isGenerating || !data.transformPrompt?.trim()}
+          >
           {isGenerating ? (
             <>
               <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
@@ -157,17 +169,18 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
               Generate Code
             </>
           )}
-        </Button>
+          </Button>
+        )}
 
-        {/* Error display */}
-        {hasError && data.generationError && (
+        {/* Error display - only shown when not connected */}
+        {!isTransformConnected && hasError && data.generationError && (
           <div className="rounded-md bg-destructive/10 border border-destructive/30 p-2">
             <p className="text-xs text-destructive">{data.generationError}</p>
           </div>
         )}
 
-        {/* Collapsible code view */}
-        {hasCode && !hasError && (
+        {/* Collapsible code view - only shown when not connected */}
+        {!isTransformConnected && hasCode && !hasError && (
           <Collapsible open={data.codeExpanded} onOpenChange={toggleCodeView}>
             <CollapsibleTrigger className="nodrag flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground w-full">
               {data.codeExpanded ? (
@@ -183,6 +196,13 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
               </pre>
             </CollapsibleContent>
           </Collapsible>
+        )}
+
+        {/* Info when connected */}
+        {isTransformConnected && (
+          <p className="text-xs text-muted-foreground italic">
+            Code will be generated dynamically at runtime from connected input.
+          </p>
         )}
       </div>
     </NodeFrame>

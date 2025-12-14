@@ -181,6 +181,7 @@ export const NODE_PORT_SCHEMAS: Record<NodeType, NodePortSchema> = {
   },
   magic: {
     inputs: [
+      { id: "transform", label: "transform", dataType: "string", required: false },
       { id: "input1", label: "input1", dataType: "string", required: false },
       { id: "input2", label: "input2", dataType: "string", required: false },
     ],
