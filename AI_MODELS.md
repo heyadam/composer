@@ -28,7 +28,7 @@ Quick reference for AI model IDs used in API calls.
 |----------|-------------|
 | `claude-opus-4-5` | Most capable model |
 | `claude-sonnet-4-5` | Best for agents and coding |
-| `claude-haiku-4-5` | Hybrid - fast responses + extended thinking |
+| `claude-haiku-4-5` | Fast, cost-effective (used by AI Logic node) |
 
 
 ---

@@ -64,6 +64,7 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
       const result = await response.json();
       updateNodeData(id, {
         generatedCode: result.code,
+        codeExplanation: result.explanation,
         isGenerating: false,
         generationError: undefined,
       });
@@ -190,7 +191,10 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
               )}
               Generated Code
             </CollapsibleTrigger>
-            <CollapsibleContent className="pt-2">
+            <CollapsibleContent className="pt-2 space-y-2">
+              {data.codeExplanation && (
+                <p className="text-xs text-muted-foreground">{data.codeExplanation}</p>
+              )}
               <pre className="nodrag text-xs font-mono bg-muted/50 rounded-md p-2 whitespace-pre-wrap break-words max-h-[120px] overflow-auto border">
                 <code className="text-muted-foreground">{data.generatedCode}</code>
               </pre>

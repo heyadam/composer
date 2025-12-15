@@ -72,6 +72,7 @@ export interface MagicNodeData extends Record<string, unknown>, ExecutionData {
   label: string;
   transformPrompt?: string;    // User's natural language transformation description
   generatedCode?: string;      // Cached generated JavaScript code
+  codeExplanation?: string;    // Plain English explanation of what the code does
   codeExpanded?: boolean;      // Whether code view is expanded
   isGenerating?: boolean;      // Loading state for generation
   generationError?: string;    // Error from code generation

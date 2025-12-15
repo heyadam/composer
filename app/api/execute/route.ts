@@ -298,38 +298,53 @@ The function will receive two variables:
 - input2: string | number | null (second input value)
 
 RULES:
-1. Output ONLY the function body code (no function declaration, no comments, no explanation)
-2. The code MUST start with "return" and return a single value (string or number)
-3. Use only pure JavaScript - no external libraries, no fetch, no async/await
-4. Handle null/undefined inputs gracefully
-5. Keep code concise (1-3 lines max)
+1. First provide a brief plain English explanation (1 sentence) of what the code does
+2. Then provide the code on a new line starting with "return"
+3. The code MUST start with "return" and return a single value (string or number)
+4. Use only pure JavaScript - no external libraries, no fetch, no async/await
+5. Handle null/undefined inputs gracefully
+6. Keep code concise (1-3 lines max)
+
+OUTPUT FORMAT (exactly like this):
+EXPLANATION: [one sentence explaining what the code does]
+CODE: [the return statement]
 
 EXAMPLES:
 User: "make uppercase"
-Output: return String(input1 || '').toUpperCase();
+Output:
+EXPLANATION: Converts the first input to uppercase text.
+CODE: return String(input1 || '').toUpperCase();
 
 User: "add the two numbers"
-Output: return Number(input1 || 0) + Number(input2 || 0);
+Output:
+EXPLANATION: Adds the two input numbers together.
+CODE: return Number(input1 || 0) + Number(input2 || 0);
 
 User: "concatenate with a space"
-Output: return String(input1 || '') + ' ' + String(input2 || '');
-
-User: "extract first word"
-Output: return String(input1 || '').split(/\\s+/)[0] || '';
-
-User: "multiply by 2"
-Output: return Number(input1 || 0) * 2;`;
+Output:
+EXPLANATION: Joins the two inputs with a space between them.
+CODE: return String(input1 || '') + ' ' + String(input2 || '');`;
 
       try {
         const result = await generateText({
-          model: anthropic("claude-sonnet-4-5-20250929"),
+          model: anthropic("claude-haiku-4-5"),
           system: systemPrompt,
           prompt: prompt,
           maxOutputTokens: 500,
         });
 
-        // Extract just the code, removing markdown fences if present
-        let code = result.text.trim();
+        // Parse the response to extract explanation and code
+        const responseText = result.text.trim();
+
+        // Extract explanation
+        const explanationMatch = responseText.match(/EXPLANATION:\s*(.+?)(?=\n|CODE:)/i);
+        const explanation = explanationMatch ? explanationMatch[1].trim() : "";
+
+        // Extract code
+        const codeMatch = responseText.match(/CODE:\s*([\s\S]+?)$/i);
+        let code = codeMatch ? codeMatch[1].trim() : responseText;
+
+        // Remove markdown fences if present
         if (code.startsWith("```")) {
           code = code.replace(/^```(?:javascript|js)?\n?/, "").replace(/\n?```$/, "");
         }
@@ -364,7 +379,7 @@ Output: return Number(input1 || 0) * 2;`;
           }
         }
 
-        return NextResponse.json({ code });
+        return NextResponse.json({ code, explanation });
       } catch (genError) {
         console.error("[API] magic-generate error:", genError);
         return NextResponse.json(
