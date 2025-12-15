@@ -87,8 +87,8 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
       title={data.label}
       onTitleChange={(label) => updateNodeData(id, { label })}
       icon={<Sparkles className="h-4 w-4" />}
-      iconClassName="bg-yellow-500/10 text-yellow-600 dark:text-yellow-300"
-      accentBorderClassName="border-yellow-500"
+      iconClassName="bg-orange-500/10 text-orange-600 dark:text-orange-300"
+      accentBorderClassName="border-orange-500"
       status={data.executionStatus}
       className="w-[280px]"
       ports={
