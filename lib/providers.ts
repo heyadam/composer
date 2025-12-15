@@ -2,7 +2,7 @@ export const PROVIDERS = {
   openai: {
     label: "OpenAI",
     models: [
-      { value: "gpt-5", label: "GPT-5", supportsVerbosity: true, supportsThinking: true },
+      { value: "gpt-5.2", label: "GPT-5.2", supportsVerbosity: true, supportsThinking: true },
       { value: "gpt-5-mini", label: "GPT-5 Mini", supportsVerbosity: true, supportsThinking: true },
       { value: "gpt-5-nano", label: "GPT-5 Nano", supportsVerbosity: true, supportsThinking: false },
     ],
@@ -12,7 +12,7 @@ export const PROVIDERS = {
     models: [
       { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", supportsVerbosity: false, supportsThinking: false },
       { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", supportsVerbosity: false, supportsThinking: false },
-      { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash", supportsVerbosity: false, supportsThinking: false },
+      { value: "gemini-3-pro-preview", label: "Gemini 3 Pro", supportsVerbosity: false, supportsThinking: false },
     ],
   },
   anthropic: {
@@ -27,7 +27,7 @@ export const PROVIDERS = {
 
 export type ProviderId = keyof typeof PROVIDERS;
 export const DEFAULT_PROVIDER: ProviderId = "openai";
-export const DEFAULT_MODEL = "gpt-5";
+export const DEFAULT_MODEL = "gpt-5.2";
 
 export const VERBOSITY_OPTIONS = [
   { value: "low", label: "Low" },
@@ -45,7 +45,7 @@ export const IMAGE_PROVIDERS = {
   openai: {
     label: "OpenAI",
     models: [
-      { value: "gpt-5", label: "GPT-5", supportsPartialImages: true },
+      { value: "gpt-5.2", label: "GPT-5.2", supportsPartialImages: true },
     ],
   },
   google: {
@@ -59,7 +59,7 @@ export const IMAGE_PROVIDERS = {
 
 export type ImageProviderId = keyof typeof IMAGE_PROVIDERS;
 export const DEFAULT_IMAGE_PROVIDER: ImageProviderId = "openai";
-export const DEFAULT_IMAGE_MODEL = "gpt-5";
+export const DEFAULT_IMAGE_MODEL = "gpt-5.2";
 
 export const ASPECT_RATIO_OPTIONS = [
   { value: "1:1", label: "Square (1:1)" },

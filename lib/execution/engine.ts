@@ -50,7 +50,7 @@ async function executeNode(
       const effectiveSystemPrompt = hasSystemEdge ? inputs["system"] : inlineSystemPrompt;
 
       const provider = (node.data.provider as string) || "openai";
-      const model = (node.data.model as string) || "gpt-5";
+      const model = (node.data.model as string) || "gpt-5.2";
 
       const requestBody = {
         type: "text-generation" as const,
@@ -140,7 +140,7 @@ async function executeNode(
       // Get source image from connected input or inline upload
       const imageInput = inputs["image"] || (node.data.imageInput as string) || "";
       const provider = (node.data.provider as string) || "openai";
-      const model = (node.data.model as string) || "gpt-5";
+      const model = (node.data.model as string) || "gpt-5.2";
 
       const outputFormat = (node.data.outputFormat as string) || "webp";
       const size = (node.data.size as string) || "1024x1024";

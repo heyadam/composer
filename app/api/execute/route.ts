@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
       try {
         const result = streamText({
-          model: getModel(provider || "openai", model || "gpt-5", apiKeys),
+          model: getModel(provider || "openai", model || "gpt-5.2", apiKeys),
           messages,
           maxOutputTokens: 1000,
           ...(Object.keys(openaiOptions).length > 0 && {
@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
 
       // Use OpenAI Responses API directly for streaming partial images
       const stream = await openaiClient.responses.create({
-        model: model || "gpt-5",
+        model: model || "gpt-5.2",
         input: inputText,
         stream: true,
         tools: [imageGenTool],
