@@ -149,7 +149,7 @@ export const nodeDefinitions: NodeDefinition[] = [
   },
   {
     type: "output",
-    label: "Output",
+    label: "Preview Output",
     description: "Flow output",
     color: "bg-blue-500/10 text-blue-700 dark:text-blue-300",
   },

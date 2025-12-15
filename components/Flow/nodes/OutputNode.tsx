@@ -62,7 +62,7 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
       ports={
         <PortRow
           nodeId={id}
-          input={{ id: "input", label: "response", colorClass: "amber", isConnected: isInputConnected }}
+          input={{ id: "input", label: "Image or String", colorClass: "amber", isConnected: isInputConnected }}
         />
       }
       footer={renderFooter()}

@@ -61,7 +61,7 @@ updateIdCounter(initialNodes);
 const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
   input: { label: "Input Text", inputValue: "" },
   "image-input": { label: "Input Image" },
-  output: { label: "Response" },
+  output: { label: "Preview Output" },
   prompt: { label: "AI Text", prompt: "", provider: "openai", model: "gpt-5" },
   image: { label: "AI Image", prompt: "", outputFormat: "webp", size: "1024x1024", quality: "low", partialImages: 3 },
   magic: { label: "Magic", transformPrompt: "", codeExpanded: false },
@@ -450,7 +450,7 @@ export function AgentFlow() {
       // Handle preview for output/response nodes
       const targetNode = nodesRef.current.find((n) => n.id === nodeId);
       if (targetNode?.type === "output") {
-        const nodeLabel = (targetNode.data as { label?: string }).label || "Response";
+        const nodeLabel = (targetNode.data as { label?: string }).label || "Preview Output";
 
         if (state.status === "running") {
           // Add to preview immediately when running (dedupe by nodeId)

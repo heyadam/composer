@@ -5,7 +5,7 @@ import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react
 import type { ImageNodeData } from "@/types/flow";
 import { ImageIcon, Upload, X } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
-import { PortList } from "./PortLabel";
+import { PortRow } from "./PortLabel";
 import { InputWithHandle } from "./InputWithHandle";
 import { ProviderModelSelector } from "./ProviderModelSelector";
 import { ConfigSelect } from "./ConfigSelect";
@@ -121,14 +121,9 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
       status={data.executionStatus}
       className="w-[280px]"
       ports={
-        <PortList
+        <PortRow
           nodeId={id}
-          inputs={[
-            { id: "prompt", label: "prompt", colorClass: "cyan", required: false, isConnected: isPromptConnected },
-          ]}
-          outputs={[
-            { id: "output", label: "image", colorClass: "purple", isConnected: isOutputConnected },
-          ]}
+          output={{ id: "output", label: "Image", colorClass: "purple", isConnected: isOutputConnected }}
         />
       }
       footer={renderFooter()}
@@ -142,6 +137,27 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
           onChange={handleFileChange}
           className="hidden"
         />
+
+        {/* Prompt Input */}
+        <InputWithHandle
+          id="prompt"
+          label="Image Prompt"
+          colorClass="cyan"
+          isConnected={isPromptConnected}
+        >
+          <textarea
+            value={isPromptConnected ? "" : (typeof data.prompt === "string" ? data.prompt : "")}
+            onChange={(e) => updateNodeData(id, { prompt: e.target.value })}
+            placeholder={isPromptConnected ? "Connected" : "Describe the image..."}
+            disabled={isPromptConnected}
+            className={cn(
+              "nodrag w-full min-h-[60px] resize-y rounded-md border border-input px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
+              isPromptConnected
+                ? "bg-muted/50 dark:bg-muted/20 cursor-not-allowed placeholder:italic placeholder:text-muted-foreground"
+                : "bg-background/60 dark:bg-muted/40 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+            )}
+          />
+        </InputWithHandle>
 
         {/* Source Image Input */}
         <InputWithHandle
@@ -188,17 +204,6 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
             </button>
           )}
         </InputWithHandle>
-
-        {/* Prompt Input */}
-        <textarea
-          value={typeof data.prompt === "string" ? data.prompt : ""}
-          onChange={(e) => updateNodeData(id, { prompt: e.target.value })}
-          placeholder="Describe the image..."
-          className={cn(
-            "nodrag w-full min-h-[60px] resize-y rounded-md border border-input bg-background/60 dark:bg-muted/40 px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
-            "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-          )}
-        />
 
         <ProviderModelSelector
           providers={IMAGE_PROVIDERS}

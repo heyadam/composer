@@ -44,7 +44,7 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
       ports={
         <PortRow
           nodeId={id}
-          output={{ id: "output", label: "string", colorClass: "cyan", isConnected: isOutputConnected }}
+          output={{ id: "output", label: "String", colorClass: "cyan", isConnected: isOutputConnected }}
         />
       }
       footer={

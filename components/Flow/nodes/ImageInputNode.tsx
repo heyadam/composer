@@ -65,7 +65,7 @@ export function ImageInputNode({ id, data }: NodeProps<ImageInputNodeType>) {
       ports={
         <PortRow
           nodeId={id}
-          output={{ id: "output", label: "image", colorClass: "purple", isConnected: isOutputConnected }}
+          output={{ id: "output", label: "Image", colorClass: "purple", isConnected: isOutputConnected }}
         />
       }
     >
