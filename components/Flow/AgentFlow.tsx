@@ -258,37 +258,26 @@ export function AgentFlow() {
     }
   }, []);
 
-  // Keep a ref to edges for validation
-  const edgesRef = useRef(edges);
-  edgesRef.current = edges;
-
-  // Validate connections - prevent multiple edges to the same input handle
-  const isValidConnection = useCallback((connection: Edge | Connection) => {
-    // Check if target handle already has an incoming edge
-    // Use "prompt" as default for backward compatibility
-    const targetHandle = connection.targetHandle || "prompt";
-    const handleHasEdge = edgesRef.current.some(
-      (edge) =>
-        edge.target === connection.target &&
-        (edge.targetHandle || "prompt") === targetHandle
-    );
-    return !handleHasEdge;
-  }, []);
+  // Allow all connections - replacement is handled in onConnect
+  const isValidConnection = useCallback(() => true, []);
 
   const onConnect: OnConnect = useCallback(
     (params: Connection) => {
-      // Prevent multiple edges to the same target handle
-      const targetHandle = params.targetHandle || "prompt";
-      const handleAlreadyConnected = edgesRef.current.some(
-        (edge) =>
-          edge.target === params.target &&
-          (edge.targetHandle || "prompt") === targetHandle
-      );
-      if (handleAlreadyConnected) return;
-
       const dataType = params.source ? getEdgeDataType(params.source) : "default";
-      setEdges((eds) =>
-        addEdge(
+
+      setEdges((eds) => {
+        // Remove any existing edge to this target handle (replacement behavior)
+        const filtered = eds.filter((edge) => {
+          if (edge.target !== params.target) return true;
+          // If existing edge has no targetHandle, it connects to the default input
+          // and should be replaced by any new connection to the same node
+          if (!edge.targetHandle) return false;
+          // Otherwise, only filter out if handles match exactly
+          return edge.targetHandle !== params.targetHandle;
+        });
+
+        // Add the new edge
+        return addEdge(
           {
             ...params,
             type: "colored",
@@ -298,9 +287,9 @@ export function AgentFlow() {
               targetHandle: params.targetHandle,
             },
           },
-          eds
-        )
-      );
+          filtered
+        );
+      });
     },
     [setEdges, getEdgeDataType]
   );
