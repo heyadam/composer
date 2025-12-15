@@ -131,9 +131,9 @@ export const nodeDefinitions: NodeDefinition[] = [
   },
   {
     type: "magic",
-    label: "Transform",
+    label: "AI Logic",
     description: "Custom code transformation",
-    color: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
+    color: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-300",
   },
   {
     type: "prompt",

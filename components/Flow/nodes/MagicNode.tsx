@@ -87,20 +87,20 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
       title={data.label}
       onTitleChange={(label) => updateNodeData(id, { label })}
       icon={<Sparkles className="h-4 w-4" />}
-      iconClassName="bg-violet-500/10 text-violet-600 dark:text-violet-300"
-      accentBorderClassName="border-l-2 border-l-violet-500/50"
+      iconClassName="bg-yellow-500/10 text-yellow-600 dark:text-yellow-300"
+      accentBorderClassName="border-yellow-500"
       status={data.executionStatus}
       className="w-[280px]"
       ports={
         <>
           <PortRow
             nodeId={id}
-            input={{ id: "input1", label: "input1", colorClass: "cyan", required: false, isConnected: isInput1Connected }}
+            input={{ id: "input1", label: "Input 1", colorClass: "cyan", required: false, isConnected: isInput1Connected }}
           />
           <PortRow
             nodeId={id}
-            input={{ id: "input2", label: "input2", colorClass: "cyan", required: false, isConnected: isInput2Connected }}
-            output={{ id: "output", label: "output", colorClass: "cyan", isConnected: isOutputConnected }}
+            input={{ id: "input2", label: "Input 2", colorClass: "cyan", required: false, isConnected: isInput2Connected }}
+            output={{ id: "output", label: "String", colorClass: "cyan", isConnected: isOutputConnected }}
           />
         </>
       }
@@ -120,7 +120,7 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
         {/* Transformation description input with handle */}
         <InputWithHandle
           id="transform"
-          label="Transformation"
+          label="Logic to generate"
           colorClass="cyan"
           required={false}
           isConnected={isTransformConnected}
@@ -128,7 +128,7 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
           <textarea
             value={isTransformConnected ? "" : (data.transformPrompt ?? "")}
             onChange={(e) => updateNodeData(id, { transformPrompt: e.target.value })}
-            placeholder={isTransformConnected ? "Connected" : "Describe transformation..."}
+            placeholder={isTransformConnected ? "Connected" : "Describe logic to generate via Claude..."}
             disabled={isTransformConnected}
             className={cn(
               "nodrag w-full min-h-[60px] resize-y rounded-md border border-input px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
@@ -166,7 +166,7 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
           ) : (
             <>
               <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-              Generate Code
+              Generate Logic
             </>
           )}
           </Button>
