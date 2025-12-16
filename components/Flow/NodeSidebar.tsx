@@ -1,7 +1,7 @@
 "use client";
 
 import { nodeDefinitions, type NodeType } from "@/types/flow";
-import { Keyboard, Square, MessageSquare, ImageIcon, X, Upload, Sparkles } from "lucide-react";
+import { Keyboard, Square, MessageSquare, ImageIcon, X, Upload, Sparkles, MessageSquarePlus } from "lucide-react";
 import type { DragEvent } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -12,6 +12,7 @@ const iconMap: Record<NodeType, typeof Keyboard> = {
   "text-generation": MessageSquare,
   "image-generation": ImageIcon,
   "ai-logic": Sparkles,
+  "comment": MessageSquarePlus,
 };
 
 interface NodeSidebarProps {

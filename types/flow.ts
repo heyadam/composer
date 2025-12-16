@@ -78,6 +78,15 @@ export interface MagicNodeData extends Record<string, unknown>, ExecutionData {
   generationError?: string;    // Error from code generation
 }
 
+// Comment node colors
+export type CommentColor = "gray" | "blue" | "green" | "yellow" | "purple" | "pink" | "orange";
+
+export interface CommentNodeData extends Record<string, unknown> {
+  label: string;
+  description?: string;
+  color: CommentColor;
+}
+
 // Union type for all node data
 export type AgentNodeData =
   | InputNodeData
@@ -85,10 +94,11 @@ export type AgentNodeData =
   | PromptNodeData
   | ImageNodeData
   | ImageInputNodeData
-  | MagicNodeData;
+  | MagicNodeData
+  | CommentNodeData;
 
 // Custom node types
-export type NodeType = "text-input" | "preview-output" | "text-generation" | "image-generation" | "image-input" | "ai-logic";
+export type NodeType = "text-input" | "preview-output" | "text-generation" | "image-generation" | "image-input" | "ai-logic" | "comment";
 
 // Typed nodes
 export type InputNode = Node<InputNodeData, "text-input">;
@@ -97,6 +107,7 @@ export type PromptNode = Node<PromptNodeData, "text-generation">;
 export type ImageNode = Node<ImageNodeData, "image-generation">;
 export type ImageInputNode = Node<ImageInputNodeData, "image-input">;
 export type MagicNode = Node<MagicNodeData, "ai-logic">;
+export type CommentNode = Node<CommentNodeData, "comment">;
 
 export type AgentNode =
   | InputNode
@@ -104,7 +115,8 @@ export type AgentNode =
   | PromptNode
   | ImageNode
   | ImageInputNode
-  | MagicNode;
+  | MagicNode
+  | CommentNode;
 
 // Edge type
 export type AgentEdge = Edge;
@@ -191,5 +203,9 @@ export const NODE_PORT_SCHEMAS: Record<NodeType, NodePortSchema> = {
       { id: "input2", label: "input2", dataType: "string", required: false },
     ],
     outputs: [{ id: "output", label: "output", dataType: "string" }],
+  },
+  "comment": {
+    inputs: [],
+    outputs: [],
   },
 };

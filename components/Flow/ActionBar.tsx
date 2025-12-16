@@ -12,6 +12,7 @@ import {
   Save,
   FolderOpen,
   FilePlus,
+  MessageSquarePlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +35,7 @@ interface ActionBarProps {
   onToggleNodes: () => void;
   onToggleAutopilot: () => void;
   onToggleResponses: () => void;
+  onCommentAround: () => void;
   onRun: () => void;
   onReset: () => void;
   onNewFlow: () => void;
@@ -43,12 +45,14 @@ interface ActionBarProps {
   autopilotOpen: boolean;
   responsesOpen: boolean;
   isRunning: boolean;
+  hasSelection: boolean;
 }
 
 export function ActionBar({
   onToggleNodes,
   onToggleAutopilot,
   onToggleResponses,
+  onCommentAround,
   onRun,
   onReset,
   onNewFlow,
@@ -58,6 +62,7 @@ export function ActionBar({
   autopilotOpen,
   responsesOpen,
   isRunning,
+  hasSelection,
 }: ActionBarProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { getKeyStatuses, isDevMode } = useApiKeys();
@@ -71,7 +76,7 @@ export function ActionBar({
       <TooltipProvider delayDuration={200}>
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
           <div className="flex items-center gap-1 p-1.5 rounded-xl bg-neutral-900/95 backdrop-blur border border-neutral-700 shadow-lg">
-            {/* Section 1: Add Node */}
+            {/* Section 1: Add Node & Comment */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -90,6 +95,23 @@ export function ActionBar({
               </TooltipTrigger>
               <TooltipContent side="top" className="bg-neutral-800 text-white border-neutral-700">
                 Add Node
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onCommentAround}
+                  disabled={!hasSelection}
+                  className="h-10 w-10 rounded-lg transition-colors text-neutral-400 hover:text-white hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <MessageSquarePlus className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-neutral-800 text-white border-neutral-700">
+                {hasSelection ? "Comment Around" : "Select nodes first"}
               </TooltipContent>
             </Tooltip>
 

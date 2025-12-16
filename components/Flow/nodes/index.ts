@@ -5,6 +5,7 @@ import { PromptNode } from "./PromptNode";
 import { ImageNode } from "./ImageNode";
 import { ImageInputNode } from "./ImageInputNode";
 import { MagicNode } from "./MagicNode";
+import { CommentNode } from "./CommentNode";
 
 export const nodeTypes: NodeTypes = {
   "text-input": InputNode,
@@ -13,6 +14,7 @@ export const nodeTypes: NodeTypes = {
   "image-generation": ImageNode,
   "image-input": ImageInputNode,
   "ai-logic": MagicNode,
+  "comment": CommentNode,
 };
 
-export { InputNode, OutputNode, PromptNode, ImageNode, ImageInputNode, MagicNode };
+export { InputNode, OutputNode, PromptNode, ImageNode, ImageInputNode, MagicNode, CommentNode };
