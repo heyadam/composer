@@ -99,17 +99,34 @@ export function useCommentSuggestions({
     );
 
     try {
+      // Extract only relevant fields from node data for the API
+      const sanitizedChildNodes = childNodes.map((n) => {
+        const data = n.data as Record<string, unknown>;
+        return {
+          id: n.id,
+          type: n.type,
+          label: data?.label as string | undefined,
+          data: {
+            // Text Generation node fields
+            userPrompt: data?.userPrompt,
+            systemPrompt: data?.systemPrompt,
+            // AI Logic node fields
+            transformPrompt: data?.transformPrompt,
+            // Text Input node fields
+            inputValue: data?.inputValue,
+            // Image Generation node fields
+            prompt: data?.prompt,
+            provider: data?.provider,
+            model: data?.model,
+          },
+        };
+      });
+
       const response = await fetch("/api/comment-suggest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          commentId,
-          childNodes: childNodes.map((n) => ({
-            id: n.id,
-            type: n.type,
-            label: n.data?.label,
-            data: n.data,
-          })),
+          childNodes: sanitizedChildNodes,
           apiKeys,
         }),
         signal: abortController.signal,
@@ -196,5 +213,5 @@ export function useCommentSuggestions({
     [cancelGeneration, generateForComment]
   );
 
-  return { triggerGeneration, cancelGeneration, markUserEdited };
+  return { triggerGeneration, markUserEdited };
 }

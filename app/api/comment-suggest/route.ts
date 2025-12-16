@@ -16,7 +16,6 @@ interface ChildNodeInfo {
 }
 
 interface CommentSuggestRequest {
-  commentId: string;
   childNodes: ChildNodeInfo[];
   apiKeys?: ApiKeys;
 }
