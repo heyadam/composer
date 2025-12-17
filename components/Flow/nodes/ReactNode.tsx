@@ -1,7 +1,7 @@
 "use client";
 
 import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
-import type { ReactNodeData } from "@/types/flow";
+import type { ReactNodeData, ReactStylePreset } from "@/types/flow";
 import { Code } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
@@ -9,8 +9,22 @@ import { InputWithHandle } from "./InputWithHandle";
 import { ProviderModelSelector } from "./ProviderModelSelector";
 import { cn } from "@/lib/utils";
 import { PROVIDERS, DEFAULT_PROVIDER, DEFAULT_MODEL, type ProviderId } from "@/lib/providers";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type ReactNodeType = Node<ReactNodeData, "react-component">;
+
+// Style preset options
+const STYLE_PRESETS: { value: ReactStylePreset; label: string }[] = [
+  { value: "simple", label: "v0 Style" },
+  { value: "none", label: "No styling" },
+  { value: "robust", label: "Robust UI" },
+];
 
 export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
   const { updateNodeData } = useReactFlow();
@@ -29,6 +43,7 @@ export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
 
   const currentProvider = (data.provider || DEFAULT_PROVIDER) as ProviderId;
   const currentModel = data.model || DEFAULT_MODEL;
+  const currentStylePreset = data.stylePreset || "simple";
 
   return (
     <NodeFrame
@@ -115,6 +130,26 @@ export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
             }}
             width="w-[120px]"
           />
+
+          {/* Style Preset */}
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-muted-foreground w-16 shrink-0">Style</span>
+            <Select
+              value={currentStylePreset}
+              onValueChange={(value: ReactStylePreset) => updateNodeData(id, { stylePreset: value })}
+            >
+              <SelectTrigger className="nodrag h-8 w-[120px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STYLE_PRESETS.map((preset) => (
+                  <SelectItem key={preset.value} value={preset.value} className="text-xs">
+                    {preset.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
     </NodeFrame>

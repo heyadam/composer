@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { AlertCircle, RefreshCw, Code, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { ReactComponentData } from "@/lib/react-utils";
+import { extractReactCode, type ReactComponentData } from "@/lib/react-utils";
 
 interface ReactPreviewProps {
   data: ReactComponentData;
@@ -13,14 +13,8 @@ interface ReactPreviewProps {
 
 // HTML template for the sandboxed iframe
 function createIframeContent(code: string): string {
-  // Extract the code from markdown if present
-  let cleanCode = code;
-  const codeBlockMatch = code.match(/```(?:jsx|tsx|javascript|js|react)?\s*\n?([\s\S]*?)\n?```/);
-  if (codeBlockMatch) {
-    cleanCode = codeBlockMatch[1].trim();
-  }
-
-  // Encode the code as base64 to avoid template literal issues with backticks/${}
+  // Extract clean code from markdown fences and encode as base64
+  const cleanCode = extractReactCode(code);
   const encodedCode = btoa(unescape(encodeURIComponent(cleanCode)));
 
   return `<!DOCTYPE html>
@@ -31,7 +25,7 @@ function createIframeContent(code: string): string {
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: system-ui, -apple-system, sans-serif; }
@@ -133,6 +127,13 @@ function createIframeContent(code: string): string {
             React.createElement(UserComponent)
           )
         );
+
+        // Give Tailwind CDN time to process the new classes
+        setTimeout(() => {
+          if (window.tailwind && typeof window.tailwind.refresh === 'function') {
+            window.tailwind.refresh();
+          }
+        }, 100);
       } catch (error) {
         document.getElementById('root').innerHTML =
           '<div class="error-boundary"><h3>Error</h3><pre>' +
@@ -182,11 +183,8 @@ export function ReactPreview({ data, className }: ReactPreviewProps) {
     setError(null);
   };
 
-  // Extract clean code for display
-  const displayCode = (() => {
-    const match = data.code.match(/```(?:jsx|tsx|javascript|js|react)?\s*\n?([\s\S]*?)\n?```/);
-    return match ? match[1].trim() : data.code;
-  })();
+  // Extract clean code for display (strips markdown fences)
+  const displayCode = extractReactCode(data.code);
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
@@ -237,14 +235,13 @@ export function ReactPreview({ data, className }: ReactPreviewProps) {
       )}
 
       {/* Sandboxed iframe */}
-      <div className="relative rounded-md border bg-white overflow-hidden">
+      <div className="relative w-full rounded-md border bg-white overflow-hidden aspect-[4/3]">
         <iframe
           ref={iframeRef}
           key={key}
           title="React Component Preview"
           sandbox="allow-scripts allow-same-origin"
-          className="w-full min-h-[200px] border-0"
-          style={{ height: "300px" }}
+          className="w-full h-full border-0 absolute inset-0"
         />
       </div>
     </div>

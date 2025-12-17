@@ -78,12 +78,16 @@ export interface MagicNodeData extends Record<string, unknown>, ExecutionData {
   generationError?: string;    // Error from code generation
 }
 
+// React component style presets
+export type ReactStylePreset = "simple" | "none" | "robust";
+
 export interface ReactNodeData extends Record<string, unknown>, ExecutionData {
   label: string;
   userPrompt?: string;    // Component description (when not connected)
   systemPrompt?: string;  // Additional instructions (when not connected)
   provider?: string;
   model?: string;
+  stylePreset?: ReactStylePreset;  // UI style preset
 }
 
 // Comment node colors
