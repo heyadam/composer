@@ -161,9 +161,9 @@ export function useClipboard({
     });
 
     // Create new edges with updated IDs
-    const newEdges: Edge[] = copiedEdges.map((edge) => ({
+    const newEdges: Edge[] = copiedEdges.map((edge, index) => ({
       ...edge,
-      id: `edge-${idMapping.get(edge.source)}-${idMapping.get(edge.target)}-${Date.now()}`,
+      id: `edge-${idMapping.get(edge.source)}-${idMapping.get(edge.target)}-${Date.now()}-${index}`,
       source: idMapping.get(edge.source)!,
       target: idMapping.get(edge.target)!,
       selected: false,
