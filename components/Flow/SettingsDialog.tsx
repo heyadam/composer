@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Settings, Eye, EyeOff, Check, AlertCircle, X, RotateCcw } from "lucide-react";
+import { Settings, Eye, EyeOff, Check, AlertCircle, X, RotateCcw, Lock, Unlock } from "lucide-react";
 import { BackgroundVariant } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,11 +42,13 @@ const VARIANT_OPTIONS = [
 ];
 
 export function SettingsDialog() {
-  const { keys, setKey, removeKey, isDevMode, getKeyStatuses } = useApiKeys();
+  const { keys, setKey, removeKey, isDevMode, getKeyStatuses, unlockWithPassword, isUnlocking } = useApiKeys();
   const { settings: bgSettings, updateSettings: updateBgSettings, resetSettings: resetBgSettings } = useBackgroundSettings();
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const [isOpen, setIsOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const statuses = getKeyStatuses();
   const hasAnyKey = statuses.some((s) => s.hasKey);
@@ -72,6 +74,20 @@ export function SettingsDialog() {
 
   const toggleShowKey = (provider: string) => {
     setShowKeys((prev) => ({ ...prev, [provider]: !prev[provider] }));
+  };
+
+  const handleUnlock = async () => {
+    if (!password.trim()) {
+      setPasswordError("Enter a password");
+      return;
+    }
+    setPasswordError("");
+    const result = await unlockWithPassword(password.trim());
+    if (result.success) {
+      setPassword("");
+    } else {
+      setPasswordError(result.error || "Invalid password");
+    }
   };
 
   return (
@@ -101,7 +117,52 @@ export function SettingsDialog() {
           </TabsList>
 
           <TabsContent value="api" className="space-y-4 pt-4">
+            {/* Password unlock section */}
             {!isDevMode && !hasAnyKey && (
+              <div className="space-y-2 pb-4 border-b">
+                <div className="flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-muted-foreground" />
+                  <label className="text-sm font-medium">Unlock with password</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="password"
+                    placeholder="Enter password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setPasswordError("");
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleUnlock();
+                      }
+                    }}
+                    className="font-mono text-xs"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUnlock}
+                    disabled={isUnlocking || !password.trim()}
+                  >
+                    {isUnlocking ? (
+                      <span className="animate-pulse">...</span>
+                    ) : (
+                      <Unlock className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                {passwordError && (
+                  <p className="text-xs text-red-500">{passwordError}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Or add API keys manually below
+                </p>
+              </div>
+            )}
+
+            {!isDevMode && !hasAnyKey && !password && (
               <p className="text-sm text-amber-500 font-medium">
                 Add at least one API key to get started
               </p>

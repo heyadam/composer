@@ -20,4 +20,6 @@ export interface ApiKeysContextValue {
   getKeyStatuses: () => ApiKeyStatus[];
   hasRequiredKey: (provider: ProviderId) => boolean;
   isDevMode: boolean;
+  unlockWithPassword: (password: string) => Promise<{ success: boolean; error?: string }>;
+  isUnlocking: boolean;
 }

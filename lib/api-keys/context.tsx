@@ -16,6 +16,26 @@ import type {
 } from "./types";
 import { loadApiKeys, saveApiKeys, clearApiKeys } from "./storage";
 
+async function fetchEnvKeys(password: string): Promise<{ keys?: ApiKeys; error?: string }> {
+  try {
+    const response = await fetch("/api/auth-keys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { error: data.error || "Invalid password" };
+    }
+
+    return { keys: data.keys };
+  } catch {
+    return { error: "Failed to verify password" };
+  }
+}
+
 const PROVIDER_LABELS: Record<ProviderId, string> = {
   openai: "OpenAI",
   google: "Google Gemini",
@@ -26,6 +46,7 @@ const ApiKeysContext = createContext<ApiKeysContextValue | null>(null);
 
 export function ApiKeysProvider({ children }: { children: ReactNode }) {
   const [keys, setKeys] = useState<ApiKeys>({});
+  const [isUnlocking, setIsUnlocking] = useState(false);
   const [isDevMode] = useState(
     () => process.env.NEXT_PUBLIC_DEV_MODE === "true"
   );
@@ -72,6 +93,27 @@ export function ApiKeysProvider({ children }: { children: ReactNode }) {
     [keys, isDevMode]
   );
 
+  const unlockWithPassword = useCallback(
+    async (password: string): Promise<{ success: boolean; error?: string }> => {
+      setIsUnlocking(true);
+      try {
+        const result = await fetchEnvKeys(password);
+        if (result.error) {
+          return { success: false, error: result.error };
+        }
+        if (result.keys) {
+          // Set all keys from env
+          setKeys((prev) => ({ ...prev, ...result.keys }));
+          return { success: true };
+        }
+        return { success: false, error: "No keys returned" };
+      } finally {
+        setIsUnlocking(false);
+      }
+    },
+    []
+  );
+
   return (
     <ApiKeysContext.Provider
       value={{
@@ -82,6 +124,8 @@ export function ApiKeysProvider({ children }: { children: ReactNode }) {
         getKeyStatuses,
         hasRequiredKey,
         isDevMode,
+        unlockWithPassword,
+        isUnlocking,
       }}
     >
       {children}
