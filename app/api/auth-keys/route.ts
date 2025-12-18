@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const VALID_PASSWORD = process.env.API_KEYS_PASSWORD || "paper";
+const VALID_PASSWORD = process.env.API_KEYS_PASSWORD;
 
 export async function POST(request: NextRequest) {
   try {
+    // Fail closed if password not configured
+    if (!VALID_PASSWORD) {
+      return NextResponse.json(
+        { error: "Password unlock not configured" },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const { password } = body;
 
