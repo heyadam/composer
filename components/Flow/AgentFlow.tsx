@@ -70,7 +70,7 @@ const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
   "image-generation": { label: "AI Image", prompt: "", outputFormat: "webp", size: "1024x1024", quality: "low", partialImages: 3 },
   "ai-logic": { label: "AI Logic", transformPrompt: "", codeExpanded: false },
   "comment": { label: "Comment", description: "", color: "gray" },
-  "react-component": { label: "React Component", userPrompt: "", provider: "anthropic", model: "claude-sonnet-4-5" },
+  "react-component": { label: "React Component", userPrompt: "", provider: "anthropic", model: "claude-sonnet-4-5", stylePreset: "simple" },
 };
 
 export function AgentFlow() {

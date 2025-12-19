@@ -58,7 +58,7 @@ export function ResponsesContent({ entries }: ResponsesContentProps) {
       className="flex-1 p-3 space-y-3 overflow-auto"
     >
       {entries.map((entry) => (
-        <Message key={entry.id} from="assistant">
+        <Message key={entry.id} from="assistant" className="mx-auto">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-medium text-muted-foreground">
               {entry.nodeLabel}
@@ -72,7 +72,7 @@ export function ResponsesContent({ entries }: ResponsesContentProps) {
           </div>
           <MessageContent
             className={cn(
-              "rounded-lg border p-3",
+              "w-full rounded-lg border p-3",
               entry.status === "running" && "bg-primary/5 border-primary/20",
               entry.status === "success" && "bg-emerald-500/5 border-emerald-500/20",
               entry.status === "error" && "bg-destructive/5 border-destructive/20"

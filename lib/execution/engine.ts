@@ -406,12 +406,14 @@ async function executeNode(
 
       const provider = (node.data.provider as string) || "openai";
       const model = (node.data.model as string) || "gpt-5.2";
+      const stylePreset = (node.data.stylePreset as string) || "simple";
 
       const requestBody = {
         type: "react-component" as const,
         inputs: { prompt: promptInput, system: effectiveSystemPrompt },
         provider,
         model,
+        stylePreset,
         apiKeys,
       };
 

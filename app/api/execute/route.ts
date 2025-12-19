@@ -281,22 +281,55 @@ export async function POST(request: NextRequest) {
     }
 
     if (type === "react-component") {
-      const { inputs, provider, model } = body;
+      const { inputs, provider, model, stylePreset } = body;
       const promptInput = inputs?.prompt ?? "";
       const userSystemPrompt = inputs?.system ?? "";
+
+      // Style-specific instructions
+      const styleInstructions: Record<string, string> = {
+        simple: `STYLING (Vercel/v0 inspired):
+- Clean, minimal, modern aesthetic
+- Use neutral color palette: zinc/slate/gray backgrounds, subtle borders
+- Soft shadows: shadow-sm, shadow-md with low opacity
+- Rounded corners: rounded-lg or rounded-xl
+- Proper spacing: consistent padding (p-4, p-6) and gaps (gap-4)
+- Typography: font-medium for labels, text-sm for secondary text
+- Subtle hover states: hover:bg-zinc-100 dark:hover:bg-zinc-800
+- Border colors: border-zinc-200 dark:border-zinc-800
+- Focus rings: focus:ring-2 focus:ring-zinc-900
+- Buttons: bg-zinc-900 text-white hover:bg-zinc-800 rounded-lg
+- Cards: bg-white dark:bg-zinc-950 border rounded-xl p-6
+- Keep it sophisticated and professional`,
+
+        none: `STYLING:
+- Do NOT add any CSS classes or inline styles
+- Use plain HTML elements without styling
+- Focus purely on structure and functionality
+- No Tailwind, no inline styles, no CSS`,
+
+        robust: `STYLING:
+- Create a polished, production-ready UI
+- Use Tailwind CSS with animations and transitions
+- Include hover states, focus states, and visual feedback
+- Add shadows, gradients, and modern design patterns
+- Make it responsive and accessible
+- Include loading states and error handling where appropriate`,
+      };
+
+      const selectedStyle = styleInstructions[stylePreset || "simple"] || styleInstructions.simple;
 
       // Build comprehensive system prompt for React component generation
       const systemPrompt = `You are an expert React component developer. Generate clean, functional React components.
 
 RULES:
 1. Generate a single React functional component
-2. Use inline styles or Tailwind CSS classes for styling
-3. The component should be self-contained (no external imports except React)
-4. Export the component as default: \`export default function Component() {...}\`
-5. Use modern React patterns (hooks, functional components)
-6. Include helpful comments for complex logic
-7. Make components responsive when appropriate
-8. Handle edge cases gracefully
+2. The component should be self-contained (no external imports except React)
+3. Export the component as default: \`export default function Component() {...}\`
+4. Use modern React patterns (hooks, functional components)
+5. Include helpful comments for complex logic
+6. Handle edge cases gracefully
+
+${selectedStyle}
 
 IMPORTANT:
 - Do NOT use external dependencies (no axios, lodash, etc.)
