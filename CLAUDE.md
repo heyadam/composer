@@ -48,7 +48,9 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 - Color-coded handles (cyan/purple/amber) with connection highlighting
 - Used by PromptNode for user prompt and system instructions inputs
 
-**Provider Configuration** (`lib/providers.ts`): Centralized config for AI providers and models. Supports OpenAI, Google, and Anthropic with provider-specific options (verbosity, thinking).
+**Provider Configuration** (`lib/providers.ts`): Centralized config for AI providers and models. Supports OpenAI, Google, and Anthropic with provider-specific options:
+- OpenAI: `verbosity`, `thinking`
+- Google Gemini: `thinkingLevel` (Gemini 3), `thinkingBudget` (Gemini 2.5), `safetyPreset`
 
 **IMPORTANT: Always consult `AI_MODELS.md` for the authoritative list of model IDs.** Do not hardcode or assume model names - refer to AI_MODELS.md for correct, up-to-date model identifiers when working with providers.
 
@@ -118,7 +120,8 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 **Example Flow** (`lib/example-flow.ts`): Default flow configuration loaded on startup.
 
 **API Route** (`app/api/execute/route.ts`): Server-side execution handler for text-generation and image-generation nodes:
-- Text generation nodes: Uses Vercel AI SDK with `streamText` for real-time streaming responses. Supports OpenAI, Google, and Anthropic providers with provider-specific options (verbosity, thinking).
+- Text generation nodes: Uses Vercel AI SDK with `streamText` for real-time streaming responses. Supports OpenAI, Google, and Anthropic providers with provider-specific options.
+- Google Gemini thinking: When thinking is enabled, streams NDJSON with separate `reasoning` and `text` chunks. Auto-enables `includeThoughts` when `thinkingLevel` or `thinkingBudget` is set.
 - Image generation nodes: OpenAI (Responses API with streaming partial images) and Google Gemini. Configurable aspect ratio, quality, format, and partial image count.
 
 ### Type System
@@ -129,11 +132,19 @@ Flow types in `types/flow.ts` define node data interfaces with execution state t
 - `userPrompt`: User message content (used when prompt input not connected)
 - `systemPrompt`: System instructions (used when system input not connected)
 - `provider`, `model`: AI provider and model selection
-- `verbosity`, `thinking`: Provider-specific options
+- `verbosity`, `thinking`: OpenAI-specific options
+- `googleThinkingConfig`: Google-specific thinking options (`thinkingLevel`, `thinkingBudget`, `includeThoughts`)
+- `googleSafetyPreset`: Safety filtering level (`default`, `strict`, `relaxed`, `none`)
+- `executionReasoning`: Captured thinking/reasoning output from models that support it
 
 ### UI Components
 
 Uses shadcn/ui components in `components/ui/` with Tailwind CSS v4. Import alias `@/*` maps to project root.
+
+**ThinkingSummary** (`components/ThinkingSummary.tsx`): Reusable collapsible component for displaying AI thinking/reasoning output:
+- Props: `reasoning` (required), `defaultExpanded`, `maxHeight`, `className`
+- Shows a "Thinking" header with Brain icon, expands to show full reasoning text
+- Used in PromptNode footer when Google Gemini thinking is enabled
 
 **Content Design**: When adding or modifying UI text (labels, placeholders, descriptions, tooltips, button text), follow the standards in `CONTENT_DESIGN.md`. This ensures consistent tone and formatting across the application.
 
