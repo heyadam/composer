@@ -34,6 +34,8 @@ export interface NodeExecutionState {
   status: ExecutionStatus;
   output?: string;
   error?: string;
+  /** Reasoning/thinking output (for models that support it) */
+  reasoning?: string;
   /** The type of node producing the content (for downstream outputs) */
   sourceType?: string;
   /** Debug information for API calls */

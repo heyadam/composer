@@ -11,6 +11,7 @@ import {
 
 interface ExecuteNodeResult {
   output: string;
+  reasoning?: string;
   debugInfo?: DebugInfo;
 }
 
@@ -58,7 +59,7 @@ async function executeNode(
   inputs: Record<string, string>,
   context: Record<string, unknown>,
   apiKeys?: ApiKeys,
-  onStreamUpdate?: (output: string, debugInfo?: DebugInfo) => void,
+  onStreamUpdate?: (output: string, debugInfo?: DebugInfo, reasoning?: string) => void,
   signal?: AbortSignal
 ): Promise<ExecuteNodeResult> {
   switch (node.type) {
@@ -150,23 +151,63 @@ async function executeNode(
         throw new Error("No response body");
       }
 
+      // Check if response is NDJSON (Google with thinking enabled)
+      const contentType = response.headers.get("content-type") || "";
+      const isNdjson = contentType.includes("application/x-ndjson");
+
       // Stream the response
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let fullOutput = "";
+      let fullReasoning = "";
       const rawChunks: string[] = [];
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      if (isNdjson) {
+        // Parse NDJSON stream with text and reasoning parts
+        let buffer = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        const chunk = decoder.decode(value);
-        rawChunks.push(chunk);
-        fullOutput += chunk;
-        streamChunksReceived++;
-        debugInfo.streamChunksReceived = streamChunksReceived;
-        debugInfo.rawResponseBody = rawChunks.join("");
-        onStreamUpdate?.(fullOutput, debugInfo);
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const data = JSON.parse(line);
+              rawChunks.push(line);
+              streamChunksReceived++;
+              debugInfo.streamChunksReceived = streamChunksReceived;
+
+              if (data.type === "reasoning") {
+                fullReasoning += data.text;
+              } else if (data.type === "text") {
+                fullOutput += data.text;
+              }
+
+              debugInfo.rawResponseBody = rawChunks.join("\n");
+              onStreamUpdate?.(fullOutput, debugInfo, fullReasoning);
+            } catch (e) {
+              console.error("Failed to parse NDJSON line:", e);
+            }
+          }
+        }
+      } else {
+        // Regular text stream
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          rawChunks.push(chunk);
+          fullOutput += chunk;
+          streamChunksReceived++;
+          debugInfo.streamChunksReceived = streamChunksReceived;
+          debugInfo.rawResponseBody = rawChunks.join("");
+          onStreamUpdate?.(fullOutput, debugInfo);
+        }
       }
 
       debugInfo.endTime = Date.now();
@@ -177,7 +218,7 @@ async function executeNode(
         throw new Error("Model returned empty response. The prompt combination may have confused the model.");
       }
 
-      return { output: fullOutput, debugInfo };
+      return { output: fullOutput, reasoning: fullReasoning || undefined, debugInfo };
     }
 
     case "image-generation": {
@@ -626,10 +667,11 @@ export async function executeFlow(
         inputs,
         context,
         apiKeys,
-        (streamedOutput, debugInfo) => {
+        (streamedOutput, debugInfo, reasoning) => {
           onNodeStateChange(node.id, {
             status: "running",
             output: streamedOutput,
+            reasoning,
             debugInfo,
           });
           for (const outputNode of downstreamOutputs) {
@@ -651,6 +693,7 @@ export async function executeFlow(
       onNodeStateChange(node.id, {
         status: "success",
         output: result.output,
+        reasoning: result.reasoning,
         debugInfo: result.debugInfo,
       });
 

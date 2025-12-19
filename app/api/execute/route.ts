@@ -79,17 +79,23 @@ export async function POST(request: NextRequest) {
 
       // Build provider options for Google
       const googleOptions: GoogleGenerativeAIProviderOptions = {};
+      let googleThinkingEnabled = false;
       if (provider === "google") {
         // Thinking config
         if (googleThinkingConfig) {
           const thinkingConfig: GoogleGenerativeAIProviderOptions["thinkingConfig"] = {};
           if (googleThinkingConfig.thinkingLevel) {
             thinkingConfig.thinkingLevel = googleThinkingConfig.thinkingLevel;
+            googleThinkingEnabled = true;
           }
-          if (googleThinkingConfig.thinkingBudget !== undefined) {
+          if (googleThinkingConfig.thinkingBudget !== undefined && googleThinkingConfig.thinkingBudget > 0) {
             thinkingConfig.thinkingBudget = googleThinkingConfig.thinkingBudget;
+            googleThinkingEnabled = true;
           }
-          if (googleThinkingConfig.includeThoughts !== undefined) {
+          // Auto-enable includeThoughts when thinking is enabled
+          if (googleThinkingEnabled) {
+            thinkingConfig.includeThoughts = true;
+          } else if (googleThinkingConfig.includeThoughts !== undefined) {
             thinkingConfig.includeThoughts = googleThinkingConfig.includeThoughts;
           }
           if (Object.keys(thinkingConfig).length > 0) {
@@ -156,6 +162,39 @@ export async function POST(request: NextRequest) {
         }
 
         const result = streamText(streamOptions);
+
+        // If Google thinking is enabled, use custom stream to include reasoning
+        if (googleThinkingEnabled) {
+          const encoder = new TextEncoder();
+          const readableStream = new ReadableStream({
+            async start(controller) {
+              try {
+                for await (const part of result.fullStream) {
+                  if (part.type === "reasoning-delta") {
+                    // Send reasoning chunk
+                    const data = JSON.stringify({ type: "reasoning", text: part.text });
+                    controller.enqueue(encoder.encode(data + "\n"));
+                  } else if (part.type === "text-delta") {
+                    // Send text chunk
+                    const data = JSON.stringify({ type: "text", text: part.text });
+                    controller.enqueue(encoder.encode(data + "\n"));
+                  }
+                }
+                controller.close();
+              } catch (error) {
+                console.error("Stream error:", error);
+                controller.error(error);
+              }
+            },
+          });
+
+          return new Response(readableStream, {
+            headers: {
+              "Content-Type": "application/x-ndjson",
+              "Transfer-Encoding": "chunked",
+            },
+          });
+        }
 
         return result.toTextStreamResponse();
       } catch (streamError) {

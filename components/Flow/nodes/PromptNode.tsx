@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
 import type { PromptNodeData } from "@/types/flow";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Brain, ChevronDown, ChevronRight } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
 import { InputWithHandle } from "./InputWithHandle";
@@ -26,6 +27,7 @@ type PromptNodeType = Node<PromptNodeData, "text-generation">;
 export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
   const { updateNodeData } = useReactFlow();
   const edges = useEdges();
+  const [reasoningExpanded, setReasoningExpanded] = useState(false);
 
   // Check which input handles are connected
   const isPromptConnected = edges.some(
@@ -69,10 +71,37 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
           <p className="text-xs text-destructive whitespace-pre-wrap line-clamp-4">
             {data.executionError}
           </p>
-        ) : data.executionOutput ? (
-          <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4">
-            {data.executionOutput}
-          </p>
+        ) : (data.executionOutput || data.executionReasoning) ? (
+          <div className="space-y-2">
+            {/* Reasoning section (collapsible) */}
+            {data.executionReasoning && (
+              <div className="border border-purple-500/20 rounded-md overflow-hidden">
+                <button
+                  onClick={() => setReasoningExpanded(!reasoningExpanded)}
+                  className="nodrag w-full flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 transition-colors"
+                >
+                  <Brain className="h-3 w-3" />
+                  <span>Thinking</span>
+                  {reasoningExpanded ? (
+                    <ChevronDown className="h-3 w-3 ml-auto" />
+                  ) : (
+                    <ChevronRight className="h-3 w-3 ml-auto" />
+                  )}
+                </button>
+                {reasoningExpanded && (
+                  <p className="px-2 py-1.5 text-xs text-purple-600/80 dark:text-purple-400/80 whitespace-pre-wrap max-h-[120px] overflow-y-auto">
+                    {data.executionReasoning}
+                  </p>
+                )}
+              </div>
+            )}
+            {/* Output */}
+            {data.executionOutput && (
+              <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4">
+                {data.executionOutput}
+              </p>
+            )}
+          </div>
         ) : null
       }
     >

@@ -75,6 +75,8 @@ export interface PromptNodeData extends Record<string, unknown>, ExecutionData {
   googleSafetySettings?: GoogleSafetySetting[];
   googleSafetyPreset?: "default" | "strict" | "relaxed" | "none";
   googleStructuredOutputs?: boolean;
+  // Reasoning/thinking output (for models that support it)
+  executionReasoning?: string;
 }
 
 export interface ImageNodeData extends Record<string, unknown>, ExecutionData {

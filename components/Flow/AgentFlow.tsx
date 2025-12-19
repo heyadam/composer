@@ -803,6 +803,7 @@ export function AgentFlow() {
                   executionStatus: state.status,
                   executionOutput: state.output,
                   executionError: state.error,
+                  executionReasoning: state.reasoning,
                 },
               }
             : node
