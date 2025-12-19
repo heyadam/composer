@@ -8,12 +8,10 @@ export const PROVIDERS = {
     ],
   },
   google: {
-    label: "Google Gemini",
+    label: "Google",
     models: [
-      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", supportsVerbosity: false, supportsThinking: false, supportsThinkingBudget: true, supportsThinkingLevel: false },
-      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", supportsVerbosity: false, supportsThinking: false, supportsThinkingBudget: true, supportsThinkingLevel: false },
-      { value: "gemini-3-pro-preview", label: "Gemini 3 Pro", supportsVerbosity: false, supportsThinking: false, supportsThinkingBudget: false, supportsThinkingLevel: true },
       { value: "gemini-3-flash-preview", label: "Gemini 3 Flash", supportsVerbosity: false, supportsThinking: false, supportsThinkingBudget: false, supportsThinkingLevel: true },
+      { value: "gemini-3-pro-preview", label: "Gemini 3 Pro", supportsVerbosity: false, supportsThinking: false, supportsThinkingBudget: false, supportsThinkingLevel: true },
     ],
   },
   anthropic: {
@@ -27,8 +25,8 @@ export const PROVIDERS = {
 } as const;
 
 export type ProviderId = keyof typeof PROVIDERS;
-export const DEFAULT_PROVIDER: ProviderId = "openai";
-export const DEFAULT_MODEL = "gpt-5.2";
+export const DEFAULT_PROVIDER: ProviderId = "google";
+export const DEFAULT_MODEL = "gemini-3-flash-preview";
 
 export const VERBOSITY_OPTIONS = [
   { value: "low", label: "Low" },
@@ -41,9 +39,9 @@ export const THINKING_OPTIONS = [
   { value: "on", label: "On" },
 ] as const;
 
-// Google Gemini-specific options
+// Google Gemini 3 thinking level options
+// Both Flash and Pro support: low, high
 export const GOOGLE_THINKING_LEVEL_OPTIONS = [
-  { value: "off", label: "Off" },
   { value: "low", label: "Low" },
   { value: "high", label: "High" },
 ] as const;
@@ -111,7 +109,7 @@ export const IMAGE_PROVIDERS = {
     ],
   },
   google: {
-    label: "Google Gemini",
+    label: "Google",
     models: [
       { value: "gemini-2.5-flash-image", label: "Gemini 2.5 Flash", supportsPartialImages: false },
       { value: "gemini-3-pro-image-preview", label: "Gemini 3 Pro", supportsPartialImages: false },

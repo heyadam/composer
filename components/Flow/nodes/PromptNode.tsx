@@ -167,13 +167,13 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
           {currentModelConfig?.supportsThinkingLevel && (
             <ConfigSelect
               label="Thinking"
-              value={data.googleThinkingConfig?.thinkingLevel || "off"}
+              value={data.googleThinkingConfig?.thinkingLevel || "low"}
               options={GOOGLE_THINKING_LEVEL_OPTIONS}
               onChange={(val) =>
                 updateNodeData(id, {
                   googleThinkingConfig: {
                     ...data.googleThinkingConfig,
-                    thinkingLevel: val === "off" ? undefined : (val as "low" | "high"),
+                    thinkingLevel: val as "low" | "high",
                   },
                 })
               }

@@ -86,7 +86,8 @@ export async function POST(request: NextRequest) {
           const thinkingConfig: GoogleGenerativeAIProviderOptions["thinkingConfig"] = {};
           if (googleThinkingConfig.thinkingLevel) {
             thinkingConfig.thinkingLevel = googleThinkingConfig.thinkingLevel;
-            googleThinkingEnabled = true;
+            // Enable thinking stream for high level (produces substantial reasoning)
+            googleThinkingEnabled = googleThinkingConfig.thinkingLevel === "high";
           }
           if (googleThinkingConfig.thinkingBudget !== undefined && googleThinkingConfig.thinkingBudget > 0) {
             thinkingConfig.thinkingBudget = googleThinkingConfig.thinkingBudget;
