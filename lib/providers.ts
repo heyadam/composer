@@ -13,6 +13,7 @@ export const PROVIDERS = {
       { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", supportsVerbosity: false, supportsThinking: false },
       { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", supportsVerbosity: false, supportsThinking: false },
       { value: "gemini-3-pro-preview", label: "Gemini 3 Pro", supportsVerbosity: false, supportsThinking: false },
+      { value: "gemini-3-flash-preview", label: "Gemini 3 Flash", supportsVerbosity: false, supportsThinking: false },
     ],
   },
   anthropic: {
