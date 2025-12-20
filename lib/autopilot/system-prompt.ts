@@ -112,6 +112,7 @@ Custom code transformation node. Uses Claude to generate JavaScript code based o
 
 ### 6. react-component (React Component)
 AI-powered React component generator. Takes a description and generates a self-contained React functional component that renders in a sandboxed iframe. Useful for creating dynamic UI previews, dashboards, or interactive visualizations.
+**Default: provider="anthropic", model="claude-haiku-4-5"**
 \`\`\`typescript
 {
   type: "react-component",
@@ -119,8 +120,8 @@ AI-powered React component generator. Takes a description and generates a self-c
     label: string,            // Display name
     userPrompt?: string,      // Component description (used when prompt input not connected)
     systemPrompt?: string,    // Additional style/behavior instructions
-    provider?: "openai" | "google" | "anthropic",
-    model?: string            // Model ID
+    provider?: "openai" | "google" | "anthropic",  // Default: "anthropic"
+    model?: string            // Model ID - Default: "claude-haiku-4-5"
   }
 }
 \`\`\`

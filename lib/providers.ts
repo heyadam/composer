@@ -28,6 +28,10 @@ export type ProviderId = keyof typeof PROVIDERS;
 export const DEFAULT_PROVIDER: ProviderId = "google";
 export const DEFAULT_MODEL = "gemini-3-flash-preview";
 
+// React component node defaults
+export const DEFAULT_REACT_PROVIDER: ProviderId = "anthropic";
+export const DEFAULT_REACT_MODEL = "claude-haiku-4-5";
+
 export const VERBOSITY_OPTIONS = [
   { value: "low", label: "Low" },
   { value: "medium", label: "Medium" },

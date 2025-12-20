@@ -8,7 +8,7 @@ import { PortRow } from "./PortLabel";
 import { InputWithHandle } from "./InputWithHandle";
 import { ProviderModelSelector } from "./ProviderModelSelector";
 import { cn } from "@/lib/utils";
-import { PROVIDERS, DEFAULT_PROVIDER, DEFAULT_MODEL, type ProviderId } from "@/lib/providers";
+import { PROVIDERS, DEFAULT_REACT_PROVIDER, DEFAULT_REACT_MODEL, type ProviderId } from "@/lib/providers";
 import {
   Select,
   SelectContent,
@@ -41,8 +41,8 @@ export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
     (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
   );
 
-  const currentProvider = (data.provider || DEFAULT_PROVIDER) as ProviderId;
-  const currentModel = data.model || DEFAULT_MODEL;
+  const currentProvider = (data.provider || DEFAULT_REACT_PROVIDER) as ProviderId;
+  const currentModel = data.model || DEFAULT_REACT_MODEL;
   const currentStylePreset = data.stylePreset || "simple";
 
   return (
