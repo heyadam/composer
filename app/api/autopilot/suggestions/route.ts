@@ -48,6 +48,7 @@ Good examples (4-8 words):
 - "Compare haikus from different AIs"
 - "Create movie posters from plots"
 - "Design album art from lyrics"
+- "Generate image then stylize it"
 
 BAD (too long, don't do this):
 - "Add a Theme Switcher node between Generator and Preview to transform components"
