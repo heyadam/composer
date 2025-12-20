@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronDown, Code, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Shimmer } from "@/components/ai-elements/shimmer";
 
 /**
  * Synchronous JSON syntax highlighter
@@ -178,9 +179,13 @@ export function CollapsibleJson({ json, isStreaming }: CollapsibleJsonProps) {
           )}
         />
         <Code className="h-3 w-3" />
-        <span>
-          Composer Agent ({isStreaming ? `${lineCount}+` : lineCount} lines)
-        </span>
+        {isStreaming ? (
+          <Shimmer as="span" duration={1.5}>
+            Composer Agent Running
+          </Shimmer>
+        ) : (
+          <span>Composer Agent ({lineCount} lines)</span>
+        )}
       </button>
 
       {isExpanded && (

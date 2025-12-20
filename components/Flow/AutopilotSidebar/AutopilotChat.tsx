@@ -19,7 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Loader } from "@/components/ai-elements/loader";
+import { Shimmer } from "@/components/ai-elements/shimmer";
 import {
   Check,
   Sparkles,
@@ -329,10 +329,9 @@ export function AutopilotChat({
               </Message>
             ))}
             {isLoading && messages[messages.length - 1]?.content === "" && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader className="h-4 w-4" />
-                <span className="text-sm">Thinking...</span>
-              </div>
+              <Shimmer className="text-sm" duration={1.5}>
+                Thinking...
+              </Shimmer>
             )}
             <div ref={bottomRef} />
           </div>
