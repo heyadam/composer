@@ -979,13 +979,20 @@ export function AgentFlow() {
 
   // Flow file operations
   const handleNewFlow = useCallback(() => {
-    // Reset to default flow
-    setNodes(initialNodes);
-    setEdges(initialEdges);
-    setFlowMetadata(defaultFlow.metadata as FlowMetadata);
+    // Start with a blank canvas
+    const now = new Date().toISOString();
+    setNodes([]);
+    setEdges([]);
+    setFlowMetadata({
+      name: "Untitled Flow",
+      description: "",
+      createdAt: now,
+      updatedAt: now,
+      schemaVersion: 1,
+    });
     resetExecution();
     setAutopilotHighlightedIds(new Set());
-    updateIdCounter(initialNodes);
+    updateIdCounter([]);
   }, [setNodes, setEdges, resetExecution]);
 
   const handleSaveFlow = useCallback((name: string) => {
