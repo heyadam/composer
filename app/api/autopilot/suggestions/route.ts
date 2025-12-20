@@ -20,52 +20,50 @@ export interface Suggestion {
 }
 
 const DEFAULT_SUGGESTIONS: Suggestion[] = [
-  { icon: "FileText", text: "Summarize the input text" },
-  { icon: "Image", text: "Generate an image from text" },
-  { icon: "Languages", text: "Translate text to Spanish" },
-  { icon: "BarChart", text: "Analyze sentiment of input" },
+  { icon: "Image", text: "Generate portraits in 3 art styles" },
+  { icon: "Sparkles", text: "Write a poem and illustrate it" },
+  { icon: "Languages", text: "Translate a story to 5 languages" },
+  { icon: "Bot", text: "Compare haikus from different AIs" },
 ];
 
-// Valid icon names that map to lucide-react icons
+// Valid icon names that map to lucide-react icons (no Code icon to discourage code suggestions)
 const VALID_ICONS = [
   "FileText", "Image", "Languages", "BarChart", "Palette", "RefreshCw",
-  "Sparkles", "Bot", "Mail", "Lightbulb", "Code", "MessageSquare",
-  "Search", "Filter", "Wand2", "Pencil", "BookOpen", "Mic", "Video",
-  "Music", "Globe", "Zap", "Heart", "Star", "Tag", "List"
+  "Sparkles", "Bot", "Mail", "Lightbulb", "MessageSquare",
+  "Search", "Wand2", "Pencil", "BookOpen", "Music", "Globe", "Zap", "GitBranch"
 ];
 
-const SYSTEM_PROMPT = `You are an assistant helping users with an AI workflow builder called Composer. Generate 4 short, actionable prompt suggestions for what workflows they could build.
+const SYSTEM_PROMPT = `Generate 4 creative workflow ideas for Composer, a visual tool where users connect AI nodes to build pipelines.
 
-Guidelines:
-- Each suggestion needs an icon name and text
-- Text should be 3-8 words starting with an action verb (Summarize, Generate, Translate, Analyze, Create, Build, etc.)
-- Be specific but concise
-- If the flow is empty or just has an input node, suggest common starter workflows
-- If the flow already has nodes, suggest ways to extend or modify it
-- Don't repeat what the flow already does
-- Suggestions should be diverse (mix of text processing, image generation, translation, analysis, etc.)
+IMPORTANT - Focus on CREATIVE, non-technical workflows:
+- Image generation and visual art
+- Storytelling with illustrations
+- Multi-language content
+- Comparing AI model outputs side-by-side
+- Text-to-image pipelines
+- Creative writing with visuals
 
-Valid icon names (use exactly these):
-- FileText: text/documents/summarize
-- Image: images/photos/visual
-- Languages: translation/multilingual
-- BarChart: analysis/data/charts
-- Palette: creative/design/art
-- Sparkles: enhance/improve/magic
-- Bot: AI/automation
-- Mail: email/messages
-- Lightbulb: ideas/brainstorm
-- Code: programming/technical
-- MessageSquare: chat/conversation
-- Search: find/lookup
-- Wand2: transform/convert
-- Pencil: write/edit
-- BookOpen: reading/learning
-- Globe: web/international
-- Zap: fast/quick/action
+DO NOT suggest:
+- Code generation or programming
+- React components or web development
+- Technical/developer tasks
+- Data processing or APIs
+- Anything code-related
 
-Output format (JSON array only, no markdown, no explanation):
-[{"icon":"FileText","text":"Summarize the input text"},{"icon":"Image","text":"Generate an image from text"},{"icon":"Languages","text":"Translate to Spanish"},{"icon":"BarChart","text":"Analyze sentiment"}]`;
+Example good suggestions:
+- "Generate portraits in 3 art styles"
+- "Write a poem and illustrate it"
+- "Translate a story to 5 languages"
+- "Compare haikus from different AIs"
+- "Create a comic strip from a plot"
+- "Design album art from song lyrics"
+- "Generate travel postcards from descriptions"
+- "Write and visualize a children's story"
+
+Return JSON array with icon and text. Icons: Image, Sparkles, Languages, Bot, Palette, Wand2, Lightbulb, Pencil, BookOpen, Globe.
+
+Output (JSON only, no markdown):
+[{"icon":"Image","text":"..."},{"icon":"Sparkles","text":"..."},{"icon":"Languages","text":"..."},{"icon":"Palette","text":"..."}]`;
 
 function buildPrompt(flowSnapshot: FlowSnapshot): string {
   const nodeCount = flowSnapshot.nodes.length;

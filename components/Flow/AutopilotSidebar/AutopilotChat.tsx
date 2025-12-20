@@ -45,6 +45,7 @@ import {
   Pencil,
   BookOpen,
   Globe,
+  GitBranch,
   type LucideIcon,
 } from "lucide-react";
 import { ThinkingSummary } from "@/components/ThinkingSummary";
@@ -72,6 +73,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   BookOpen,
   Globe,
   Zap,
+  GitBranch,
 };
 
 const MODELS: { id: AutopilotModel; name: string }[] = [

@@ -11,10 +11,10 @@ export interface Suggestion {
 }
 
 const DEFAULT_SUGGESTIONS: Suggestion[] = [
-  { icon: "FileText", text: "Summarize the input text" },
-  { icon: "Image", text: "Generate an image from text" },
-  { icon: "Languages", text: "Translate text to Spanish" },
-  { icon: "BarChart", text: "Analyze sentiment of input" },
+  { icon: "Image", text: "Generate portraits in 3 art styles" },
+  { icon: "Sparkles", text: "Write a poem and illustrate it" },
+  { icon: "Languages", text: "Translate a story to 5 languages" },
+  { icon: "Bot", text: "Compare haikus from different AIs" },
 ];
 
 interface UseSuggestionsOptions {
