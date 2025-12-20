@@ -140,16 +140,10 @@ Check each item and report any issues:
    - Are data types correct? (string for text, image for images, response for preview-output)
    - Are node types valid? Must be one of: text-input, image-input, text-generation, image-generation, ai-logic, preview-output, react-component
 
-3. **MODEL ID VALIDATION** (CRITICAL - check every node with provider/model)
-   - For text-generation and react-component nodes:
-     - OpenAI models: ${JSON.stringify(VALID_TEXT_MODELS.openai)}
-     - Google models: ${JSON.stringify(VALID_TEXT_MODELS.google)}
-     - Anthropic models: ${JSON.stringify(VALID_TEXT_MODELS.anthropic)}
-   - For image-generation nodes:
-     - OpenAI models: ${JSON.stringify(VALID_IMAGE_MODELS.openai)}
-     - Google models: ${JSON.stringify(VALID_IMAGE_MODELS.google)}
-   - REJECT any model ID not in these exact lists (e.g., "gemini-2.5-flash" is INVALID)
-   - If provider is set, model MUST also be set and valid for that provider
+3. **MODEL ID VALIDATION** (check provider/model pairs)
+   - Valid text models: openai=${JSON.stringify(VALID_TEXT_MODELS.openai)}, google=${JSON.stringify(VALID_TEXT_MODELS.google)}, anthropic=${JSON.stringify(VALID_TEXT_MODELS.anthropic)}
+   - Valid image models: openai=${JSON.stringify(VALID_IMAGE_MODELS.openai)}, google=${JSON.stringify(VALID_IMAGE_MODELS.google)}
+   - Only flag if the model ID is NOT in the valid list for its provider
 
 4. **COMPLETENESS**
    - Are new nodes connected to the flow (not orphaned)?
@@ -163,25 +157,17 @@ Check each item and report any issues:
 
 ## Response Format
 
-Respond with ONLY a JSON object (no explanation):
-\`\`\`json
-{
-  "valid": true,
-  "issues": [],
-  "suggestions": []
-}
-\`\`\`
+Respond with ONLY valid JSON (no explanation, no markdown):
+{"valid": true, "issues": [], "suggestions": []}
 
-Or if there are problems:
-\`\`\`json
-{
-  "valid": false,
-  "issues": ["Issue 1 description", "Issue 2 description"],
-  "suggestions": ["How to fix issue 1"]
-}
-\`\`\`
+Or if there are REAL problems:
+{"valid": false, "issues": ["Issue description"], "suggestions": ["Fix suggestion"]}
 
-Be strict but fair. Only report actual problems, not style preferences.`;
+IMPORTANT:
+- Only report ACTUAL errors (wrong IDs, missing connections, invalid types)
+- Do NOT report something as invalid if it matches the valid list
+- Orphaned nodes are a warning, not necessarily invalid
+- When in doubt, mark as valid`;
 }
 
 /**

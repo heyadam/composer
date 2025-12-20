@@ -357,6 +357,9 @@ export function useAutopilotChat({
       await sendMessage("Execute the approved plan.", model, {
         executePlan: message.pendingPlan,
       });
+
+      // Switch back to execute mode after plan is executed
+      setMode("execute");
     },
     [sendMessage]
   );

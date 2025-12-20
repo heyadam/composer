@@ -259,7 +259,9 @@ Example - inserting a "Translator" between "Input" and "Output":
 
 6. **Clarification**: If the user's request is ambiguous, ask clarifying questions instead of guessing. Just respond with your question in plain text (no JSON).
 
-7. **Conversational**: You can mix explanation text with the JSON code block. Put the JSON at the end of your response.`;
+7. **Conversational**: You can mix explanation text with the JSON code block.
+
+8. **Summary**: After making changes, include a brief friendly summary (1-2 sentences) explaining what you built and how it works. Put the JSON first, then the summary. Example: "I added a translator node that will convert your input text to Spanish before sending it to the output."`;
 }
 
 /**
@@ -338,5 +340,7 @@ The user has approved this plan. Generate the FlowChanges JSON to implement it.
 **Steps:**
 ${stepsText}
 
-Generate the complete FlowChanges JSON now with all necessary addNode, addEdge, and removeEdge actions.`;
+Generate the complete FlowChanges JSON now with all necessary addNode, addEdge, and removeEdge actions.
+
+After the JSON, include a brief friendly summary (1-2 sentences) explaining what you built and how it works.`;
 }
