@@ -19,6 +19,7 @@ import {
   Code,
   ChevronDown,
   CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
 import { useState } from "react";
 import { Loader } from "@/components/ai-elements/loader";
@@ -261,8 +262,8 @@ export function ChangesPreview({
         )}
         {evaluationState === "retrying" && (
           <span className="flex items-center gap-1 text-xs text-amber-600">
-            <Loader className="h-3 w-3" />
-            Retrying...
+            <AlertTriangle className="h-3 w-3" />
+            Validation error
           </span>
         )}
         {evaluationState === "passed" && (

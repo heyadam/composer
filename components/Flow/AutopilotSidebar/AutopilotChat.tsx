@@ -94,6 +94,8 @@ interface AutopilotChatProps {
   onModeChange: (mode: AutopilotMode) => void;
   thinkingEnabled: boolean;
   onThinkingChange: (enabled: boolean) => void;
+  testModeEnabled?: boolean;
+  onTestModeChange?: (enabled: boolean) => void;
   onSendMessage: (content: string, model: AutopilotModel) => void;
   onApprovePlan: (messageId: string, model: AutopilotModel) => void;
   onUndoChanges: (messageId: string) => void;
@@ -114,6 +116,8 @@ export function AutopilotChat({
   onModeChange,
   thinkingEnabled,
   onThinkingChange,
+  testModeEnabled,
+  onTestModeChange,
   onSendMessage,
   onApprovePlan,
   onUndoChanges,
@@ -265,12 +269,12 @@ export function AutopilotChat({
 
                           {/* Validation errors - shown during retrying */}
                           {message.evaluationState === "retrying" && message.evaluationResult && (
-                            <div className="mt-2 space-y-2">
+                            <div className="mt-2">
                               <div className="rounded-lg border border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 p-3">
                                 <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 mb-2">
                                   <AlertTriangle className="h-4 w-4" />
                                   <span className="text-xs font-medium">
-                                    Validation Failed — Retrying
+                                    Validation flags
                                   </span>
                                 </div>
                                 <ul className="text-xs space-y-1 text-amber-800 dark:text-amber-300">
@@ -279,19 +283,6 @@ export function AutopilotChat({
                                   ))}
                                 </ul>
                               </div>
-                              {message.retryInstructions && (
-                                <div className="rounded-lg border border-blue-500/50 bg-blue-50 dark:bg-blue-950/20 p-3">
-                                  <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400 mb-2">
-                                    <RefreshCw className="h-4 w-4 animate-spin" />
-                                    <span className="text-xs font-medium">
-                                      Retry Instructions
-                                    </span>
-                                  </div>
-                                  <pre className="text-[10px] leading-tight text-blue-800 dark:text-blue-300 whitespace-pre-wrap overflow-x-auto max-h-[200px] overflow-y-auto">
-                                    {message.retryInstructions}
-                                  </pre>
-                                </div>
-                              )}
                             </div>
                           )}
 
@@ -460,6 +451,24 @@ export function AutopilotChat({
                 <Brain className="h-3 w-3" />
                 <span>Think</span>
               </Button>
+              {/* Dev-only test mode toggle */}
+              {process.env.NEXT_PUBLIC_DEV_MODE === "true" && onTestModeChange && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className={`h-6 px-2 text-[11px] gap-1 ${
+                    testModeEnabled
+                      ? "text-orange-600 hover:text-orange-700"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  onClick={() => onTestModeChange(!testModeEnabled)}
+                  title={testModeEnabled ? "Disable test mode (bad JSON)" : "Enable test mode (bad JSON)"}
+                >
+                  <AlertTriangle className="h-3 w-3" />
+                  <span>Test</span>
+                </Button>
+              )}
             </div>
             <PromptInputSubmit
               disabled={!inputValue.trim() || isLoading}

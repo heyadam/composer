@@ -105,6 +105,7 @@ export function useAutopilotChat({
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<AutopilotMode>("execute");
   const [thinkingEnabled, setThinkingEnabled] = useState(false);
+  const [testModeEnabled, setTestModeEnabled] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesRef = useRef<AutopilotMessage[]>([]);
   const { keys: apiKeys } = useApiKeys();
@@ -177,9 +178,16 @@ export function useAutopilotChat({
         const currentMode = options?.executePlan ? "execute" : mode;
         const shouldEnableThinking = currentMode === "plan" || thinkingEnabled;
 
+        // Test mode: Only inject bad JSON on first request, not retries
+        const isTestRequest = testModeEnabled && !options?.retryContext;
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (isTestRequest) {
+          headers["x-autopilot-test-mode"] = "bad-json";
+        }
+
         const response = await fetch("/api/autopilot", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             messages: apiMessages,
             flowSnapshot,
@@ -330,6 +338,18 @@ export function useAutopilotChat({
                   )
                 );
 
+                // Add a system message indicating auto-fix is happening
+                const retryMessageId = crypto.randomUUID();
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: retryMessageId,
+                    role: "assistant" as const,
+                    content: "Let's auto fix those flags...",
+                    timestamp: Date.now(),
+                  },
+                ]);
+
                 // Trigger retry after a brief delay to show "retrying" state
                 setIsLoading(false);
                 await new Promise((resolve) => setTimeout(resolve, 500));
@@ -426,7 +446,7 @@ export function useAutopilotChat({
         abortControllerRef.current = null;
       }
     },
-    [nodes, edges, isLoading, onApplyChanges, apiKeys, mode, thinkingEnabled]
+    [nodes, edges, isLoading, onApplyChanges, apiKeys, mode, thinkingEnabled, testModeEnabled]
   );
 
   const approvePlan = useCallback(
@@ -537,6 +557,8 @@ export function useAutopilotChat({
     setMode,
     thinkingEnabled,
     setThinkingEnabled,
+    testModeEnabled,
+    setTestModeEnabled,
     sendMessage,
     approvePlan,
     undoChanges,

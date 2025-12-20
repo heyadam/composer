@@ -7,6 +7,7 @@ import {
   buildExecuteFromPlanSystemPrompt,
 } from "@/lib/autopilot/system-prompt";
 import { buildRetryContext } from "@/lib/autopilot/evaluator";
+import { getRandomBadJson } from "@/lib/autopilot/test-fixtures";
 import type { AutopilotRequest, FlowChanges, EvaluationResult } from "@/lib/autopilot/types";
 
 interface ApiKeys {
@@ -43,6 +44,22 @@ export async function POST(request: NextRequest) {
         { error: "Flow snapshot is required" },
         { status: 400 }
       );
+    }
+
+    // Test mode: Return intentionally bad JSON for validator testing (dev only)
+    const testMode = request.headers.get("x-autopilot-test-mode");
+    if (testMode === "bad-json") {
+      const badJson = getRandomBadJson();
+      const mockResponse = `I'll create this flow for you.
+
+\`\`\`json
+${JSON.stringify(badJson, null, 2)}
+\`\`\`
+
+This should work perfectly!`;
+      return new Response(mockResponse, {
+        headers: { "Content-Type": "text/plain" },
+      });
     }
 
     // Build system prompt based on mode

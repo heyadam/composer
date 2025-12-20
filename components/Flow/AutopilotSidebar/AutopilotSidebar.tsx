@@ -48,6 +48,8 @@ export function AutopilotSidebar({
     setMode,
     thinkingEnabled,
     setThinkingEnabled,
+    testModeEnabled,
+    setTestModeEnabled,
     sendMessage,
     approvePlan,
     undoChanges,
@@ -142,6 +144,8 @@ export function AutopilotSidebar({
           onModeChange={setMode}
           thinkingEnabled={thinkingEnabled}
           onThinkingChange={setThinkingEnabled}
+          testModeEnabled={testModeEnabled}
+          onTestModeChange={setTestModeEnabled}
           onSendMessage={sendMessage}
           onApprovePlan={approvePlan}
           onUndoChanges={undoChanges}
