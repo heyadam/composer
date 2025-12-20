@@ -226,7 +226,7 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
                 <ChevronRight className="h-3.5 w-3.5" />
               )}
               <span className="flex items-center gap-1.5">
-                Eval
+                Validated
                 {data.evalResults.allPassed ? (
                   <CheckCircle2 className="h-3 w-3 text-green-500" />
                 ) : (
