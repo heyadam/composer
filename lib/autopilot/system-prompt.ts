@@ -261,7 +261,10 @@ Example - inserting a "Translator" between "Input" and "Output":
 
 7. **Conversational**: You can mix explanation text with the JSON code block.
 
-8. **Summary**: After making changes, include a brief friendly summary (1-2 sentences) explaining what you built and how it works. Put the JSON first, then the summary. Example: "I added a translator node that will convert your input text to Spanish before sending it to the output."`;
+8. **Response Structure**: Start with a brief sentence saying what you're doing, then the JSON code block, then a friendly summary explaining what you built. Example:
+   - "I'll add a translator node to convert your input to Spanish."
+   - [JSON code block]
+   - "The flow now takes your input and produces a Spanish translation."`;
 }
 
 /**

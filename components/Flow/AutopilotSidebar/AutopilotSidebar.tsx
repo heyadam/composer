@@ -142,6 +142,8 @@ export function AutopilotSidebar({
           onApprovePlan={approvePlan}
           onUndoChanges={undoChanges}
           onApplyAnyway={applyAnyway}
+          nodes={nodes}
+          edges={edges}
         />
         {/* Resize handle - on the right edge for left sidebar */}
         <div

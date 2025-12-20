@@ -14,7 +14,56 @@ import type {
   FlowPlan,
   EvaluationResult,
   EvaluationState,
+  RemoveEdgeAction,
+  AddNodeAction,
 } from "@/lib/autopilot/types";
+
+/**
+ * Enrich flow changes with labels for display.
+ * Populates sourceLabel/targetLabel on removeEdge actions from current flow state.
+ */
+function enrichFlowChanges(
+  changes: FlowChanges,
+  nodes: Node[],
+  edges: Edge[]
+): FlowChanges {
+  const addedNodes = changes.actions.filter(
+    (a): a is AddNodeAction => a.type === "addNode"
+  );
+
+  const getNodeLabel = (nodeId: string): string => {
+    // Check nodes being added in this action set
+    const pendingNode = addedNodes.find((a) => a.node.id === nodeId);
+    if (pendingNode) {
+      const data = pendingNode.node.data as { label?: string };
+      return data.label || pendingNode.node.type;
+    }
+    // Check existing nodes
+    const existingNode = nodes.find((n) => n.id === nodeId);
+    if (existingNode) {
+      const data = existingNode.data as { label?: string };
+      return data.label || (existingNode.type as string) || nodeId;
+    }
+    return nodeId;
+  };
+
+  return {
+    ...changes,
+    actions: changes.actions.map((action) => {
+      if (action.type === "removeEdge") {
+        const edge = edges.find((e) => e.id === action.edgeId);
+        if (edge) {
+          return {
+            ...action,
+            sourceLabel: getNodeLabel(edge.source),
+            targetLabel: getNodeLabel(edge.target),
+          } as RemoveEdgeAction;
+        }
+      }
+      return action;
+    }),
+  };
+}
 
 interface UseAutopilotChatOptions {
   nodes: Node[];
@@ -178,7 +227,8 @@ export function useAutopilotChat({
         let pendingChanges: FlowChanges | undefined;
 
         if (parseResult.type === "changes") {
-          pendingChanges = parseResult.data;
+          // Enrich with labels before edges are removed
+          pendingChanges = enrichFlowChanges(parseResult.data, nodes, edges);
 
           // Update message with pending changes and start evaluation
           setMessages((prev) =>

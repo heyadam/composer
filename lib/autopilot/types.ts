@@ -59,6 +59,9 @@ export interface AddEdgeAction {
 export interface RemoveEdgeAction {
   type: "removeEdge";
   edgeId: string;
+  // Labels are populated at parse time for display purposes
+  sourceLabel?: string;
+  targetLabel?: string;
 }
 
 export type FlowAction = AddNodeAction | AddEdgeAction | RemoveEdgeAction;
