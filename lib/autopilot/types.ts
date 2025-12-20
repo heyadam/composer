@@ -64,7 +64,14 @@ export interface RemoveEdgeAction {
   targetLabel?: string;
 }
 
-export type FlowAction = AddNodeAction | AddEdgeAction | RemoveEdgeAction;
+export interface RemoveNodeAction {
+  type: "removeNode";
+  nodeId: string;
+  // Label is populated at parse time for display purposes
+  nodeLabel?: string;
+}
+
+export type FlowAction = AddNodeAction | AddEdgeAction | RemoveEdgeAction | RemoveNodeAction;
 
 export interface FlowChanges {
   actions: FlowAction[];
@@ -72,9 +79,26 @@ export interface FlowChanges {
 }
 
 // Chat message types
+export interface RemovedNodeInfo {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  data: Record<string, unknown>;
+}
+
+export interface RemovedEdgeInfo {
+  id: string;
+  source: string;
+  target: string;
+  type?: string;
+  data?: { dataType: string };
+}
+
 export interface AppliedChangesInfo {
   nodeIds: string[];
   edgeIds: string[];
+  removedNodes?: RemovedNodeInfo[];
+  removedEdges?: RemovedEdgeInfo[];
 }
 
 // Evaluation result from LLM validator

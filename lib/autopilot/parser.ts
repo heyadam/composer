@@ -154,6 +154,10 @@ function isValidFlowAction(action: unknown): action is FlowAction {
     return isValidRemoveEdgeAction(candidate);
   }
 
+  if (candidate.type === "removeNode") {
+    return isValidRemoveNodeAction(candidate);
+  }
+
   return false;
 }
 
@@ -197,4 +201,8 @@ function isValidAddEdgeAction(action: Record<string, unknown>): boolean {
 
 function isValidRemoveEdgeAction(action: Record<string, unknown>): boolean {
   return typeof action.edgeId === "string";
+}
+
+function isValidRemoveNodeAction(action: Record<string, unknown>): boolean {
+  return typeof action.nodeId === "string";
 }

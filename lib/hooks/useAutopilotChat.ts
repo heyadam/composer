@@ -15,12 +15,13 @@ import type {
   EvaluationResult,
   EvaluationState,
   RemoveEdgeAction,
+  RemoveNodeAction,
   AddNodeAction,
 } from "@/lib/autopilot/types";
 
 /**
  * Enrich flow changes with labels for display.
- * Populates sourceLabel/targetLabel on removeEdge actions from current flow state.
+ * Populates sourceLabel/targetLabel on removeEdge actions and nodeLabel on removeNode actions.
  */
 function enrichFlowChanges(
   changes: FlowChanges,
@@ -59,6 +60,12 @@ function enrichFlowChanges(
             targetLabel: getNodeLabel(edge.target),
           } as RemoveEdgeAction;
         }
+      }
+      if (action.type === "removeNode") {
+        return {
+          ...action,
+          nodeLabel: getNodeLabel(action.nodeId),
+        } as RemoveNodeAction;
       }
       return action;
     }),

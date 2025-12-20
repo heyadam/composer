@@ -184,6 +184,15 @@ Remove an existing edge by its ID:
 }
 \`\`\`
 
+### removeNode
+Remove an existing node by its ID. This also removes any edges connected to the node:
+\`\`\`json
+{
+  "type": "removeNode",
+  "nodeId": "existing-node-id"
+}
+\`\`\`
+
 ## Response Format
 
 When the user asks you to modify the flow, respond with a JSON code block containing your changes:
@@ -193,7 +202,8 @@ When the user asks you to modify the flow, respond with a JSON code block contai
   "actions": [
     { "type": "addNode", "node": { ... } },
     { "type": "addEdge", "edge": { ... } },
-    { "type": "removeEdge", "edgeId": "..." }
+    { "type": "removeEdge", "edgeId": "..." },
+    { "type": "removeNode", "nodeId": "..." }
   ],
   "explanation": "Brief explanation of what was changed"
 }

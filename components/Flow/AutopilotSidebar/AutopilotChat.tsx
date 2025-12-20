@@ -23,6 +23,7 @@ import { Loader } from "@/components/ai-elements/loader";
 import { Check, Sparkles, ChevronDown, Play, Zap, ListTodo, AlertTriangle, Brain } from "lucide-react";
 import { ThinkingSummary } from "@/components/ThinkingSummary";
 import { ChangesPreview } from "./ChangesPreview";
+import { CollapsibleJson, parseMessageContent } from "./CollapsibleJson";
 import type { AutopilotMessage, AutopilotModel, AutopilotMode, FlowPlan } from "@/lib/autopilot/types";
 import type { Node, Edge } from "@xyflow/react";
 
@@ -130,7 +131,31 @@ export function AutopilotChat({
                           className="mb-2"
                         />
                       )}
-                      <MessageResponse className="[&_pre]:text-[8px] [&_pre]:leading-[1.2] [&_pre]:p-1.5 [&_code]:text-[8px]">{message.content}</MessageResponse>
+                      {(() => {
+                        const { textBefore, jsonBlocks, textAfter, hasOpenCodeBlock } = parseMessageContent(message.content);
+                        const isThisMessageStreaming = isLoading && messages[messages.length - 1]?.id === message.id;
+                        return (
+                          <>
+                            {textBefore && (
+                              <MessageResponse className="[&_pre]:text-[8px] [&_pre]:leading-[1.2] [&_pre]:p-1.5 [&_code]:text-[8px]">
+                                {textBefore}
+                              </MessageResponse>
+                            )}
+                            {jsonBlocks.map((json, i) => (
+                              <CollapsibleJson
+                                key={i}
+                                json={json}
+                                isStreaming={isThisMessageStreaming && hasOpenCodeBlock}
+                              />
+                            ))}
+                            {textAfter && (
+                              <MessageResponse className="[&_pre]:text-[8px] [&_pre]:leading-[1.2] [&_pre]:p-1.5 [&_code]:text-[8px]">
+                                {textAfter}
+                              </MessageResponse>
+                            )}
+                          </>
+                        );
+                      })()}
                       {/* Plan awaiting approval */}
                       {message.pendingPlan && !message.planApproved && (
                         <PlanCard

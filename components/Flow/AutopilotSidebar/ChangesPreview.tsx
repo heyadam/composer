@@ -4,6 +4,7 @@ import type {
   AddNodeAction,
   AddEdgeAction,
   RemoveEdgeAction,
+  RemoveNodeAction,
   EvaluationState,
 } from "@/lib/autopilot/types";
 import type { NodeType } from "@/types/flow";
@@ -112,6 +113,9 @@ export function ChangesPreview({
   const removedEdges = changes.actions.filter(
     (a): a is RemoveEdgeAction => a.type === "removeEdge"
   );
+  const removedNodes = changes.actions.filter(
+    (a): a is RemoveNodeAction => a.type === "removeNode"
+  );
 
   if (changes.actions.length === 0) {
     return null;
@@ -145,7 +149,30 @@ export function ChangesPreview({
       {/* Changes list */}
       {isExpanded && (
         <div className="px-3 py-2 space-y-1">
-          {/* Removed Edges - show removals first like a diff */}
+          {/* Removed Nodes - show removals first like a diff */}
+          {removedNodes.map((action) => {
+            const nodeLabel = action.nodeLabel || getNodeLabel(action.nodeId, nodes, addedNodes);
+            const existingNode = nodes.find((n) => n.id === action.nodeId);
+            const nodeType = existingNode?.type as NodeType | undefined;
+            const Icon = nodeType ? (iconMap[nodeType] || Square) : Square;
+
+            return (
+              <div
+                key={action.nodeId}
+                className="flex items-center gap-1.5 text-xs"
+              >
+                <span className="text-red-600 dark:text-red-400 font-medium">
+                  −
+                </span>
+                <Icon className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                <span className="text-muted-foreground line-through">
+                  {nodeLabel}
+                </span>
+              </div>
+            );
+          })}
+
+          {/* Removed Edges */}
           {removedEdges.map((action) => {
             let sourceLabel = action.sourceLabel;
             let targetLabel = action.targetLabel;

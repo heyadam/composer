@@ -32,7 +32,7 @@ import { useClipboard } from "@/lib/hooks/useClipboard";
 import type { NodeType, CommentColor } from "@/types/flow";
 import { executeFlow } from "@/lib/execution/engine";
 import type { NodeExecutionState } from "@/lib/execution/types";
-import type { FlowChanges, AddNodeAction, AddEdgeAction, RemoveEdgeAction, AppliedChangesInfo } from "@/lib/autopilot/types";
+import type { FlowChanges, AddNodeAction, AddEdgeAction, RemoveEdgeAction, RemoveNodeAction, AppliedChangesInfo, RemovedNodeInfo, RemovedEdgeInfo } from "@/lib/autopilot/types";
 import { ResponsesSidebar, type PreviewEntry, type DebugEntry } from "./ResponsesSidebar";
 import { useApiKeys, type ProviderId } from "@/lib/api-keys";
 import {
@@ -144,6 +144,8 @@ export function AgentFlow() {
     (changes: FlowChanges): AppliedChangesInfo => {
       const nodeIds: string[] = [];
       const edgeIds: string[] = [];
+      const removedNodes: RemovedNodeInfo[] = [];
+      const removedEdges: RemovedEdgeInfo[] = [];
 
       for (const action of changes.actions) {
         if (action.type === "addNode") {
@@ -176,13 +178,47 @@ export function AgentFlow() {
         } else if (action.type === "removeEdge") {
           const removeAction = action as RemoveEdgeAction;
           setEdges((eds) => eds.filter((e) => e.id !== removeAction.edgeId));
+        } else if (action.type === "removeNode") {
+          const removeAction = action as RemoveNodeAction;
+          const nodeId = removeAction.nodeId;
+
+          // Store the node data for undo
+          setNodes((nds) => {
+            const nodeToRemove = nds.find((n) => n.id === nodeId);
+            if (nodeToRemove) {
+              removedNodes.push({
+                id: nodeToRemove.id,
+                type: nodeToRemove.type as string,
+                position: nodeToRemove.position,
+                data: nodeToRemove.data,
+              });
+            }
+            return nds.filter((n) => n.id !== nodeId);
+          });
+
+          // Also remove connected edges and store them for undo
+          setEdges((eds) => {
+            const edgesToRemove = eds.filter(
+              (e) => e.source === nodeId || e.target === nodeId
+            );
+            edgesToRemove.forEach((e) => {
+              removedEdges.push({
+                id: e.id,
+                source: e.source,
+                target: e.target,
+                type: e.type,
+                data: e.data as { dataType: string } | undefined,
+              });
+            });
+            return eds.filter((e) => e.source !== nodeId && e.target !== nodeId);
+          });
         }
       }
 
       // Track highlighted nodes
       setAutopilotHighlightedIds((prev) => new Set([...prev, ...nodeIds]));
 
-      return { nodeIds, edgeIds };
+      return { nodeIds, edgeIds, removedNodes, removedEdges };
     },
     [setNodes, setEdges]
   );
@@ -190,8 +226,40 @@ export function AgentFlow() {
   // Undo changes from autopilot
   const undoAutopilotChanges = useCallback(
     (applied: AppliedChangesInfo) => {
+      // Remove added nodes
       setNodes((nds) => nds.filter((n) => !applied.nodeIds.includes(n.id)));
+      // Remove added edges
       setEdges((eds) => eds.filter((e) => !applied.edgeIds.includes(e.id)));
+
+      // Restore removed nodes
+      if (applied.removedNodes && applied.removedNodes.length > 0) {
+        setNodes((nds) =>
+          nds.concat(
+            applied.removedNodes!.map((node) => ({
+              id: node.id,
+              type: node.type,
+              position: node.position,
+              data: node.data,
+            }))
+          )
+        );
+      }
+
+      // Restore removed edges
+      if (applied.removedEdges && applied.removedEdges.length > 0) {
+        setEdges((eds) =>
+          eds.concat(
+            applied.removedEdges!.map((edge) => ({
+              id: edge.id,
+              source: edge.source,
+              target: edge.target,
+              type: edge.type || "colored",
+              data: edge.data,
+            }))
+          )
+        );
+      }
+
       // Remove from highlighted set
       setAutopilotHighlightedIds((prev) => {
         const next = new Set(prev);
