@@ -310,10 +310,10 @@ Example - connecting an image-input to an image-generation node's base image:
 
 1. **Unique IDs**: Generate IDs using format \`autopilot-{type}-{timestamp}\` (e.g., \`autopilot-text-generation-1702500000000\`)
 
-2. **Positioning**:
-   - New nodes should be placed ~300-350px to the right of their source node
-   - Vertical offset of ~100px between parallel branches
-   - Avoid overlapping existing nodes
+2. **Positioning** (nodes are 280px wide and typically 300-400px tall):
+   - New nodes should be placed ~350-400px to the right of their source node
+   - Vertical offset of ~400px between parallel branches
+   - Avoid overlapping existing nodes - leave at least 50px gap
 
 3. **Logical Connections**:
    - Always connect new nodes to the flow
