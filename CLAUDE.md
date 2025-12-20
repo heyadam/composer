@@ -40,8 +40,9 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 - `ImageInputNode` (type: `image-input`): Entry point for image upload
 - `PromptNode` (type: `text-generation`): LLM prompt execution with dual inputs (user prompt + system instructions), multi-provider support. Default: Google `gemini-3-flash-preview`
 - `ImageNode` (type: `image-generation`): AI image generation (OpenAI with streaming partial images, Google Gemini). Default: Google `gemini-2.5-flash-image` with 1:1 aspect ratio
-- `MagicNode` (type: `ai-logic`): Custom code transformation using Claude Haiku-generated JavaScript
+- `MagicNode` (type: `ai-logic`): Custom code transformation using Claude Haiku-generated JavaScript. Auto-generates code when transform input is connected at execution time. Includes validation with test cases and collapsible code/eval views.
 - `ReactComponentNode` (type: `react-component`): AI-generated React components rendered in sandboxed iframe
+- `CommentNode` (type: `comment`): Resizable comment boxes for annotating flows. Features color themes (gray, blue, green, yellow, purple, pink, orange), editable title/description, and AI-generated suggestions.
 - `OutputNode` (type: `preview-output`): Exit point, displays final result and sends to preview
 
 **InputWithHandle** (`components/Flow/nodes/InputWithHandle.tsx`): Reusable component combining input fields with connection handles:
@@ -103,7 +104,7 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 
 **Autopilot Sidebar** (`components/Flow/AutopilotSidebar/`): AI-powered chat interface for natural language flow editing:
 - `AutopilotSidebar.tsx`: Main container with resizable width (320-600px)
-- `AutopilotChat.tsx`: Chat UI with effort level selector (Low/Medium/High) and suggested prompts
+- `AutopilotChat.tsx`: Chat UI with effort level selector (Low/Medium/High) and dynamic LLM-generated suggestions
 - `AutopilotHeader.tsx`: Header with clear history button
 - `CollapsibleJson.tsx`: Collapsible JSON preview with syntax highlighting, auto-scroll during streaming, auto-collapse when done
 - `ChangesPreview.tsx`: Visual diff of pending changes (added/removed nodes and edges)
@@ -112,10 +113,11 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 - Auto-applies changes with full undo capability (restores removed nodes/edges)
 - New nodes highlighted with purple glow until interacted with
 - LLM-based validation using Claude Haiku 4.5 with auto-retry on failure
+- Shimmer loading effects during AI operations
 
 **Autopilot System** (`lib/autopilot/`):
 - `types.ts`: Action types, FlowChanges, AutopilotMessage, EvaluationResult, EvaluationState
-- `parser.ts`: Extracts and validates JSON actions from Claude's responses. Valid node types: `text-input`, `image-input`, `text-generation`, `image-generation`, `ai-logic`, `preview-output`, `react-component`
+- `parser.ts`: Extracts and validates JSON actions from Claude's responses. Valid node types: `text-input`, `image-input`, `text-generation`, `image-generation`, `ai-logic`, `preview-output`, `react-component`, `comment`
 - `snapshot.ts`: Serializes current flow state for context
 - `system-prompt.ts`: Builds prompt with node types, edge rules, valid model IDs, and insertion examples
 - `evaluator.ts`: LLM-based validation of generated flow changes using Claude Haiku 4.5. Checks semantic match, structural validity, model ID correctness, and completeness. Returns issues and suggestions.
@@ -123,8 +125,16 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 **Autopilot API Routes**:
 - `app/api/autopilot/route.ts`: Streams responses from Claude Opus 4.5 with effort parameter
 - `app/api/autopilot/evaluate/route.ts`: Validates flow changes using Claude Haiku 4.5
+- `app/api/autopilot/suggestions/route.ts`: Generates dynamic prompt suggestions based on current flow state
 
-**Autopilot Hook** (`lib/hooks/useAutopilotChat.ts`): Manages conversation state, streaming responses, post-stream evaluation, auto-retry on validation failure, auto-apply on success, and undo functionality.
+**Autopilot Hooks** (`lib/hooks/`):
+- `useAutopilotChat.ts`: Manages conversation state, streaming responses, post-stream evaluation, auto-retry on validation failure, auto-apply on success, and undo functionality.
+- `useSuggestions.ts`: Fetches dynamic LLM-generated prompt suggestions based on current flow state. Refreshable with default fallback suggestions.
+
+**Comment System**:
+- `CommentEditContext.tsx`: React context for tracking user-edited comments to prevent AI overwrites
+- `app/api/comment-suggest/route.ts`: AI-generates title and description for comment nodes based on nearby nodes
+- `lib/hooks/useCommentSuggestions.ts`: Manages auto-generation of comment suggestions
 
 **Example Flow** (`lib/example-flow.ts`): Default flow configuration loaded on startup.
 
@@ -154,6 +164,7 @@ Uses shadcn/ui components in `components/ui/` with Tailwind CSS v4. Import alias
 - Props: `reasoning` (required), `defaultExpanded`, `maxHeight`, `className`
 - Shows a "Thinking" header with Brain icon, expands to show full reasoning text
 - Used in PromptNode footer when Google Gemini thinking is enabled
+- Shimmer loading effect while reasoning is streaming
 
 **Content Design**: When adding or modifying UI text (labels, placeholders, descriptions, tooltips, button text), follow the standards in `CONTENT_DESIGN.md`. This ensures consistent tone and formatting across the application.
 

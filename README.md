@@ -14,8 +14,9 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
   - **Image Input**: Entry point for image uploads
   - **Text Generation**: Execute LLM prompts with dual inputs (user prompt + system instructions) and multi-provider support
   - **Image Generation**: AI image generation with OpenAI and Google Gemini
-  - **AI Logic**: Custom code transformations using Claude-generated JavaScript
+  - **AI Logic**: Custom code transformations using Claude-generated JavaScript with auto-generation and validation
   - **React Component**: AI-generated React components rendered in sandboxed iframe
+  - **Comment**: Resizable annotation boxes with color themes and AI-generated suggestions
   - **Preview Output**: Exit point that displays results in the responses sidebar
 - **Smart Input Fields**: Textareas disable with "Using connected input" when handles are wired
 - **Multi-Provider Support**: Choose from OpenAI, Google Gemini, or Anthropic Claude models
@@ -34,7 +35,8 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
   - Powered by Claude Opus 4.5 with configurable effort levels (Low/Medium/High)
   - LLM-based validation using Claude Haiku 4.5 with auto-retry on failure
   - Auto-apply with full undo support (restores removed nodes/edges)
-  - Suggested prompts for quick starts
+  - Dynamic LLM-generated prompt suggestions based on current flow
+  - Shimmer loading effects during AI operations
 
 ### Supported Models
 

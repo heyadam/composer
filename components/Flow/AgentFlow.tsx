@@ -31,6 +31,7 @@ import { useCommentSuggestions } from "@/lib/hooks/useCommentSuggestions";
 import { useSuggestions } from "@/lib/hooks/useSuggestions";
 import { useClipboard } from "@/lib/hooks/useClipboard";
 import type { NodeType, CommentColor } from "@/types/flow";
+import { Github } from "lucide-react";
 import { executeFlow } from "@/lib/execution/engine";
 import type { NodeExecutionState } from "@/lib/execution/types";
 import type { FlowChanges, AddNodeAction, AddEdgeAction, RemoveEdgeAction, RemoveNodeAction, AppliedChangesInfo, RemovedNodeInfo, RemovedEdgeInfo } from "@/lib/autopilot/types";
@@ -1180,6 +1181,16 @@ export function AgentFlow() {
         <div className="absolute top-0 left-0 right-0 z-10 flex justify-center pt-4 pb-8 bg-gradient-to-b from-black/90 to-transparent">
           <AvyLogo isPanning={isPanning} />
         </div>
+        {/* GitHub link */}
+        <a
+          href="https://github.com/heyadam/avy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute top-4 right-4 z-10 p-2 text-muted-foreground/60 hover:text-foreground transition-colors"
+          title="View on GitHub"
+        >
+          <Github className="w-5 h-5" />
+        </a>
         <ActionBar
           onToggleNodes={() => setNodesPaletteOpen(!nodesPaletteOpen)}
           onToggleAutopilot={() => setAutopilotOpen(!autopilotOpen)}
