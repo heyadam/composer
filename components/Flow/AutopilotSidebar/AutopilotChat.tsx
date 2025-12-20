@@ -326,6 +326,7 @@ export function AutopilotChat({
 
               {/* Thinking Toggle */}
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
                 className={`h-6 px-2 text-[11px] gap-1 ${
