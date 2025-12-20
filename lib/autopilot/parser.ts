@@ -165,33 +165,29 @@ function isValidAddNodeAction(action: Record<string, unknown>): boolean {
   const node = action.node as Record<string, unknown> | undefined;
   if (!node) return false;
 
-  return (
-    typeof node.id === "string" &&
-    typeof node.type === "string" &&
-    ["text-input", "preview-output", "text-generation", "image-generation", "ai-logic", "image-input", "react-component"].includes(node.type) &&
-    typeof node.position === "object" &&
-    node.position !== null &&
-    typeof (node.position as Record<string, unknown>).x === "number" &&
-    typeof (node.position as Record<string, unknown>).y === "number" &&
-    typeof node.data === "object" &&
-    node.data !== null
-  );
-}
+  // Basic structure validation only - evaluator handles business rules
+  if (typeof node.id !== "string") return false;
+  if (typeof node.type !== "string") return false;
+  // Don't validate node type here - let evaluator catch invalid types
 
-const VALID_DATA_TYPES = ["string", "image", "response"] as const;
+  // Position validation
+  if (typeof node.position !== "object" || node.position === null) return false;
+  const position = node.position as Record<string, unknown>;
+  if (typeof position.x !== "number" || typeof position.y !== "number")
+    return false;
+
+  // Data validation - just check it exists
+  if (typeof node.data !== "object" || node.data === null) return false;
+
+  return true;
+}
 
 function isValidAddEdgeAction(action: Record<string, unknown>): boolean {
   const edge = action.edge as Record<string, unknown> | undefined;
   if (!edge) return false;
 
-  const data = edge.data as Record<string, unknown> | undefined;
-  if (!data || typeof data !== "object") return false;
-
-  const dataType = data.dataType;
-  if (typeof dataType !== "string" || !VALID_DATA_TYPES.includes(dataType as typeof VALID_DATA_TYPES[number])) {
-    return false;
-  }
-
+  // Basic structure validation only - evaluator handles business rules
+  // Don't validate dataType here - let evaluator catch invalid types
   return (
     typeof edge.id === "string" &&
     typeof edge.source === "string" &&

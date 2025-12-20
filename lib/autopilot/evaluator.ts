@@ -1,29 +1,62 @@
-import type { FlowSnapshot, FlowChanges, EvaluationResult, AddNodeAction } from "./types";
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { generateText } from "ai";
+import type { FlowSnapshot, FlowChanges, EvaluationResult, AddNodeAction, AddEdgeAction, RemoveNodeAction } from "./types";
+import {
+  VALID_TEXT_MODELS,
+  VALID_IMAGE_MODELS,
+  VALID_NODE_TYPES,
+  VALID_DATA_TYPES,
+  ValidNodeType,
+  ValidDataType,
+} from "./config";
 
 export interface EvaluatorOptions {
   userRequest: string;
   flowSnapshot: FlowSnapshot;
   changes: FlowChanges;
-  apiKey?: string;
 }
 
-// Valid model IDs - used for programmatic validation
-const VALID_TEXT_MODELS: Record<string, string[]> = {
-  openai: ["gpt-5.2", "gpt-5-mini", "gpt-5-nano"],
-  google: ["gemini-3-pro-preview", "gemini-3-flash-preview"],
-  anthropic: ["claude-opus-4-5", "claude-sonnet-4-5", "claude-haiku-4-5"],
+/**
+ * Valid input handles per node type.
+ * Maps node type -> { handleName: acceptedDataTypes[] }
+ */
+const NODE_INPUT_HANDLES: Record<string, Record<string, string[]>> = {
+  "text-generation": {
+    prompt: ["string"],
+    system: ["string"],
+  },
+  "image-generation": {
+    prompt: ["string"],
+    image: ["image"], // Base image for image-to-image transformation
+  },
+  "react-component": {
+    prompt: ["string"],
+    system: ["string"],
+  },
+  "ai-logic": {
+    input: ["string"],
+  },
+  "preview-output": {
+    // Accepts any data type, no specific handle required
+    _default: ["string", "image", "response"],
+  },
+  "comment": {
+    // No inputs
+  },
 };
 
-const VALID_IMAGE_MODELS: Record<string, string[]> = {
-  openai: ["gpt-image-1", "dall-e-3", "dall-e-2"],
-  google: ["gemini-2.5-flash-image", "gemini-3-pro-image-preview", "imagen-4.0-generate-001", "imagen-4.0-ultra-generate-001", "imagen-4.0-fast-generate-001"],
+/**
+ * Node types that produce each data type as output.
+ */
+const OUTPUT_DATA_TYPES: Record<string, string> = {
+  "text-input": "string",
+  "image-input": "image",
+  "text-generation": "string",
+  "image-generation": "image",
+  "ai-logic": "string",
+  "react-component": "response",
 };
 
 /**
  * Programmatically validate model IDs in the changes.
- * Returns array of issues found.
  */
 function validateModelIds(changes: FlowChanges): string[] {
   const issues: string[] = [];
@@ -43,12 +76,12 @@ function validateModelIds(changes: FlowChanges): string[] {
       if (nodeType === "text-generation" || nodeType === "react-component") {
         const validModels = VALID_TEXT_MODELS[provider];
         if (validModels && !validModels.includes(model)) {
-          issues.push(`Node "${label}": Invalid model ID "${model}" for provider "${provider}". Valid models: ${validModels.join(", ")}`);
+          issues.push(`Node "${label}": Invalid model "${model}" for ${provider}. Valid: ${validModels.join(", ")}`);
         }
       } else if (nodeType === "image-generation") {
         const validModels = VALID_IMAGE_MODELS[provider];
         if (validModels && !validModels.includes(model)) {
-          issues.push(`Node "${label}": Invalid model ID "${model}" for provider "${provider}". Valid models: ${validModels.join(", ")}`);
+          issues.push(`Node "${label}": Invalid model "${model}" for ${provider}. Valid: ${validModels.join(", ")}`);
         }
       }
     }
@@ -58,219 +91,310 @@ function validateModelIds(changes: FlowChanges): string[] {
 }
 
 /**
- * Evaluate flow changes using Claude Sonnet for validation.
- * Model IDs are validated programmatically first, then LLM checks semantics and structure.
+ * Validate that edge connections are valid.
  */
-export async function evaluateFlowChanges(
-  options: EvaluatorOptions
-): Promise<EvaluationResult> {
-  const { userRequest, flowSnapshot, changes, apiKey } = options;
+function validateEdges(
+  changes: FlowChanges,
+  flowSnapshot: FlowSnapshot
+): string[] {
+  const issues: string[] = [];
 
-  // First, do programmatic model ID validation
-  const modelIdIssues = validateModelIds(changes);
+  // Build a map of all node IDs (existing + new)
+  const existingNodeIds = new Set(flowSnapshot.nodes.map((n) => n.id));
+  const newNodes = new Map<string, { type: string; label: string }>();
 
-  const anthropic = createAnthropic({
-    apiKey: apiKey || process.env.ANTHROPIC_API_KEY,
-  });
-
-  const prompt = buildEvaluatorPrompt(userRequest, flowSnapshot, changes);
-
-  try {
-    const result = await generateText({
-      model: anthropic("claude-haiku-4-5"),
-      prompt,
-      maxOutputTokens: 500,
-    });
-
-    const llmResult = parseEvaluationResponse(result.text);
-
-    // Combine programmatic issues with LLM issues
-    const allIssues = [...modelIdIssues, ...llmResult.issues];
-
-    return {
-      valid: allIssues.length === 0,
-      issues: allIssues,
-      suggestions: llmResult.suggestions,
-    };
-  } catch (error) {
-    console.error("Evaluation error:", error);
-    // On error, still return model ID issues if any
-    if (modelIdIssues.length > 0) {
-      return {
-        valid: false,
-        issues: modelIdIssues,
-        suggestions: [],
-      };
+  // Track removed nodes
+  const removedNodeIds = new Set<string>();
+  for (const action of changes.actions) {
+    if (action.type === "removeNode") {
+      removedNodeIds.add(action.nodeId);
     }
-    return {
-      valid: true,
-      issues: [],
-      suggestions: [],
-    };
   }
-}
 
-/**
- * Filter out model-related issues from LLM response.
- * The LLM sometimes still flags model IDs despite instructions to skip.
- */
-function filterModelIssues(issues: string[]): string[] {
-  const modelKeywords = [
-    "model id", "model \"", "model '", "does not exist",
-    "invalid model", "gpt-4", "gpt-5", "gemini", "claude",
-    "not a valid model", "valid models are", "valid model"
-  ];
-  return issues.filter(issue => {
-    const lower = issue.toLowerCase();
-    return !modelKeywords.some(keyword => lower.includes(keyword));
-  });
-}
-
-/**
- * Parse the evaluator's JSON response.
- */
-function parseEvaluationResponse(response: string): EvaluationResult {
-  // Extract JSON from response (handle markdown code blocks)
-  const jsonMatch = response.match(/```(?:json)?\s*([\s\S]*?)```/);
-  const jsonStr = jsonMatch ? jsonMatch[1].trim() : response.trim();
-
-  try {
-    const parsed = JSON.parse(jsonStr);
-    // Filter out model-related issues that the LLM might still report
-    const filteredIssues = filterModelIssues(
-      Array.isArray(parsed.issues) ? parsed.issues : []
-    );
-    return {
-      // Valid if no issues remain after filtering (even if LLM said invalid due to model issues)
-      valid: filteredIssues.length === 0,
-      issues: filteredIssues,
-      suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
-    };
-  } catch {
-    // If parsing fails, try to detect obvious errors in the text
-    const lowerResponse = response.toLowerCase();
-    if (
-      lowerResponse.includes("invalid") ||
-      lowerResponse.includes("error") ||
-      lowerResponse.includes("issue")
-    ) {
-      return {
-        valid: false,
-        issues: ["Validation detected issues but could not parse details"],
-        suggestions: [],
-      };
+  for (const action of changes.actions) {
+    if (action.type === "addNode") {
+      const node = (action as AddNodeAction).node;
+      const data = node.data as { label?: string };
+      newNodes.set(node.id, { type: node.type, label: data.label || node.id });
     }
-    // Default to valid if we can't parse
-    return {
-      valid: true,
-      issues: [],
-      suggestions: [],
-    };
   }
+
+  // Get node type helper
+  const getNodeType = (nodeId: string): string | null => {
+    if (removedNodeIds.has(nodeId)) return null;
+    const newNode = newNodes.get(nodeId);
+    if (newNode) return newNode.type;
+    const existing = flowSnapshot.nodes.find((n) => n.id === nodeId);
+    return existing?.type || null;
+  };
+
+  const getNodeLabel = (nodeId: string): string => {
+    const newNode = newNodes.get(nodeId);
+    if (newNode) return newNode.label;
+    const existing = flowSnapshot.nodes.find((n) => n.id === nodeId);
+    return (existing?.data as { label?: string })?.label || nodeId;
+  };
+
+  // Validate each addEdge action
+  for (const action of changes.actions) {
+    if (action.type !== "addEdge") continue;
+
+    const edge = (action as AddEdgeAction).edge;
+    const sourceId = edge.source;
+    const targetId = edge.target;
+    const targetHandle = edge.targetHandle;
+    const dataType = edge.data?.dataType;
+
+    // Check source exists
+    if (!existingNodeIds.has(sourceId) && !newNodes.has(sourceId)) {
+      issues.push(`Edge "${edge.id}": Source node "${sourceId}" does not exist`);
+      continue;
+    }
+    if (removedNodeIds.has(sourceId)) {
+      issues.push(`Edge "${edge.id}": Source node "${sourceId}" is being removed`);
+      continue;
+    }
+
+    // Check target exists
+    if (!existingNodeIds.has(targetId) && !newNodes.has(targetId)) {
+      issues.push(`Edge "${edge.id}": Target node "${targetId}" does not exist`);
+      continue;
+    }
+    if (removedNodeIds.has(targetId)) {
+      issues.push(`Edge "${edge.id}": Target node "${targetId}" is being removed`);
+      continue;
+    }
+
+    const targetType = getNodeType(targetId);
+    if (!targetType) continue;
+
+    // Check target handle validity
+    const validHandles = NODE_INPUT_HANDLES[targetType];
+    if (validHandles && targetHandle) {
+      const handleConfig = validHandles[targetHandle];
+      if (!handleConfig) {
+        const validHandleNames = Object.keys(validHandles).filter(h => h !== "_default");
+        issues.push(
+          `Edge to "${getNodeLabel(targetId)}": Invalid handle "${targetHandle}". Valid handles: ${validHandleNames.join(", ")}`
+        );
+        continue;
+      }
+
+      // Check data type compatibility
+      if (dataType && !handleConfig.includes(dataType)) {
+        issues.push(
+          `Edge to "${getNodeLabel(targetId)}": Handle "${targetHandle}" accepts ${handleConfig.join("/")} but got "${dataType}"`
+        );
+      }
+    }
+
+    // Check dataType is valid
+    if (dataType && !VALID_DATA_TYPES.includes(dataType as ValidDataType)) {
+      issues.push(
+        `Edge "${edge.id}": Invalid dataType "${dataType}". Valid types: ${VALID_DATA_TYPES.join(", ")}`
+      );
+      continue;
+    }
+
+    // Special check: image data can only go to image handles or preview-output
+    if (dataType === "image" && targetType !== "preview-output") {
+      if (targetHandle !== "image") {
+        issues.push(
+          `Edge to "${getNodeLabel(targetId)}": Image data must connect to "image" handle, not "${targetHandle || "default"}"`
+        );
+      }
+    }
+  }
+
+  return issues;
 }
 
 /**
- * Build the prompt for the evaluator model.
+ * Validate node types and required fields.
  */
-function buildEvaluatorPrompt(
-  userRequest: string,
+function validateNodes(changes: FlowChanges): string[] {
+  const issues: string[] = [];
+
+  for (const action of changes.actions) {
+    if (action.type !== "addNode") continue;
+
+    const node = (action as AddNodeAction).node;
+    const data = node.data as { label?: string };
+    const label = data.label || node.id;
+
+    // Check valid node type
+    if (!VALID_NODE_TYPES.includes(node.type as ValidNodeType)) {
+      issues.push(`Node "${label}": Invalid type "${node.type}". Valid types: ${VALID_NODE_TYPES.join(", ")}`);
+    }
+
+    // Check required label field
+    if (!data.label) {
+      issues.push(`Node "${node.id}": Missing required "label" field`);
+    }
+  }
+
+  return issues;
+}
+
+/**
+ * Check for orphaned nodes (nodes not connected to the flow).
+ * Exception: Allow single node if user request seems to be asking for just one node.
+ */
+function validateOrphanedNodes(
+  changes: FlowChanges,
   flowSnapshot: FlowSnapshot,
-  changes: FlowChanges
-): string {
-  // Get existing node and edge IDs for reference
-  const existingNodeIds = flowSnapshot.nodes.map((n) => n.id);
-  const existingEdgeIds = flowSnapshot.edges.map((e) => e.id);
+  userRequest: string
+): string[] {
+  const issues: string[] = [];
 
-  // Get new node IDs being added
-  const newNodeIds = changes.actions
-    .filter((a) => a.type === "addNode")
-    .map((a) => (a as { node: { id: string } }).node.id);
+  // Get all new node IDs
+  const newNodeIds = new Set<string>();
+  for (const action of changes.actions) {
+    if (action.type === "addNode") {
+      newNodeIds.add((action as AddNodeAction).node.id);
+    }
+  }
 
-  const allNodeIds = [...existingNodeIds, ...newNodeIds];
+  if (newNodeIds.size === 0) return issues;
 
-  return `You are a flow validation assistant. Evaluate whether these flow changes correctly implement the user's request.
+  // If only adding 1 node and request doesn't mention connections, allow orphan
+  if (newNodeIds.size === 1) {
+    const lowerRequest = userRequest.toLowerCase();
+    const connectionWords = ["connect", "chain", "pipe", "flow", "after", "before", "between", "to the", "from the", "then"];
+    const hasConnectionIntent = connectionWords.some(word => lowerRequest.includes(word));
 
-## User Request
-"${userRequest}"
+    if (!hasConnectionIntent) {
+      // User just asked for a node without specifying connections - allow it
+      return issues;
+    }
+  }
 
-## Current Flow State
-Existing nodes: ${JSON.stringify(existingNodeIds)}
-Existing edges: ${JSON.stringify(existingEdgeIds)}
+  // Get all edge connections (existing + new - removed)
+  const connectedNodes = new Set<string>();
 
-Full snapshot:
-${JSON.stringify(flowSnapshot, null, 2)}
+  // Existing edges
+  const removedEdgeIds = new Set(
+    changes.actions
+      .filter((a) => a.type === "removeEdge")
+      .map((a) => a.edgeId)
+  );
 
-## Proposed Changes
-${JSON.stringify(changes, null, 2)}
+  for (const edge of flowSnapshot.edges) {
+    if (!removedEdgeIds.has(edge.id)) {
+      connectedNodes.add(edge.source);
+      connectedNodes.add(edge.target);
+    }
+  }
 
-## Validation Checklist
+  // New edges
+  for (const action of changes.actions) {
+    if (action.type === "addEdge") {
+      const edge = (action as AddEdgeAction).edge;
+      connectedNodes.add(edge.source);
+      connectedNodes.add(edge.target);
+    }
+  }
 
-Check each item and report any issues:
+  // Check each new node is connected
+  for (const nodeId of newNodeIds) {
+    if (!connectedNodes.has(nodeId)) {
+      const nodeAction = changes.actions.find(
+        (a) => a.type === "addNode" && (a as AddNodeAction).node.id === nodeId
+      ) as AddNodeAction;
+      const label = (nodeAction?.node.data as { label?: string })?.label || nodeId;
+      issues.push(`Node "${label}" is not connected to the flow`);
+    }
+  }
 
-1. **SEMANTIC MATCH**
-   - Do the changes actually implement what the user asked for?
-   - Are the node types appropriate (text-generation for text tasks, image-generation for images)?
+  return issues;
+}
 
-2. **STRUCTURAL VALIDITY**
-   - For addEdge: Do source and target node IDs exist in: ${JSON.stringify(allNodeIds)}?
-   - Are data types correct? (string for text, image for images, response for preview-output)
-   - Are node types valid? Must be one of: text-input, image-input, text-generation, image-generation, ai-logic, preview-output, react-component
+/**
+ * Validate removeNode actions reference existing nodes.
+ */
+function validateRemoveNodes(
+  changes: FlowChanges,
+  flowSnapshot: FlowSnapshot
+): string[] {
+  const issues: string[] = [];
+  const existingNodeIds = new Set(flowSnapshot.nodes.map((n) => n.id));
 
-3. **MODEL ID VALIDATION** - DO NOT CHECK THIS
-   - SKIP COMPLETELY - Model IDs are validated programmatically elsewhere
-   - NEVER report any issues about model IDs
-   - ALL model IDs are valid (gpt-5-mini, gpt-5-nano, gemini-3-flash-preview, etc.)
-   - Model substitutions are intentional and correct
+  for (const action of changes.actions) {
+    if (action.type !== "removeNode") continue;
 
-4. **DATA TYPE / TARGET HANDLE COMPATIBILITY** (CRITICAL)
-   - Image data (dataType: "image") can ONLY connect to:
-     - targetHandle: "image" on image-generation nodes (Base Image input) - THIS IS CORRECT!
-     - preview-output nodes (targetHandle is optional for single-input nodes)
-   - Image data CANNOT connect to text-only inputs:
-     - targetHandle: "prompt" on text-generation nodes (User Prompt) - INVALID
-     - targetHandle: "system" on text-generation nodes (System Instructions) - INVALID
-     - targetHandle: "prompt" on image-generation nodes (Image Prompt) - INVALID (this is for TEXT prompts only)
-   - String data (dataType: "string") can connect to any text input (prompt, system)
+    const nodeId = (action as RemoveNodeAction).nodeId;
+    if (!existingNodeIds.has(nodeId)) {
+      issues.push(`Cannot remove node "${nodeId}" - it doesn't exist in the flow`);
+    }
+  }
 
-   IMPORTANT CLARIFICATIONS:
-   - Connecting image data to targetHandle: "image" IS VALID - this is the correct way to do image-to-image transformation
-   - Prompts can be set EITHER via node data.prompt OR via an edge connection - both are valid patterns
-   - preview-output nodes have only one input, so targetHandle is OPTIONAL for edges targeting them
-   - Do NOT flag as invalid if prompt is in node data instead of connected via edge
+  return issues;
+}
 
-5. **COMPLETENESS** (CRITICAL)
-   - Are new nodes connected via edges? Disconnected/orphaned nodes are INVALID
-   - If adding multiple nodes, there MUST be edges connecting them
-   - If inserting a node between existing nodes, was the old edge removed?
-   - Does the flow maintain a path from input to output?
-   - A flow with nodes but NO edges is INVALID
+/**
+ * Check for duplicate IDs.
+ */
+function validateDuplicateIds(
+  changes: FlowChanges,
+  flowSnapshot: FlowSnapshot
+): string[] {
+  const issues: string[] = [];
 
-6. **OBVIOUS ISSUES**
-   - Duplicate node or edge IDs?
-   - Missing required fields (id, position, data for nodes)?
-   - Edges referencing non-existent nodes?
+  const existingNodeIds = new Set(flowSnapshot.nodes.map((n) => n.id));
+  const existingEdgeIds = new Set(flowSnapshot.edges.map((e) => e.id));
+  const newNodeIds = new Set<string>();
+  const newEdgeIds = new Set<string>();
 
-## Response Format
+  for (const action of changes.actions) {
+    if (action.type === "addNode") {
+      const nodeId = (action as AddNodeAction).node.id;
+      if (existingNodeIds.has(nodeId)) {
+        issues.push(`Duplicate node ID "${nodeId}" - already exists in flow`);
+      }
+      if (newNodeIds.has(nodeId)) {
+        issues.push(`Duplicate node ID "${nodeId}" - added multiple times`);
+      }
+      newNodeIds.add(nodeId);
+    }
 
-Respond with ONLY valid JSON (no explanation, no markdown):
-{"valid": true, "issues": [], "suggestions": []}
+    if (action.type === "addEdge") {
+      const edgeId = (action as AddEdgeAction).edge.id;
+      if (existingEdgeIds.has(edgeId)) {
+        issues.push(`Duplicate edge ID "${edgeId}" - already exists in flow`);
+      }
+      if (newEdgeIds.has(edgeId)) {
+        issues.push(`Duplicate edge ID "${edgeId}" - added multiple times`);
+      }
+      newEdgeIds.add(edgeId);
+    }
+  }
 
-Or if there are REAL problems:
-{"valid": false, "issues": ["Issue description"], "suggestions": ["Fix suggestion"]}
+  return issues;
+}
 
-IMPORTANT - WHAT TO FLAG AS INVALID:
-- Nodes with no edges connecting them = INVALID (disconnected flow)
-- Multiple nodes added with zero edges = INVALID
-- Image data connecting to text inputs (prompt/system handles) = INVALID
-- Edges referencing non-existent nodes = INVALID
+/**
+ * Evaluate flow changes using purely programmatic validation.
+ * No LLM calls - fast, deterministic, and reliable.
+ */
+export function evaluateFlowChanges(
+  options: EvaluatorOptions
+): EvaluationResult {
+  const { userRequest, flowSnapshot, changes } = options;
 
-DO NOT FLAG MODEL IDS - they are validated elsewhere. Any model ID is acceptable.
+  const allIssues: string[] = [
+    ...validateModelIds(changes),
+    ...validateNodes(changes),
+    ...validateEdges(changes, flowSnapshot),
+    ...validateRemoveNodes(changes, flowSnapshot),
+    ...validateDuplicateIds(changes, flowSnapshot),
+    ...validateOrphanedNodes(changes, flowSnapshot, userRequest),
+  ];
 
-THESE ARE ALL VALID (do NOT flag as errors):
-- Image connecting to targetHandle: "image" on image-generation = VALID (base image input)
-- Prompt set in node data.prompt instead of via edge = VALID
-- Edge to preview-output without targetHandle = VALID (single input node)
-- Image data going to preview-output = VALID`;
+  return {
+    valid: allIssues.length === 0,
+    issues: allIssues,
+    suggestions: [], // No suggestions without LLM
+  };
 }
 
 /**
@@ -281,39 +405,22 @@ export function buildRetryContext(
   evalResult: EvaluationResult
 ): string {
   return `
-## IMPORTANT: Fix Previous Validation Errors
+## Fix These Validation Errors
 
-Your previous response failed validation. Here are the issues:
+Your previous response had issues:
 
 ${evalResult.issues.map((issue, i) => `${i + 1}. ${issue}`).join("\n")}
 
-Your previous (invalid) response was:
+Previous (invalid) response:
 \`\`\`json
 ${JSON.stringify(failedChanges, null, 2)}
 \`\`\`
 
-Please generate CORRECTED FlowChanges that address these issues.
+Please fix these specific issues and regenerate the FlowChanges JSON.
 
-### Valid Model IDs (use EXACTLY these):
-**Text Generation (text-generation, react-component):**
-- OpenAI: gpt-5.2, gpt-5-mini, gpt-5-nano
-- Google: gemini-3-pro-preview, gemini-3-flash-preview
-- Anthropic: claude-opus-4-5, claude-sonnet-4-5, claude-haiku-4-5
-
-**Image Generation (image-generation):**
-- OpenAI: gpt-image-1, dall-e-3, dall-e-2
-- Google: gemini-2.5-flash-image, gemini-3-pro-image-preview
-
-Double-check:
-- All node IDs in edges must exist (either in the current flow or being created)
-- Model IDs must be EXACTLY as listed above (e.g., "gemini-3-flash-preview" NOT "gemini-2.5-flash")
-- Data types must match (string/image/response)
-- New nodes must be connected to the flow
-- If inserting between nodes, remove the old edge first
-
-**CRITICAL - Image connections:**
-- Image data (dataType: "image") can ONLY connect to:
-  - targetHandle: "image" on image-generation nodes (Base Image)
-  - preview-output nodes
-- Image data CANNOT connect to text inputs (targetHandle: "prompt" or "system")`;
+### Quick Reference:
+- image-generation accepts: \`targetHandle: "prompt"\` (string) OR \`targetHandle: "image"\` (image-to-image)
+- text-generation accepts: \`targetHandle: "prompt"\` (string) OR \`targetHandle: "system"\` (string)
+- Image data can ONLY connect to \`targetHandle: "image"\` or preview-output
+- All new nodes must be connected via edges (unless adding a single standalone node)`;
 }

@@ -80,11 +80,15 @@ interface UseAutopilotChatOptions {
   onUndoChanges: (applied: AppliedChangesInfo) => void;
 }
 
+// Maximum number of auto-retry attempts before showing errors to user
+const MAX_RETRY_ATTEMPTS = 2;
+
 interface SendMessageOptions {
   executePlan?: FlowPlan;
   retryContext?: {
     failedChanges: FlowChanges;
     evalResult: EvaluationResult;
+    attemptCount: number;
   };
   skipEvaluation?: boolean;
   skipUserMessage?: boolean;
@@ -281,7 +285,6 @@ export function useAutopilotChat({
                 userRequest,
                 flowSnapshot,
                 changes: pendingChanges,
-                apiKeys,
               }),
             });
 
@@ -304,12 +307,15 @@ export function useAutopilotChat({
                 )
               );
             } else {
-              // Evaluation failed
-              if (!options?.retryContext) {
+              // Evaluation failed - check if we should retry
+              const currentAttempt = options?.retryContext?.attemptCount ?? 1;
+              const canRetry = currentAttempt < MAX_RETRY_ATTEMPTS;
+
+              if (canRetry) {
                 // Build the retry instructions to show user
                 const retryInstructions = buildRetryContext(pendingChanges, evalResult);
 
-                // First failure - auto-retry with error feedback
+                // Auto-retry with error feedback
                 setMessages((prev) =>
                   prev.map((m) =>
                     m.id === assistantMessageId
@@ -333,13 +339,14 @@ export function useAutopilotChat({
                   retryContext: {
                     failedChanges: pendingChanges,
                     evalResult,
+                    attemptCount: currentAttempt + 1,
                   },
                   skipEvaluation: false,
                   skipUserMessage: true,
                 });
                 return; // Exit early, retry will handle the rest
               } else {
-                // Already retried - show errors, don't apply
+                // Max retries reached - show errors, don't apply
                 setMessages((prev) =>
                   prev.map((m) =>
                     m.id === assistantMessageId
@@ -497,11 +504,12 @@ export function useAutopilotChat({
 
       if (!originalRequest) return;
 
-      // Trigger another retry
+      // Trigger another retry (manual retry resets attempt count)
       await sendMessage(originalRequest, model, {
         retryContext: {
           failedChanges: message.pendingChanges,
           evalResult: message.evaluationResult,
+          attemptCount: 1,
         },
         skipEvaluation: false,
         skipUserMessage: true,

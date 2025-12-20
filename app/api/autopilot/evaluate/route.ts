@@ -2,23 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { evaluateFlowChanges } from "@/lib/autopilot/evaluator";
 import type { FlowSnapshot, FlowChanges } from "@/lib/autopilot/types";
 
-interface ApiKeys {
-  openai?: string;
-  google?: string;
-  anthropic?: string;
-}
-
 interface EvaluateRequest {
   userRequest: string;
   flowSnapshot: FlowSnapshot;
   changes: FlowChanges;
-  apiKeys?: ApiKeys;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as EvaluateRequest;
-    const { userRequest, flowSnapshot, changes, apiKeys } = body;
+    const { userRequest, flowSnapshot, changes } = body;
 
     if (!userRequest || !flowSnapshot || !changes) {
       return NextResponse.json(
@@ -27,11 +20,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await evaluateFlowChanges({
+    // Programmatic validation - fast and deterministic
+    const result = evaluateFlowChanges({
       userRequest,
       flowSnapshot,
       changes,
-      apiKey: apiKeys?.anthropic,
     });
 
     return NextResponse.json(result);
