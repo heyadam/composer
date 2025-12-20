@@ -20,13 +20,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Loader } from "@/components/ai-elements/loader";
-import { Check, Sparkles, Undo2, ChevronDown, Play, Zap, ListTodo, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Check, Sparkles, Undo2, ChevronDown, Play, Zap, ListTodo, AlertTriangle, CheckCircle2, Brain } from "lucide-react";
+import { ThinkingSummary } from "@/components/ThinkingSummary";
 import type { AutopilotMessage, AutopilotModel, AutopilotMode, FlowPlan } from "@/lib/autopilot/types";
 
 const MODELS: { id: AutopilotModel; name: string }[] = [
-  { id: "opus-4-5-low", name: "Opus 4.5 (Low)" },
-  { id: "opus-4-5-medium", name: "Opus 4.5 (Medium)" },
-  { id: "opus-4-5-high", name: "Opus 4.5 (High)" },
+  { id: "opus-4-5-low", name: "Opus 4.5 L" },
+  { id: "opus-4-5-medium", name: "Opus 4.5 M" },
+  { id: "opus-4-5-high", name: "Opus 4.5 H" },
 ];
 
 const MODES: { id: AutopilotMode; name: string; icon: typeof Zap }[] = [
@@ -47,6 +48,8 @@ interface AutopilotChatProps {
   error: string | null;
   mode: AutopilotMode;
   onModeChange: (mode: AutopilotMode) => void;
+  thinkingEnabled: boolean;
+  onThinkingChange: (enabled: boolean) => void;
   onSendMessage: (content: string, model: AutopilotModel) => void;
   onApprovePlan: (messageId: string, model: AutopilotModel) => void;
   onUndoChanges: (messageId: string) => void;
@@ -59,6 +62,8 @@ export function AutopilotChat({
   error,
   mode,
   onModeChange,
+  thinkingEnabled,
+  onThinkingChange,
   onSendMessage,
   onApprovePlan,
   onUndoChanges,
@@ -110,6 +115,15 @@ export function AutopilotChat({
                 <MessageContent>
                   {message.role === "assistant" ? (
                     <>
+                      {/* Thinking summary - shown first since thinking happens before response */}
+                      {message.thinking && (
+                        <ThinkingSummary
+                          reasoning={message.thinking}
+                          defaultExpanded
+                          maxHeight="150px"
+                          className="mb-2"
+                        />
+                      )}
                       <MessageResponse className="[&_pre]:text-[8px] [&_pre]:leading-[1.2] [&_pre]:p-1.5 [&_code]:text-[8px]">{message.content}</MessageResponse>
                       {/* Plan awaiting approval */}
                       {message.pendingPlan && !message.planApproved && (
@@ -295,7 +309,13 @@ export function AutopilotChat({
                   {MODES.map((m) => (
                     <DropdownMenuItem
                       key={m.id}
-                      onClick={() => onModeChange(m.id)}
+                      onClick={() => {
+                        onModeChange(m.id);
+                        // Auto-enable thinking when switching to plan mode
+                        if (m.id === "plan" && !thinkingEnabled) {
+                          onThinkingChange(true);
+                        }
+                      }}
                       className="text-xs gap-2"
                     >
                       <m.icon className="h-3.5 w-3.5" />
@@ -335,6 +355,22 @@ export function AutopilotChat({
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              {/* Thinking Toggle */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-6 px-2 text-[11px] gap-1 ${
+                  thinkingEnabled
+                    ? "text-purple-600 hover:text-purple-700"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => onThinkingChange(!thinkingEnabled)}
+                title={thinkingEnabled ? "Disable extended thinking" : "Enable extended thinking"}
+              >
+                <Brain className="h-3 w-3" />
+                <span>Think</span>
+              </Button>
             </div>
             <PromptInputSubmit
               disabled={!inputValue.trim() || isLoading}

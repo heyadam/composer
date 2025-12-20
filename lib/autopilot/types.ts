@@ -89,6 +89,7 @@ export interface AutopilotMessage {
   role: "user" | "assistant";
   content: string;
   timestamp: number;
+  thinking?: string;
   pendingChanges?: FlowChanges;
   pendingPlan?: FlowPlan;
   planApproved?: boolean;
@@ -108,4 +109,5 @@ export interface AutopilotRequest {
   model?: AutopilotModel;
   mode?: AutopilotMode;
   approvedPlan?: FlowPlan;
+  thinkingEnabled?: boolean;
 }

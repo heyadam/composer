@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { streamText } from "ai";
-import { createAnthropic } from "@ai-sdk/anthropic";
+import { createAnthropic, type AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import {
   buildSystemPrompt,
   buildPlanModeSystemPrompt,
@@ -25,7 +25,11 @@ export async function POST(request: NextRequest) {
       apiKeys,
       mode = "execute",
       approvedPlan,
+      thinkingEnabled: thinkingEnabledParam,
     } = body;
+
+    // Enable thinking by default in plan mode, optional in execute mode
+    const thinkingEnabled = thinkingEnabledParam ?? (mode === "plan");
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
@@ -76,6 +80,18 @@ export async function POST(request: NextRequest) {
       finalSystemPrompt = systemPrompt + "\n\n" + buildRetryContext(retryContext.failedChanges, retryContext.evalResult);
     }
 
+    // Build provider options based on thinking and effort settings
+    const providerOptions: AnthropicProviderOptions = {
+      effort,
+    };
+
+    if (thinkingEnabled) {
+      providerOptions.thinking = {
+        type: "enabled",
+        budgetTokens: 10000,
+      };
+    }
+
     // Stream response from Claude Opus 4.5 with effort parameter
     const result = streamText({
       model: anthropic("claude-opus-4-5-20251101"),
@@ -85,15 +101,42 @@ export async function POST(request: NextRequest) {
         content: msg.content,
       })),
       maxOutputTokens: 16000,
-      headers: {
-        "anthropic-beta": "effort-2025-11-24",
-      },
       providerOptions: {
-        anthropic: {
-          outputConfig: { effort },
-        },
+        anthropic: providerOptions,
       },
     });
+
+    // If thinking is enabled, stream NDJSON with separate thinking and text
+    if (thinkingEnabled) {
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const part of result.fullStream) {
+              if (part.type === "reasoning-delta") {
+                controller.enqueue(
+                  encoder.encode(JSON.stringify({ type: "thinking", content: part.text }) + "\n")
+                );
+              } else if (part.type === "text-delta") {
+                controller.enqueue(
+                  encoder.encode(JSON.stringify({ type: "text", content: part.text }) + "\n")
+                );
+              }
+            }
+            controller.close();
+          } catch (error) {
+            controller.error(error);
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "application/x-ndjson",
+          "Transfer-Encoding": "chunked",
+        },
+      });
+    }
 
     return result.toTextStreamResponse();
   } catch (error) {

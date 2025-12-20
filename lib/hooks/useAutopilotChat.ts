@@ -42,6 +42,7 @@ export function useAutopilotChat({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<AutopilotMode>("execute");
+  const [thinkingEnabled, setThinkingEnabled] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesRef = useRef<AutopilotMessage[]>([]);
   const { keys: apiKeys } = useApiKeys();
@@ -93,6 +94,10 @@ export function useAutopilotChat({
         // Create flow snapshot
         const flowSnapshot = createFlowSnapshot(nodes, edges);
 
+        // Determine if thinking should be enabled (always for plan mode, optional for execute)
+        const currentMode = options?.executePlan ? "execute" : mode;
+        const shouldEnableThinking = currentMode === "plan" || thinkingEnabled;
+
         const response = await fetch("/api/autopilot", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -101,9 +106,10 @@ export function useAutopilotChat({
             flowSnapshot,
             model,
             apiKeys,
-            mode: options?.executePlan ? "execute" : mode,
+            mode: currentMode,
             approvedPlan: options?.executePlan,
             retryContext: options?.retryContext,
+            thinkingEnabled: shouldEnableThinking,
           }),
           signal: abortControllerRef.current.signal,
         });
@@ -121,20 +127,47 @@ export function useAutopilotChat({
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let fullOutput = "";
+        let fullThinking = "";
+        const isNdjson = response.headers.get("Content-Type")?.includes("ndjson");
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
           const chunk = decoder.decode(value);
-          fullOutput += chunk;
 
-          // Update message content as it streams
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantMessageId ? { ...m, content: fullOutput } : m
-            )
-          );
+          if (isNdjson) {
+            // Parse NDJSON chunks for thinking-enabled responses
+            const lines = chunk.split("\n").filter((line) => line.trim());
+            for (const line of lines) {
+              try {
+                const parsed = JSON.parse(line);
+                if (parsed.type === "thinking") {
+                  fullThinking += parsed.content;
+                } else if (parsed.type === "text") {
+                  fullOutput += parsed.content;
+                }
+              } catch {
+                // Skip invalid JSON lines
+              }
+            }
+            // Update message with both thinking and content
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMessageId
+                  ? { ...m, content: fullOutput, thinking: fullThinking || undefined }
+                  : m
+              )
+            );
+          } else {
+            // Regular text stream
+            fullOutput += chunk;
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMessageId ? { ...m, content: fullOutput } : m
+              )
+            );
+          }
         }
 
         // Parse response - could be plan, changes, or neither
@@ -305,7 +338,7 @@ export function useAutopilotChat({
         abortControllerRef.current = null;
       }
     },
-    [nodes, edges, isLoading, onApplyChanges, apiKeys, mode]
+    [nodes, edges, isLoading, onApplyChanges, apiKeys, mode, thinkingEnabled]
   );
 
   const approvePlan = useCallback(
@@ -380,6 +413,8 @@ export function useAutopilotChat({
     error,
     mode,
     setMode,
+    thinkingEnabled,
+    setThinkingEnabled,
     sendMessage,
     approvePlan,
     undoChanges,
