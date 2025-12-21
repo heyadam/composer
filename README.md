@@ -68,12 +68,21 @@ npm install
 
 ### Environment Setup
 
-Create a `.env.local` file with API keys for the providers you want to use:
+Create a `.env.local` file with Supabase and provider API keys:
 
 ```
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY=your_supabase_publishable_or_anon_key
 OPENAI_API_KEY=your_openai_key
 GOOGLE_GENERATIVE_AI_API_KEY=your_google_key
 ANTHROPIC_API_KEY=your_anthropic_key
+```
+
+Enable Google OAuth in your Supabase project and add redirect URLs:
+
+```
+http://localhost:3000/auth/callback
+https://your-domain.com/auth/callback
 ```
 
 ### Development

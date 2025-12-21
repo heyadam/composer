@@ -31,7 +31,7 @@ import { useCommentSuggestions } from "@/lib/hooks/useCommentSuggestions";
 import { useSuggestions } from "@/lib/hooks/useSuggestions";
 import { useClipboard } from "@/lib/hooks/useClipboard";
 import type { NodeType, CommentColor } from "@/types/flow";
-import { Github, User, Settings, Folder, FilePlus, FolderOpen, Save, PanelLeft, PanelRight } from "lucide-react";
+import { Github, Settings, Folder, FilePlus, FolderOpen, Save, PanelLeft, PanelRight } from "lucide-react";
 import { SettingsDialogControlled } from "./SettingsDialogControlled";
 import {
   DropdownMenu,
@@ -58,6 +58,7 @@ import {
   type FlowMetadata,
 } from "@/lib/flow-storage";
 import { useBackgroundSettings } from "@/lib/hooks/useBackgroundSettings";
+import { ProfileDropdown } from "./ProfileDropdown";
 
 let id = 0;
 const getId = () => `node_${id++}`;
@@ -1319,18 +1320,7 @@ export function AgentFlow() {
               </TooltipContent>
             </Tooltip>
             {/* Profile */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  className="p-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm"
-                >
-                  <User className="w-5 h-5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="bg-neutral-800 text-white border-neutral-700">
-                Profile
-              </TooltipContent>
-            </Tooltip>
+            <ProfileDropdown />
             {/* Preview Sidebar */}
             <Tooltip>
               <TooltipTrigger asChild>
