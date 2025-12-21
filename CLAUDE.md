@@ -22,6 +22,18 @@ Requires API keys for the AI providers you want to use:
 
 See `AI_MODELS.md` for the full list of supported models per provider.
 
+## Database
+
+This project uses **Supabase** for the database. Use the **Supabase MCP tools** (`mcp__supabase__*`) for all database operations including:
+- Querying and modifying data (`mcp__supabase__execute_sql`)
+- Creating and applying migrations (`mcp__supabase__apply_migration`)
+- Listing tables and extensions (`mcp__supabase__list_tables`, `mcp__supabase__list_extensions`)
+- Generating TypeScript types (`mcp__supabase__generate_typescript_types`)
+- Managing Edge Functions (`mcp__supabase__deploy_edge_function`)
+- Viewing logs and advisories (`mcp__supabase__get_logs`, `mcp__supabase__get_advisors`)
+
+For documentation, use `mcp__supabase__search_docs` to query the Supabase docs via GraphQL.
+
 ## Architecture Overview
 
 This is an AI agent workflow builder using Next.js 16 App Router with React Flow for visual flow editing.
