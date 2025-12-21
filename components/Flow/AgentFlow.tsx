@@ -31,7 +31,21 @@ import { useCommentSuggestions } from "@/lib/hooks/useCommentSuggestions";
 import { useSuggestions } from "@/lib/hooks/useSuggestions";
 import { useClipboard } from "@/lib/hooks/useClipboard";
 import type { NodeType, CommentColor } from "@/types/flow";
-import { Github, User, Settings, Folder } from "lucide-react";
+import { Github, User, Settings, Folder, FilePlus, FolderOpen, Save, PanelLeft, PanelRight } from "lucide-react";
+import { SettingsDialogControlled } from "./SettingsDialogControlled";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { executeFlow } from "@/lib/execution/engine";
 import type { NodeExecutionState } from "@/lib/execution/types";
 import type { FlowChanges, AddNodeAction, AddEdgeAction, RemoveEdgeAction, RemoveNodeAction, AppliedChangesInfo, RemovedNodeInfo, RemovedEdgeInfo } from "@/lib/autopilot/types";
@@ -114,8 +128,21 @@ export function AgentFlow() {
   const [flowId] = useState(() => Math.floor(Math.random() * 900 + 100).toString());
 
   // API keys context
-  const { keys: apiKeys, hasRequiredKey } = useApiKeys();
+  const { keys: apiKeys, hasRequiredKey, getKeyStatuses, isDevMode, isLoaded } = useApiKeys();
   const [keyError, setKeyError] = useState<string | null>(null);
+
+  // Settings dialog state
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const statuses = getKeyStatuses();
+  const hasAnyKey = statuses.some((s) => s.hasKey);
+  const showSettingsWarning = !isDevMode && !hasAnyKey;
+
+  // Auto-open settings dialog when no API keys are configured
+  useEffect(() => {
+    if (isLoaded && !isDevMode && !hasAnyKey) {
+      setSettingsOpen(true);
+    }
+  }, [isLoaded, isDevMode, hasAnyKey]);
 
   // Background settings
   const { settings: bgSettings } = useBackgroundSettings();
@@ -1184,60 +1211,154 @@ export function AgentFlow() {
         <div className="absolute top-0 left-0 right-0 z-10 flex justify-center pt-4 pb-8 bg-gradient-to-b from-black/90 to-transparent">
           <AvyLogo isPanning={isPanning} />
         </div>
-        {/* Flow with ID (top left) */}
-        <div className="absolute top-4 left-4 z-10">
-          <button
-            className="flex items-center gap-1.5 px-2.5 py-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm text-sm"
-            title="Files"
-          >
-            <Folder className="w-4 h-4" />
-            <span>Flow</span>
-            <span className="w-px h-4 bg-muted-foreground/30 mx-1" />
-            <span className="w-2 h-2 rounded-full bg-green-500" title="Connected" />
-            <span className="font-mono">{flowId}</span>
-          </button>
-        </div>
+        {/* Autopilot and Flow (top left) */}
+        <TooltipProvider delayDuration={200}>
+          <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
+            {/* Autopilot */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setAutopilotOpen(!autopilotOpen)}
+                  className={`flex items-center gap-1.5 px-2.5 py-2 transition-colors rounded-full border bg-background/50 backdrop-blur-sm text-sm ${
+                    autopilotOpen
+                      ? "text-foreground border-muted-foreground/40"
+                      : "text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-muted-foreground/40"
+                  }`}
+                >
+                  <PanelLeft className="w-4 h-4" />
+                  <span>AI</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-neutral-800 text-white border-neutral-700">
+                Autopilot
+              </TooltipContent>
+            </Tooltip>
+            {/* Flow dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="flex items-center gap-1.5 px-2.5 py-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm text-sm"
+                  title="Files"
+                >
+                  <Folder className="w-4 h-4" />
+                  <span>Flow</span>
+                  <span className="w-px h-4 bg-muted-foreground/30 mx-1" />
+                  <span className="w-2 h-2 rounded-full bg-green-500" title="Connected" />
+                  <span className="font-mono">{flowId}</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                sideOffset={8}
+                className="bg-neutral-900 border-neutral-700 text-white min-w-[160px]"
+              >
+                <DropdownMenuItem
+                  onClick={handleNewFlow}
+                  className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
+                >
+                  <FilePlus className="h-4 w-4 mr-2" />
+                  New Flow
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-neutral-700" />
+                <DropdownMenuItem
+                  onClick={handleOpenFlow}
+                  className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Open...
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setSaveDialogOpen(true)}
+                  className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save as...
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </TooltipProvider>
         {/* GitHub, Settings, and Profile icons (top right, left of responses sidebar) */}
-        <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-          {/* GitHub */}
-          <a
-            href="https://github.com/heyadam/avy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm"
-            title="View on GitHub"
-          >
-            <Github className="w-5 h-5" />
-          </a>
-          {/* Settings */}
-          <button
-            className="p-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm"
-            title="Settings"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-          {/* Profile */}
-          <button
-            className="p-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm"
-            title="Profile"
-          >
-            <User className="w-5 h-5" />
-          </button>
-        </div>
+        <TooltipProvider delayDuration={200}>
+          <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+            {/* GitHub */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a
+                  href="https://github.com/heyadam/avy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm"
+                >
+                  <Github className="w-5 h-5" />
+                </a>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-neutral-800 text-white border-neutral-700">
+                View on GitHub
+              </TooltipContent>
+            </Tooltip>
+            {/* Settings */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setSettingsOpen(true)}
+                  className={`p-2 transition-colors rounded-full border bg-background/50 backdrop-blur-sm relative ${
+                    showSettingsWarning
+                      ? "text-amber-400 hover:text-amber-300 border-amber-500/50 hover:border-amber-400/50"
+                      : "text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-muted-foreground/40"
+                  }`}
+                >
+                  <Settings className="w-5 h-5" />
+                  {showSettingsWarning && (
+                    <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-amber-500" />
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-neutral-800 text-white border-neutral-700">
+                {showSettingsWarning ? "Configure API Keys" : "Settings"}
+              </TooltipContent>
+            </Tooltip>
+            {/* Profile */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className="p-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm"
+                >
+                  <User className="w-5 h-5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-neutral-800 text-white border-neutral-700">
+                Profile
+              </TooltipContent>
+            </Tooltip>
+            {/* Preview Sidebar */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setResponsesOpen(!responsesOpen)}
+                  className={`flex items-center gap-1.5 px-2.5 py-2 transition-colors rounded-full border bg-background/50 backdrop-blur-sm text-sm ${
+                    responsesOpen
+                      ? "text-foreground border-muted-foreground/40"
+                      : "text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-muted-foreground/40"
+                  }`}
+                >
+                  <span>Preview</span>
+                  <PanelRight className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-neutral-800 text-white border-neutral-700">
+                Preview
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
         <ActionBar
           onToggleNodes={() => setNodesPaletteOpen(!nodesPaletteOpen)}
-          onToggleAutopilot={() => setAutopilotOpen(!autopilotOpen)}
-          onToggleResponses={() => setResponsesOpen(!responsesOpen)}
           onCommentAround={handleCommentAround}
           onRun={runFlow}
           onCancel={cancelFlow}
           onReset={resetExecution}
-          onNewFlow={handleNewFlow}
-          onSaveFlow={() => setSaveDialogOpen(true)}
-          onOpenFlow={handleOpenFlow}
           nodesPaletteOpen={nodesPaletteOpen}
-          autopilotOpen={autopilotOpen}
-          responsesOpen={responsesOpen}
           isRunning={isRunning}
           hasSelection={hasSelection}
         />
@@ -1255,6 +1376,10 @@ export function AgentFlow() {
         onOpenChange={setSaveDialogOpen}
         onSave={handleSaveFlow}
         defaultName={flowMetadata?.name || "My Flow"}
+      />
+      <SettingsDialogControlled
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
       />
     </div>
   );
