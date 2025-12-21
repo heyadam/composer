@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AuthProvider } from "@/lib/auth";
 import { ApiKeysProvider } from "@/lib/api-keys";
 import "./globals.css";
 
@@ -34,7 +35,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" style={{ colorScheme: "dark" }}>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ApiKeysProvider>{children}</ApiKeysProvider>
+        <AuthProvider>
+          <ApiKeysProvider>{children}</ApiKeysProvider>
+        </AuthProvider>
       </body>
     </html>
   );
