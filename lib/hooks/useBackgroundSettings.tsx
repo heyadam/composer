@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  createContext,
+  useContext,
+  type ReactNode,
+} from "react";
 import { BackgroundVariant } from "@xyflow/react";
 
 export interface BackgroundSettings {
@@ -15,13 +22,27 @@ const STORAGE_KEY = "avy-background-settings";
 
 const DEFAULT_SETTINGS: BackgroundSettings = {
   variant: BackgroundVariant.Dots,
-  color: "#383838",
+  color: "#43434c",
   bgColor: "#000000",
   gap: 20,
-  size: 1,
+  size: 2,
 };
 
-export function useBackgroundSettings() {
+interface BackgroundSettingsContextValue {
+  settings: BackgroundSettings;
+  updateSettings: (updates: Partial<BackgroundSettings>) => void;
+  resetSettings: () => void;
+  isLoaded: boolean;
+}
+
+const BackgroundSettingsContext =
+  createContext<BackgroundSettingsContextValue | null>(null);
+
+export function BackgroundSettingsProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const [settings, setSettings] = useState<BackgroundSettings>(DEFAULT_SETTINGS);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -58,10 +79,26 @@ export function useBackgroundSettings() {
     setSettings(DEFAULT_SETTINGS);
   }, []);
 
-  return {
+  const value: BackgroundSettingsContextValue = {
     settings,
     updateSettings,
     resetSettings,
     isLoaded,
   };
+
+  return (
+    <BackgroundSettingsContext.Provider value={value}>
+      {children}
+    </BackgroundSettingsContext.Provider>
+  );
+}
+
+export function useBackgroundSettings() {
+  const context = useContext(BackgroundSettingsContext);
+  if (!context) {
+    throw new Error(
+      "useBackgroundSettings must be used within a BackgroundSettingsProvider"
+    );
+  }
+  return context;
 }

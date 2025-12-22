@@ -253,92 +253,106 @@ export function SettingsDialogControlled({
             )}
           </TabsContent>
 
-          <TabsContent value="appearance" className="space-y-4 pt-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium">Background</h4>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={resetBgSettings}
-                className="h-7 text-xs text-muted-foreground"
-              >
-                <RotateCcw className="h-3 w-3 mr-1" />
-                Reset
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-xs text-muted-foreground">Pattern</label>
-                <Select
-                  value={bgSettings.variant}
-                  onValueChange={(value) => updateBgSettings({ variant: value as BackgroundVariant })}
+          <TabsContent value="appearance" className="space-y-5 pt-4">
+            {/* Pattern Settings */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Pattern</label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={resetBgSettings}
+                  className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
                 >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {VARIANT_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <RotateCcw className="h-3 w-3 mr-1" />
+                  Reset
+                </Button>
               </div>
-
-              <div className="space-y-2">
-                <label className="text-xs text-muted-foreground">Gap</label>
-                <Input
-                  type="number"
-                  min={5}
-                  max={100}
-                  value={bgSettings.gap}
-                  onChange={(e) => updateBgSettings({ gap: parseInt(e.target.value) || 20 })}
-                  className="h-8 text-xs"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs text-muted-foreground">Canvas Color</label>
-                <div className="flex gap-2">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Style</label>
+                  <Select
+                    value={bgSettings.variant}
+                    onValueChange={(value) => updateBgSettings({ variant: value as BackgroundVariant })}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {VARIANT_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Size</label>
                   <Input
-                    type="color"
-                    value={bgSettings.bgColor}
-                    onChange={(e) => updateBgSettings({ bgColor: e.target.value })}
-                    className="h-8 w-12 p-1 cursor-pointer"
-                  />
-                  <Input
-                    type="text"
-                    value={bgSettings.bgColor}
-                    onChange={(e) => updateBgSettings({ bgColor: e.target.value })}
-                    className="h-8 text-xs font-mono flex-1"
+                    type="number"
+                    min={0.5}
+                    max={10}
+                    step={0.5}
+                    value={bgSettings.size}
+                    onChange={(e) => updateBgSettings({ size: parseFloat(e.target.value) || 1 })}
+                    className="h-8 text-xs"
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs text-muted-foreground">Pattern Color</label>
-                <div className="flex gap-2">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Gap</label>
                   <Input
-                    type="color"
-                    value={bgSettings.color}
-                    onChange={(e) => updateBgSettings({ color: e.target.value })}
-                    className="h-8 w-12 p-1 cursor-pointer"
-                  />
-                  <Input
-                    type="text"
-                    value={bgSettings.color}
-                    onChange={(e) => updateBgSettings({ color: e.target.value })}
-                    className="h-8 text-xs font-mono flex-1"
+                    type="number"
+                    min={5}
+                    max={100}
+                    value={bgSettings.gap}
+                    onChange={(e) => updateBgSettings({ gap: parseInt(e.target.value) || 20 })}
+                    className="h-8 text-xs"
                   />
                 </div>
               </div>
             </div>
 
-            <p className="text-xs text-muted-foreground border-t pt-4">
-              Settings are saved automatically.
-            </p>
+            {/* Color Settings */}
+            <div className="space-y-3">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Colors</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Canvas</label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={bgSettings.bgColor}
+                      onChange={(e) => updateBgSettings({ bgColor: e.target.value })}
+                      className="h-8 w-10 p-1 cursor-pointer shrink-0"
+                    />
+                    <Input
+                      type="text"
+                      value={bgSettings.bgColor}
+                      onChange={(e) => updateBgSettings({ bgColor: e.target.value })}
+                      className="h-8 text-xs font-mono"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Pattern</label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={bgSettings.color}
+                      onChange={(e) => updateBgSettings({ color: e.target.value })}
+                      className="h-8 w-10 p-1 cursor-pointer shrink-0"
+                    />
+                    <Input
+                      type="text"
+                      value={bgSettings.color}
+                      onChange={(e) => updateBgSettings({ color: e.target.value })}
+                      className="h-8 text-xs font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>

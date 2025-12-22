@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/lib/auth";
 import { ApiKeysProvider } from "@/lib/api-keys";
+import { BackgroundSettingsProvider } from "@/lib/hooks/useBackgroundSettings";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -36,7 +37,9 @@ export default function RootLayout({
     <html lang="en" className="dark" style={{ colorScheme: "dark" }}>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
-          <ApiKeysProvider>{children}</ApiKeysProvider>
+          <ApiKeysProvider>
+            <BackgroundSettingsProvider>{children}</BackgroundSettingsProvider>
+          </ApiKeysProvider>
         </AuthProvider>
       </body>
     </html>
