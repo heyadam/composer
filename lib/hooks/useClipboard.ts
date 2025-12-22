@@ -14,6 +14,8 @@ interface UseClipboardOptions {
   reactFlowInstance: React.RefObject<ReactFlowInstance | null>;
   reactFlowWrapper: React.RefObject<HTMLDivElement | null>;
   getId: () => string;
+  /** Called before paste - use for undo snapshots */
+  onBeforePaste?: () => void;
 }
 
 export function useClipboard({
@@ -24,6 +26,7 @@ export function useClipboard({
   reactFlowInstance,
   reactFlowWrapper,
   getId,
+  onBeforePaste,
 }: UseClipboardOptions) {
   const clipboardRef = useRef<ClipboardData | null>(null);
   const pasteOffsetRef = useRef(0);
@@ -84,6 +87,9 @@ export function useClipboard({
   // Paste nodes from clipboard
   const pasteNodes = useCallback(() => {
     if (!clipboardRef.current || clipboardRef.current.nodes.length === 0) return;
+
+    // Take snapshot before pasting for undo support
+    onBeforePaste?.();
 
     const { nodes: copiedNodes, edges: copiedEdges } = clipboardRef.current;
 
@@ -177,7 +183,7 @@ export function useClipboard({
 
     // Add new edges
     setEdges((eds) => [...eds, ...newEdges]);
-  }, [getViewportCenter, getId, setNodes, setEdges]);
+  }, [getViewportCenter, getId, setNodes, setEdges, onBeforePaste]);
 
   // Handle keyboard shortcuts
   useEffect(() => {

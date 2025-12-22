@@ -99,7 +99,7 @@ export function WelcomeDialog({ onOpenSettings }: WelcomeDialogProps) {
 
             <div className="grid gap-2">
               <Button onClick={handleSetupApiKeys} className="h-10 w-full cursor-pointer">
-                Open API Keys
+                Set up API Keys
               </Button>
             </div>
           </div>

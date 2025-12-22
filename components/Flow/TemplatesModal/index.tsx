@@ -118,9 +118,11 @@ export function TemplatesModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+      {/* Backdrop overlay - pointer-events-none allows clicks to pass through to canvas */}
+      <div className="absolute inset-0 bg-black/50 pointer-events-none animate-in fade-in-0 duration-200" />
       <div
         ref={panelRef}
-        className="pointer-events-auto bg-background border rounded-lg shadow-xl p-6 w-full max-w-2xl animate-in fade-in-0 zoom-in-95 duration-200"
+        className="relative z-10 pointer-events-auto bg-background border rounded-lg shadow-2xl shadow-black/40 p-6 w-full max-w-2xl animate-in fade-in-0 zoom-in-95 duration-200"
       >
         {/* Header */}
         <div className="text-center mb-6">
@@ -128,7 +130,7 @@ export function TemplatesModal({
         </div>
 
         {/* AI Prompt Input */}
-        <div className="mb-6">
+        <div className="mb-6 prompt-input-glow">
           <PromptInput
             onSubmit={({ text }) => {
               if (text.trim() && onSubmitPrompt) {

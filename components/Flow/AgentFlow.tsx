@@ -37,6 +37,7 @@ import { useFlowExecution } from "@/lib/hooks/useFlowExecution";
 import { useAutopilotIntegration } from "@/lib/hooks/useAutopilotIntegration";
 import { useNodeParenting } from "@/lib/hooks/useNodeParenting";
 import { useFlowOperations } from "@/lib/hooks/useFlowOperations";
+import { useUndoRedo } from "@/lib/hooks/useUndoRedo";
 import type { NodeType, CommentColor } from "@/types/flow";
 import { Settings, Folder, FilePlus, FolderOpen, Save, PanelLeft, PanelRight, Cloud } from "lucide-react";
 import { SettingsDialogControlled } from "./SettingsDialogControlled";
@@ -145,6 +146,38 @@ export function AgentFlow() {
     clearHighlights: clearAutopilotHighlights,
     clearHighlightOnDrag,
   } = useAutopilotIntegration({ setNodes, setEdges });
+
+  // Undo/redo hook
+  const { takeSnapshot, clearHistory } = useUndoRedo({
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    reactFlowWrapper,
+  });
+
+  // Wrap onEdgesChange to snapshot before edge deletions
+  const handleEdgesChange = useCallback(
+    (changes: Parameters<typeof onEdgesChange>[0]) => {
+      // Check if any edges are being removed
+      const hasRemoval = changes.some((c) => c.type === "remove");
+      if (hasRemoval) {
+        takeSnapshot();
+      }
+      onEdgesChange(changes);
+    },
+    [onEdgesChange, takeSnapshot]
+  );
+
+  // Wrap autopilot apply to snapshot before changes
+  const handleApplyAutopilotChanges = useCallback(
+    (changes: Parameters<typeof applyAutopilotChanges>[0]) => {
+      takeSnapshot();
+      return applyAutopilotChanges(changes);
+    },
+    [applyAutopilotChanges, takeSnapshot]
+  );
+
   const [responsesOpen, setResponsesOpen] = useState(false);
 
   // Templates modal state
@@ -174,7 +207,10 @@ export function AgentFlow() {
     resetExecution,
     clearHighlights: clearAutopilotHighlights,
     reactFlowInstance,
-    onFlowChange: () => setAutopilotClearTrigger((prev) => prev + 1),
+    onFlowChange: () => {
+      setAutopilotClearTrigger((prev) => prev + 1);
+      clearHistory(); // Clear undo history when loading a new flow
+    },
     setIdCounter,
     shouldShowTemplatesModal,
     setTemplatesModalOpen,
@@ -256,6 +292,7 @@ export function AgentFlow() {
     onNodesChange,
     triggerGeneration,
     clearHighlightOnDrag,
+    onBeforeChange: takeSnapshot,
   });
 
   // Autopilot prompt suggestions
@@ -274,6 +311,7 @@ export function AgentFlow() {
     reactFlowInstance,
     reactFlowWrapper,
     getId,
+    onBeforePaste: takeSnapshot,
   });
 
   // Connection drag state
@@ -317,6 +355,9 @@ export function AgentFlow() {
 
   const onConnect: OnConnect = useCallback(
     (params: Connection) => {
+      // Take snapshot before adding edge for undo support
+      takeSnapshot();
+
       const dataType = params.source ? getEdgeDataType(params.source) : "default";
 
       setEdges((eds) => {
@@ -345,7 +386,7 @@ export function AgentFlow() {
         );
       });
     },
-    [setEdges, getEdgeDataType]
+    [setEdges, getEdgeDataType, takeSnapshot]
   );
 
   const onInit = useCallback((instance: ReactFlowInstance) => {
@@ -377,6 +418,9 @@ export function AgentFlow() {
         return;
       }
 
+      // Take snapshot before adding node for undo support
+      takeSnapshot();
+
       const position = reactFlowInstance.current.screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
@@ -391,7 +435,7 @@ export function AgentFlow() {
 
       setNodes((nds) => nds.concat(newNode));
     },
-    [setNodes]
+    [setNodes, takeSnapshot]
   );
 
   // Get the center of the current viewport in flow coordinates
@@ -409,6 +453,9 @@ export function AgentFlow() {
   // Add a node at the center of the viewport (for toolbar click-to-add)
   const handleAddNodeAtCenter = useCallback(
     (nodeType: NodeType) => {
+      // Take snapshot before adding node for undo support
+      takeSnapshot();
+
       const position = getViewportCenter();
       const newNode = {
         id: getId(),
@@ -421,7 +468,7 @@ export function AgentFlow() {
       };
       setNodes((nds) => nds.concat(newNode));
     },
-    [getViewportCenter, setNodes]
+    [getViewportCenter, setNodes, takeSnapshot]
   );
 
   // Get currently selected nodes (excluding comments when wrapping)
@@ -502,7 +549,7 @@ export function AgentFlow() {
       <AutopilotSidebar
         nodes={nodes}
         edges={edges}
-        onApplyChanges={applyAutopilotChanges}
+        onApplyChanges={handleApplyAutopilotChanges}
         onUndoChanges={undoAutopilotChanges}
         isOpen={autopilotOpen}
         onToggle={() => setAutopilotOpen(!autopilotOpen)}
@@ -530,7 +577,7 @@ export function AgentFlow() {
               nodes={nodes}
               edges={edges}
               onNodesChange={handleNodesChange}
-              onEdgesChange={onEdgesChange}
+              onEdgesChange={handleEdgesChange}
               onConnect={onConnect}
               onConnectStart={onConnectStart}
               onConnectEnd={onConnectEnd}

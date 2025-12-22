@@ -10,6 +10,8 @@ export interface UseNodeParentingOptions {
   onNodesChange: OnNodesChange;
   triggerGeneration: (commentId: string) => void;
   clearHighlightOnDrag: (changes: NodeChange<Node>[]) => void;
+  /** Called before drag/resize ends - use for undo snapshots */
+  onBeforeChange?: () => void;
 }
 
 export interface UseNodeParentingReturn {
@@ -370,9 +372,24 @@ export function useNodeParenting({
   onNodesChange,
   triggerGeneration,
   clearHighlightOnDrag,
+  onBeforeChange,
 }: UseNodeParentingOptions): UseNodeParentingReturn {
   const handleNodesChange = useCallback(
     (changes: NodeChange<Node>[]) => {
+      // Check if this is a drag end or resize end (state-changing operations)
+      const hasDragEnd = changes.some(
+        (c) => c.type === "position" && c.dragging === false
+      );
+      const hasResizeEnd = changes.some(
+        (c) => c.type === "dimensions" && c.resizing === false
+      );
+      const hasRemoval = changes.some((c) => c.type === "remove");
+
+      // Take snapshot before any state-changing operation
+      if ((hasDragEnd || hasResizeEnd || hasRemoval) && onBeforeChange) {
+        onBeforeChange();
+      }
+
       // Handle comment deletion (unparent children)
       const wasCommentDeletion = handleCommentDeletion(
         changes,
@@ -396,7 +413,7 @@ export function useNodeParenting({
       // Clear highlight for any nodes being dragged
       clearHighlightOnDrag(changes);
     },
-    [nodes, setNodes, onNodesChange, triggerGeneration, clearHighlightOnDrag]
+    [nodes, setNodes, onNodesChange, triggerGeneration, clearHighlightOnDrag, onBeforeChange]
   );
 
   // Expose helpers for potential reuse
