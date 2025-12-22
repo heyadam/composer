@@ -1,11 +1,83 @@
 {
   "metadata": {
-    "name": "Template 3",
-    "description": "Placeholder template - replace with your own",
+    "name": "i2i",
     "schemaVersion": 1,
-    "createdAt": "2025-01-01T00:00:00.000Z",
-    "updatedAt": "2025-01-01T00:00:00.000Z"
+    "createdAt": "2025-12-22T21:14:44.017Z",
+    "updatedAt": "2025-12-22T21:16:35.011Z"
   },
-  "nodes": [],
-  "edges": []
+  "nodes": [
+    {
+      "id": "autopilot-image-input-1734567890000",
+      "type": "image-input",
+      "position": {
+        "x": 90.31534422591253,
+        "y": 320.9460326777373
+      },
+      "data": {
+        "label": "Upload Image"
+      },
+      "measured": {
+        "width": 280,
+        "height": 176
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "autopilot-image-generation-1734567890001",
+      "type": "image-generation",
+      "position": {
+        "x": 450,
+        "y": 200
+      },
+      "data": {
+        "label": "Transform Image",
+        "prompt": "Change the style to be a hand drawn oil painting",
+        "provider": "google",
+        "model": "gemini-2.5-flash-image",
+        "aspectRatio": "1:1"
+      },
+      "measured": {
+        "width": 280,
+        "height": 370
+      },
+      "selected": false
+    },
+    {
+      "id": "autopilot-preview-output-1734567890002",
+      "type": "preview-output",
+      "position": {
+        "x": 850,
+        "y": 200
+      },
+      "data": {
+        "label": "Result"
+      },
+      "measured": {
+        "width": 280,
+        "height": 109
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-input-to-gen",
+      "source": "autopilot-image-input-1734567890000",
+      "target": "autopilot-image-generation-1734567890001",
+      "targetHandle": "image",
+      "type": "colored",
+      "data": {
+        "dataType": "image"
+      }
+    },
+    {
+      "id": "edge-gen-to-output",
+      "source": "autopilot-image-generation-1734567890001",
+      "target": "autopilot-preview-output-1734567890002",
+      "type": "colored",
+      "data": {
+        "dataType": "response"
+      }
+    }
+  ]
 }

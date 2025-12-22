@@ -16,19 +16,19 @@ export interface TemplateDefinition {
 export const templates: TemplateDefinition[] = [
   {
     id: "template-1",
-    title: "Template 1",
+    title: "Story & Image Gen",
     description: "Description for template 1",
     flow: template1 as SavedFlow,
   },
   {
     id: "template-2",
-    title: "Template 2",
+    title: "Basic Text Gen",
     description: "Description for template 2",
     flow: template2 as SavedFlow,
   },
   {
     id: "template-3",
-    title: "Template 3",
+    title: "Image to Image",
     description: "Description for template 3",
     flow: template3 as SavedFlow,
   },

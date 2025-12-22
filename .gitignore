@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.cursor/rules/create-db-functions.mdc
+.cursor/rules/create-migration.mdc
+.cursor/rules/create-rls-policies.mdc
+.cursor/rules/postgres-sql-style-guide.mdc
+.cursor/rules/use-realtime.mdc
+.cursor/rules/writing-supabase-edge-functions.mdc
