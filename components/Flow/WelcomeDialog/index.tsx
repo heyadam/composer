@@ -9,6 +9,9 @@ import { useNuxState } from "./hooks";
 import { DialogShell } from "./DialogShell";
 import { ProvidersHero, DemoHero } from "./heroes";
 
+// Re-export for external use
+export { isNuxComplete } from "./hooks";
+
 interface WelcomeDialogProps {
   onOpenSettings: () => void;
 }

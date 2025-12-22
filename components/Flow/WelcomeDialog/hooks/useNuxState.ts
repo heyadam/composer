@@ -6,6 +6,19 @@ const STORAGE_KEY = "avy-nux-step";
 
 export type NuxStep = "1" | "2" | "done";
 
+/**
+ * Check if NUX is complete (safe to call during render).
+ * Returns true if the user has completed or dismissed the NUX.
+ */
+export function isNuxComplete(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(STORAGE_KEY) === "done";
+  } catch {
+    return false;
+  }
+}
+
 interface UseNuxStateReturn {
   step: NuxStep;
   isLoaded: boolean;
