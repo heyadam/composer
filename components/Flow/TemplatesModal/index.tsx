@@ -3,10 +3,36 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X } from "lucide-react";
-import { TemplateCard } from "./TemplateCard";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sparkles, Wand2, Zap, ListTodo, ChevronDown, Brain, Check } from "lucide-react";
+import {
+  PromptInput,
+  PromptInputTextarea,
+  PromptInputFooter,
+  PromptInputSubmit,
+} from "@/components/ai-elements/prompt-input";
 import { templates, type TemplateDefinition } from "./templates";
 import type { SavedFlow } from "@/lib/flow-storage/types";
+
+const templateIcons = [Sparkles, Wand2, Zap];
+
+type AutopilotMode = "execute" | "plan";
+type AutopilotModel = "sonnet-4-5" | "opus-4-5";
+
+const MODES: { id: AutopilotMode; name: string; icon: typeof Zap }[] = [
+  { id: "execute", name: "Execute", icon: Zap },
+  { id: "plan", name: "Plan", icon: ListTodo },
+];
+
+const MODELS: { id: AutopilotModel; name: string }[] = [
+  { id: "sonnet-4-5", name: "Sonnet 4.5" },
+  { id: "opus-4-5", name: "Opus 4.5" },
+];
 
 interface TemplatesModalProps {
   open: boolean;
@@ -24,7 +50,12 @@ export function TemplatesModal({
   onDismissPermanently,
 }: TemplatesModalProps) {
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const [mode, setMode] = useState<AutopilotMode>("execute");
+  const [selectedModel, setSelectedModel] = useState<AutopilotModel>("sonnet-4-5");
+  const [thinkingEnabled, setThinkingEnabled] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  const currentModel = MODELS.find((m) => m.id === selectedModel) ?? MODELS[0];
 
   // Reset checkbox state when modal opens
   useEffect(() => {
@@ -89,32 +120,124 @@ export function TemplatesModal({
         className="pointer-events-auto bg-background border rounded-lg shadow-xl p-6 w-full max-w-2xl animate-in fade-in-0 zoom-in-95 duration-200"
       >
         {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h2 className="text-lg font-semibold">Choose a template</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Start with a pre-built flow or begin with a blank canvas
-            </p>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleClose}
-            className="h-8 w-8 -mr-2 -mt-2"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold">What do you want to create?</h2>
         </div>
 
-        {/* Grid of template cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-4">
-          {templates.map((template) => (
-            <TemplateCard
-              key={template.id}
-              template={template}
-              onSelect={handleSelect}
+        {/* AI Prompt Input (not hooked up yet) */}
+        <div className="mb-6">
+          <PromptInput onSubmit={() => {}}>
+            <PromptInputTextarea
+              placeholder="Ask Composer to build..."
+              className="min-h-[80px] text-sm"
             />
-          ))}
+            <PromptInputFooter className="justify-between items-center pt-2">
+              <div className="flex items-center gap-1">
+                {/* Mode Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1 bg-muted"
+                    >
+                      {(() => {
+                        const CurrentIcon = MODES.find((m) => m.id === mode)?.icon ?? Zap;
+                        return <CurrentIcon className="h-3 w-3" />;
+                      })()}
+                      <span>{MODES.find((m) => m.id === mode)?.name}</span>
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-[120px]">
+                    {MODES.map((m) => (
+                      <DropdownMenuItem
+                        key={m.id}
+                        onClick={() => {
+                          setMode(m.id);
+                          if (m.id === "plan" && !thinkingEnabled) {
+                            setThinkingEnabled(true);
+                          }
+                        }}
+                        className="text-xs gap-2"
+                      >
+                        <m.icon className="h-3.5 w-3.5" />
+                        <span className="flex-1">{m.name}</span>
+                        {m.id === mode && <Check className="h-3 w-3" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Model Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
+                    >
+                      <span>{currentModel.name}</span>
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-[120px]">
+                    {MODELS.map((model) => (
+                      <DropdownMenuItem
+                        key={model.id}
+                        onClick={() => setSelectedModel(model.id)}
+                        className="text-xs gap-2"
+                      >
+                        <span className="flex-1">{model.name}</span>
+                        {model.id === selectedModel && <Check className="h-3 w-3" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Thinking Toggle */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className={`h-7 px-2 text-xs gap-1 ${
+                    thinkingEnabled
+                      ? "text-purple-600 hover:text-purple-700"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  onClick={() => setThinkingEnabled(!thinkingEnabled)}
+                  title={thinkingEnabled ? "Disable extended thinking" : "Enable extended thinking"}
+                >
+                  <Brain className="h-3 w-3" />
+                  <span>Think</span>
+                </Button>
+              </div>
+              <PromptInputSubmit className="h-7 w-7" />
+            </PromptInputFooter>
+          </PromptInput>
+        </div>
+
+        {/* Template section */}
+        <div className="text-center mb-4">
+          <p className="text-sm text-muted-foreground">Or start with a template</p>
+        </div>
+
+        {/* Template pill buttons */}
+        <div className="flex flex-wrap justify-center gap-3 mb-6">
+          {templates.map((template, index) => {
+            const Icon = templateIcons[index] || Sparkles;
+            return (
+              <button
+                key={template.id}
+                type="button"
+                onClick={() => handleSelect(template)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border bg-background text-sm font-medium transition-all hover:border-primary hover:bg-muted cursor-pointer"
+              >
+                <Icon className="h-4 w-4" />
+                {template.title}
+              </button>
+            );
+          })}
         </div>
 
         {/* Footer with checkbox and dismiss button */}
@@ -130,9 +253,8 @@ export function TemplatesModal({
             </span>
           </label>
           <Button
-            variant="ghost"
+            variant="secondary"
             onClick={handleClose}
-            className="text-muted-foreground hover:text-foreground"
           >
             Start blank
           </Button>
