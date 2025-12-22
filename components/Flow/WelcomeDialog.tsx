@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import * as THREE from "three";
 import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
@@ -17,7 +17,8 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
-import { ArrowLeft, Check, KeyRound, Loader2, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Cloud, KeyRound, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
+import { isImageOutput, parseImageOutput, getImageDataUrl } from "@/lib/image-utils";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { nodeTypes } from "./nodes";
 import { edgeTypes } from "./edges/ColoredEdge";
@@ -486,6 +487,86 @@ function MiniNodeCanvasDemo() {
   );
   const [isRunning, setIsRunning] = useState(true); // Start as running
   const [progressLabel, setProgressLabel] = useState("Starting demo...");
+  const [showOutputs, setShowOutputs] = useState(false);
+
+  // Ref-based guard to prevent re-execution (backup for module-level flag)
+  const hasStartedRef = useRef(false);
+
+  // Extract outputs from nodes for the modal
+  const getOutputs = () => {
+    const inputNode = nodes.find((n) => n.type === "text-input");
+    const storyNode = nodes.find((n) => n.data?.label === "Story Writer");
+    const imageNode = nodes.find((n) => n.type === "image-generation");
+
+    return {
+      prompt: inputNode?.data?.inputValue as string | undefined,
+      story: storyNode?.data?.executionOutput as string | undefined,
+      image: imageNode?.data?.executionOutput as string | undefined,
+    };
+  };
+
+  // Retry demo flow
+  const retryDemo = useCallback(() => {
+    // Reset nodes to initial state
+    setNodes(welcomePreviewNodes.map((n) => ({ ...n, data: { ...n.data } })));
+    setProgressLabel("Starting demo...");
+    setIsRunning(true);
+    setShowOutputs(false);
+
+    // Reset guards to allow re-execution
+    demoHasStarted = false;
+    hasStartedRef.current = false;
+
+    // Create new abort controller
+    demoAbortController = new AbortController();
+
+    // Callback to update node state
+    const updateNodeState = (nodeId: string, state: NodeExecutionState) => {
+      if (state.status === "running") {
+        demoSetNodes?.((prev) => {
+          const node = prev.find((n) => n.id === nodeId);
+          const nodeLabel = node?.data?.label as string | undefined;
+          if (nodeLabel && NODE_PROGRESS_LABELS[nodeLabel]) {
+            demoSetProgressLabel?.(NODE_PROGRESS_LABELS[nodeLabel]);
+          }
+          return prev;
+        });
+      }
+
+      demoSetNodes?.((prev) =>
+        prev.map((node) =>
+          node.id === nodeId
+            ? {
+                ...node,
+                data: {
+                  ...node.data,
+                  executionStatus: state.status,
+                  executionOutput: state.output,
+                  executionError: state.error,
+                  executionReasoning: state.reasoning,
+                },
+              }
+            : node
+        )
+      );
+    };
+
+    // Delay and execute
+    setTimeout(() => {
+      const freshNodes = welcomePreviewNodes.map((n) => ({ ...n, data: { ...n.data } }));
+      const freshEdges = welcomePreviewEdges.map((e) => ({ ...e }));
+      executeFlow(freshNodes, freshEdges, updateNodeState, undefined, demoAbortController?.signal)
+        .then(() => {
+          demoSetIsRunning?.(false);
+        })
+        .catch((err) => {
+          if (err?.name !== "AbortError") {
+            console.error("[NUX Demo] Retry error:", err);
+          }
+          demoSetIsRunning?.(false);
+        });
+    }, 2000);
+  }, []);
 
   // Keep module-level refs to latest setters (survives strict mode remounts)
   useEffect(() => {
@@ -496,8 +577,10 @@ function MiniNodeCanvasDemo() {
 
   useEffect(() => {
     // Only run once across all mounts (survives React Strict Mode)
-    if (demoHasStarted) return;
+    // Check both module-level and ref-based guards for robustness
+    if (demoHasStarted || hasStartedRef.current) return;
     demoHasStarted = true;
+    hasStartedRef.current = true;
 
     demoAbortController = new AbortController();
 
@@ -537,18 +620,21 @@ function MiniNodeCanvasDemo() {
 
     console.log("[NUX Demo] Starting execution with", nodes.length, "nodes");
 
-    // Execute with undefined apiKeys - server uses env vars
-    executeFlow(nodes, edges, updateNodeState, undefined, demoAbortController.signal)
-      .then(() => {
-        console.log("[NUX Demo] Execution completed");
-        demoSetIsRunning?.(false);
-      })
-      .catch((err) => {
-        if (err?.name !== "AbortError") {
-          console.error("[NUX Demo] Execution error:", err);
-        }
-        demoSetIsRunning?.(false);
-      });
+    // Delay start by 2 seconds to let user observe the flow first
+    const startTimeout = setTimeout(() => {
+      // Execute with undefined apiKeys - server uses env vars
+      executeFlow(nodes, edges, updateNodeState, undefined, demoAbortController?.signal)
+        .then(() => {
+          console.log("[NUX Demo] Execution completed");
+          demoSetIsRunning?.(false);
+        })
+        .catch((err) => {
+          if (err?.name !== "AbortError") {
+            console.error("[NUX Demo] Execution error:", err);
+          }
+          demoSetIsRunning?.(false);
+        });
+    }, 2000);
 
     // Don't abort on unmount - let demo run to completion
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -577,19 +663,112 @@ function MiniNodeCanvasDemo() {
         />
       </div>
 
-      <div className="pointer-events-none absolute bottom-5 left-5 z-30 max-w-[340px] rounded-xl border bg-background/75 p-4 text-sm text-muted-foreground shadow-sm backdrop-blur-sm">
+      <div className="absolute bottom-5 left-5 z-30 max-w-[340px]">
         {isRunning ? (
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+          <div className="pointer-events-none rounded-xl border bg-background/75 p-4 text-sm text-muted-foreground shadow-sm backdrop-blur-sm">
+            <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase leading-none tracking-wider text-muted-foreground/70">
+              <span>Demo flow</span>
+              <Loader2 className="h-2.5 w-2.5 animate-spin text-primary" />
+            </div>
             <Shimmer className="font-medium" duration={1.5}>{progressLabel}</Shimmer>
           </div>
         ) : (
-          <div className="flex items-center gap-2 font-medium text-foreground">
-            <Check className="h-4 w-4 text-green-500" />
-            Flow done, view outputs
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowOutputs(true)}
+            className="group rounded-xl border bg-background/75 p-4 text-left text-sm shadow-sm backdrop-blur-sm transition-colors hover:bg-background/90"
+          >
+            <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase leading-none tracking-wider text-muted-foreground/70">
+              <span>Demo flow</span>
+              <Check className="h-2.5 w-2.5 text-green-500" />
+              <RotateCcw
+                className="h-2.5 w-2.5 cursor-pointer text-muted-foreground hover:text-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  retryDemo();
+                }}
+              />
+            </div>
+            <div className="flex items-center gap-1.5 font-medium text-foreground">
+              Flow done, view outputs
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+            </div>
+          </button>
         )}
       </div>
+
+      {/* Outputs Modal */}
+      {showOutputs && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="relative m-4 flex max-h-[90%] w-full max-w-lg flex-col rounded-xl border bg-background shadow-xl">
+            <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
+              <h3 className="font-semibold">Flow Outputs</h3>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setShowOutputs(false)}
+                className="rounded-full"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-4">
+              <div className="space-y-4">
+                <div className="text-xs text-muted-foreground">Demo flow</div>
+
+                {/* Input Prompt */}
+                <div className="space-y-1.5">
+                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Prompt
+                  </div>
+                  <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+                    {getOutputs().prompt || "No prompt"}
+                  </div>
+                </div>
+
+                {/* Generated Story */}
+                <div className="space-y-1.5">
+                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Story
+                  </div>
+                  <div className="rounded-lg border bg-muted/30 p-3 text-sm whitespace-pre-wrap">
+                    {getOutputs().story || "No story generated"}
+                  </div>
+                </div>
+
+                {/* Generated Image */}
+                <div className="space-y-1.5">
+                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Illustration
+                  </div>
+                  <div className="rounded-lg border bg-muted/30 overflow-hidden">
+                    {(() => {
+                      const imageOutput = getOutputs().image;
+                      if (imageOutput && isImageOutput(imageOutput)) {
+                        const imageData = parseImageOutput(imageOutput);
+                        if (imageData) {
+                          return (
+                            <img
+                              src={getImageDataUrl(imageData)}
+                              alt="Generated illustration"
+                              className="w-full h-auto"
+                            />
+                          );
+                        }
+                      }
+                      return (
+                        <div className="p-3 text-sm text-muted-foreground">
+                          No image generated
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </HeroPanel>
   );
 }
@@ -806,7 +985,7 @@ export function WelcomeDialog({ onOpenSettings }: WelcomeDialogProps) {
             <div className="grid gap-3">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 grid h-9 w-9 place-items-center rounded-lg border bg-foreground/5">
-                  <KeyRound className="h-4 w-4" />
+                  <Cloud className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-medium">Bring your own keys</div>
@@ -870,7 +1049,7 @@ export function WelcomeDialog({ onOpenSettings }: WelcomeDialogProps) {
 
             <div className="flex items-start gap-3">
               <div className="mt-0.5 grid h-9 w-9 place-items-center rounded-lg border bg-foreground/5">
-                <KeyRound className="h-4 w-4" />
+                <Cloud className="h-4 w-4" />
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-medium">Save work anywhere</div>
@@ -892,7 +1071,7 @@ export function WelcomeDialog({ onOpenSettings }: WelcomeDialogProps) {
             >
               Continue Without an Account
             </Button>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-center text-xs text-muted-foreground">
               You can sign in later from the profile menu
             </p>
           </div>
