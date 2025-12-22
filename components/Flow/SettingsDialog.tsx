@@ -106,7 +106,7 @@ export function SettingsDialog() {
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>
-            Configure API keys and appearance.
+            Configure API keys and appearance
           </DialogDescription>
         </DialogHeader>
 
@@ -154,7 +154,7 @@ export function SettingsDialog() {
                   </Button>
                 </div>
                 {passwordError && (
-                  <p className="text-xs text-red-500">{passwordError}</p>
+                  <p className="text-xs text-destructive">{passwordError}</p>
                 )}
                 <p className="text-xs text-muted-foreground">
                   Or add API keys manually below
@@ -220,7 +220,7 @@ export function SettingsDialog() {
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => handleRemove(provider.id)}
-                        className="text-red-500 hover:text-red-600"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
                       >
                         <X className="h-4 w-4" />
                       </Button>

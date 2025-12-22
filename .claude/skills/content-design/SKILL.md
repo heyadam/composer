@@ -1,3 +1,8 @@
+---
+name: content-design
+description: UI text and content standards for Composer. Use when writing labels, placeholders, descriptions, tooltips, or other user-facing text.
+---
+
 # Content Design Standards
 
 Guidelines for consistent UI text across the application.

@@ -24,7 +24,7 @@ Supabase authentication:
 - `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY` - Supabase anon/publishable key
 
-See `AI_MODELS.md` for the full list of supported models per provider.
+See `docs/AI_MODELS.md` for the full list of supported models per provider.
 
 ## Database
 
@@ -37,6 +37,21 @@ This project uses **Supabase** for the database. Use the **Supabase MCP tools** 
 - Viewing logs and advisories (`mcp__supabase__get_logs`, `mcp__supabase__get_advisors`)
 
 For documentation, use `mcp__supabase__search_docs` to query the Supabase docs via GraphQL.
+
+### Supabase Skill
+
+A comprehensive Supabase development skill is available at `.claude/skills/supabase/`. Invoke with `/supabase` to load the router, which provides access to detailed guides:
+
+| Guide | File | Topics |
+|-------|------|--------|
+| SQL Style | `SQL_STYLE.md` | Naming conventions, formatting, CTEs |
+| Functions | `FUNCTIONS.md` | PL/pgSQL functions, triggers, error handling |
+| Migrations | `MIGRATIONS.md` | File naming, RLS requirements, examples |
+| RLS Policies | `RLS.md` | Policy rules, auth helpers, performance |
+| Edge Functions | `EDGE_FUNCTIONS.md` | Deno/TypeScript, npm imports, templates |
+| Realtime | `REALTIME.md` | Broadcast, presence, triggers, migration |
+
+The skill uses progressive disclosure: only the relevant guide is loaded based on the task.
 
 ## Architecture Overview
 
@@ -70,13 +85,13 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 - OpenAI: `verbosity`, `thinking`
 - Google Gemini: `thinkingLevel` (Gemini 3), `thinkingBudget` (Gemini 2.5), `safetyPreset`
 
-**IMPORTANT: Always consult `AI_MODELS.md` for the authoritative list of model IDs.** Do not hardcode or assume model names - refer to AI_MODELS.md for correct, up-to-date model identifiers when working with providers.
+**IMPORTANT: Always consult `docs/AI_MODELS.md` for the authoritative list of model IDs.** Do not hardcode or assume model names - refer to docs/AI_MODELS.md for correct, up-to-date model identifiers when working with providers.
 
 ### Documentation Lookup
 
 Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__context7__get-library-docs`) to fetch the latest documentation for any libraries or SDKs (Vercel AI SDK, OpenAI SDK, etc.).
 
-**IMPORTANT: `AI_MODELS.md` supersedes Context7 for model information.** If Context7 returns different model IDs or model names, always defer to `AI_MODELS.md` as the authoritative source for this project.
+**IMPORTANT: `docs/AI_MODELS.md` supersedes Context7 for model information.** If Context7 returns different model IDs or model names, always defer to `docs/AI_MODELS.md` as the authoritative source for this project.
 
 **NodeFrame** (`components/Flow/nodes/NodeFrame.tsx`): Shared wrapper for all nodes providing consistent styling, status badges, and inline title editing.
 
@@ -249,6 +264,6 @@ Uses shadcn/ui components in `components/ui/` with Tailwind CSS v4. Import alias
 - Used in PromptNode footer when Google Gemini thinking is enabled
 - Shimmer loading effect while reasoning is streaming
 
-**Content Design**: When adding or modifying UI text (labels, placeholders, descriptions, tooltips, button text), follow the standards in `CONTENT_DESIGN.md`. This ensures consistent tone and formatting across the application.
+**Content Design**: When adding or modifying UI text (labels, placeholders, descriptions, tooltips, button text), use the `/content-design` skill (`.claude/skills/content-design/`). This ensures consistent tone and formatting across the application.
 
 **AI Elements**: Use the AI Elements MCP (`mcp__ai-elements__get_ai_elements_components` and `mcp__ai-elements__get_ai_elements_component`) to discover and add UI components. AI Elements registry is configured at `@ai-elements` for components from `https://registry.ai-sdk.dev/`.

@@ -128,3 +128,22 @@ Open [http://localhost:3000](http://localhost:3000) to use the workflow builder.
 - [Tailwind CSS v4](https://tailwindcss.com/) - Styling
 - [shadcn/ui](https://ui.shadcn.com/) - UI components
 - [AI Elements](https://registry.ai-sdk.dev/) - AI SDK component registry
+
+## Development
+
+### Claude Code Skills
+
+This project includes a Supabase skill for Claude Code at `.claude/skills/supabase/`:
+
+```
+.claude/skills/supabase/
+├── SKILL.md           # Router with quick reference
+├── SQL_STYLE.md       # SQL naming and formatting
+├── FUNCTIONS.md       # Database functions & triggers
+├── MIGRATIONS.md      # Migration files & RLS setup
+├── RLS.md             # Row Level Security policies
+├── EDGE_FUNCTIONS.md  # Deno/TypeScript edge functions
+└── REALTIME.md        # Broadcast, presence, triggers
+```
+
+Invoke with `/supabase` in Claude Code to load context-appropriate guidance for database work.

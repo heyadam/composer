@@ -35,6 +35,7 @@ import { useClipboard } from "@/lib/hooks/useClipboard";
 import type { NodeType, CommentColor } from "@/types/flow";
 import { Github, Settings, Folder, FilePlus, FolderOpen, Save, PanelLeft, PanelRight, Cloud } from "lucide-react";
 import { SettingsDialogControlled } from "./SettingsDialogControlled";
+import { WelcomeDialog } from "./WelcomeDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1444,6 +1445,7 @@ export function AgentFlow() {
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
       />
+      <WelcomeDialog onOpenSettings={() => setSettingsOpen(true)} />
     </div>
   );
 }

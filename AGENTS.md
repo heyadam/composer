@@ -37,13 +37,8 @@ Required for local auth + providers:
 ## Architecture Highlights
 - Node types live in `components/Flow/nodes/`.
 - Execution engine: `lib/execution/engine.ts`.
-- Model list: `AI_MODELS.md` is the source of truth.
-- Design text standards: follow `CONTENT_DESIGN.md`.
-
-## Known Issues & Workarounds
-- Supabase client calls can hang; see `DBissues.md`.
-  - Auth initialization uses cookie parsing instead of `getSession`.
-  - Sign-out clears cookies and refreshes the page.
+- Model list: `docs/AI_MODELS.md` is the source of truth.
+- Design text standards: use `/content-design` skill.
 
 ## When Unsure
 - Check `CLAUDE.md` for deeper architecture and component notes.
