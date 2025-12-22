@@ -2,6 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
+import { MobileBlocker } from "@/components/Flow/MobileBlocker";
+import { useMobileDetection } from "@/lib/hooks/useMobileDetection";
 
 const AgentFlow = dynamic(
   () => import("@/components/Flow/AgentFlow").then((mod) => ({ default: mod.AgentFlow })),
@@ -19,5 +21,17 @@ const AgentFlow = dynamic(
 );
 
 export default function Home() {
+  const isMobile = useMobileDetection();
+
+  // Still checking - show nothing to avoid flash
+  if (isMobile === null) {
+    return <div className="fixed inset-0 bg-background" />;
+  }
+
+  // Mobile device - show blocker, don't load heavy flow editor
+  if (isMobile) {
+    return <MobileBlocker />;
+  }
+
   return <AgentFlow />;
 }
