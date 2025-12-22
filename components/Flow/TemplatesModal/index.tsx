@@ -14,6 +14,7 @@ interface TemplatesModalProps {
   onSelectTemplate: (flow: SavedFlow) => void;
   onDismiss: () => void;
   onDismissPermanently: () => void;
+  canvasRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export function TemplatesModal({
@@ -22,6 +23,7 @@ export function TemplatesModal({
   onSelectTemplate,
   onDismiss,
   onDismissPermanently,
+  canvasRef,
 }: TemplatesModalProps) {
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -43,26 +45,33 @@ export function TemplatesModal({
     onOpenChange(false);
   }, [dontShowAgain, onDismiss, onDismissPermanently, onOpenChange]);
 
-  // Handle clicks outside the panel
+  // Handle clicks on the canvas (outside the panel but inside the canvas area)
   useEffect(() => {
     if (!open) return;
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const isOutsidePanel = panelRef.current && !panelRef.current.contains(target);
+      const isInsideCanvas = canvasRef?.current && canvasRef.current.contains(target);
+
+      // Only dismiss if clicking inside the canvas area but outside the modal
+      // This prevents dismissing when clicking on sidebars or other UI elements
+      if (isOutsidePanel && isInsideCanvas) {
         handleClose();
       }
     };
 
     // Delay adding listener to avoid immediate trigger
+    // Use capture phase (true) because React Flow stops propagation in bubble phase
     const timeoutId = setTimeout(() => {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside, true);
     }, 0);
 
     return () => {
       clearTimeout(timeoutId);
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside, true);
     };
-  }, [open, handleClose]);
+  }, [open, handleClose, canvasRef]);
 
   const handleSelect = (template: TemplateDefinition) => {
     if (dontShowAgain) {
