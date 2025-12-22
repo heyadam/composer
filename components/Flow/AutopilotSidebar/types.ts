@@ -17,4 +17,5 @@ export interface AutopilotSidebarProps {
   suggestions: Suggestion[];
   suggestionsLoading: boolean;
   onRefreshSuggestions: () => void;
+  onMessageSent?: () => void;
 }

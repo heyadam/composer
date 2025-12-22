@@ -192,6 +192,24 @@ export function AgentFlow() {
     }
   }, [isLoaded]);
 
+  // Dismiss templates modal when node palette opens (user clicks "Add Node")
+  const prevNodesPaletteOpen = useRef(nodesPaletteOpen);
+  useEffect(() => {
+    const wasClosedNowOpen = !prevNodesPaletteOpen.current && nodesPaletteOpen;
+    prevNodesPaletteOpen.current = nodesPaletteOpen;
+
+    if (wasClosedNowOpen && templatesModalOpen) {
+      setTemplatesModalOpen(false);
+    }
+  }, [nodesPaletteOpen, templatesModalOpen]);
+
+  // Dismiss templates modal when user sends autopilot message
+  const handleAutopilotMessageSent = useCallback(() => {
+    if (templatesModalOpen) {
+      setTemplatesModalOpen(false);
+    }
+  }, [templatesModalOpen]);
+
   // Background settings
   const { settings: bgSettings } = useBackgroundSettings();
 
@@ -1281,6 +1299,7 @@ export function AgentFlow() {
         suggestions={suggestions}
         suggestionsLoading={suggestionsLoading}
         onRefreshSuggestions={refreshSuggestions}
+        onMessageSent={handleAutopilotMessageSent}
       />
       <div ref={reactFlowWrapper} className="flex-1 h-full bg-muted/10 relative">
         <NodeToolbar
