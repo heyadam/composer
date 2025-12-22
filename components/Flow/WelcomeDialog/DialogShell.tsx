@@ -77,8 +77,10 @@ export function DialogShell({
                 <div className="flex h-8 items-center gap-2">
                   <div
                     aria-hidden
-                    className="h-7 w-7 rounded-md border bg-[radial-gradient(120%_120%_at_20%_20%,hsl(var(--primary)/0.55),transparent_55%),radial-gradient(100%_100%_at_80%_80%,hsl(var(--foreground)/0.18),transparent_55%)] shadow-xs"
-                  />
+                    className="grid h-7 w-7 place-items-center rounded-md border bg-[radial-gradient(120%_120%_at_20%_20%,hsl(var(--primary)/0.55),transparent_55%),radial-gradient(100%_100%_at_80%_80%,hsl(var(--foreground)/0.18),transparent_55%)] shadow-xs"
+                  >
+                    <div className="h-2.5 w-2.5 rounded-full bg-white" />
+                  </div>
                   <span className="text-sm font-medium tracking-tight">Composer</span>
                 </div>
               )}

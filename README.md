@@ -39,6 +39,11 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
   - Auto-apply with full undo support (restores removed nodes/edges)
   - Dynamic LLM-generated prompt suggestions based on current flow
   - Shimmer loading effects during AI operations
+- **Welcome Experience**: Two-step onboarding for new users
+  - Interactive demo flow that auto-executes to show capabilities
+  - 3D animated hero with provider icons flowing into Composer
+  - Google sign-in or continue without account
+  - Guided API keys setup
 
 ### Supported Models
 

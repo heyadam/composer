@@ -200,6 +200,19 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 
 **Example Flow** (`lib/example-flow.ts`): Default flow configuration loaded on startup.
 
+**Welcome Dialog (NUX)** (`components/Flow/WelcomeDialog/`): Two-step onboarding flow for new users:
+- `index.tsx`: Main dialog controller with step logic
+- `DialogShell.tsx`: Shared two-column layout (content left, hero right)
+- `StepIndicator.tsx`: Progress dots showing current step
+- `hooks/useNuxState.ts`: Manages NUX step state persisted to localStorage
+- `heroes/DemoHero.tsx`: Interactive React Flow demo that auto-executes on mount
+- `heroes/ProvidersHero.tsx`: 3D scene showing provider icons flowing into Composer
+- `heroes/DemoOutputsModal.tsx`: Modal for viewing demo execution outputs
+- `three/`: 3D components (RoundedTile, CurvedLine, SvgIcon, GoogleIcon, ComposerIcon)
+- Step 1: Welcome with sign-in options (Google OAuth or skip)
+- Step 2: API keys setup with link to settings dialog
+- State persisted to `avy-nux-step` in localStorage
+
 ### Authentication & User Management
 
 **Auth System** (`lib/auth/`): Supabase-based authentication with Google OAuth:

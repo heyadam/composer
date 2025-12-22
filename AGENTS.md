@@ -40,5 +40,12 @@ Required for local auth + providers:
 - Model list: `docs/AI_MODELS.md` is the source of truth.
 - Design text standards: use `/content-design` skill.
 
+## New User Experience (NUX)
+- **Welcome Dialog**: `components/Flow/WelcomeDialog/` — two-step onboarding.
+- **State**: Persisted to `avy-nux-step` in localStorage (values: `1`, `2`, `done`).
+- **Step 1**: Welcome + Google sign-in (or skip).
+- **Step 2**: API keys setup prompt.
+- **Heroes**: Interactive React Flow demo (step 1) and 3D provider icons (step 2).
+
 ## When Unsure
 - Check `CLAUDE.md` for deeper architecture and component notes.
