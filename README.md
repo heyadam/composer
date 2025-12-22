@@ -65,7 +65,7 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 24+
 - API key(s) for the providers you want to use
 
 ### Installation
