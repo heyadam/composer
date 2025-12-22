@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, EyeOff, Check, AlertCircle, X, RotateCcw, Lock, Unlock } from "lucide-react";
+import { Eye, EyeOff, Check, AlertCircle, X, RotateCcw, Lock, Unlock, LogOut, Trash2, RefreshCw } from "lucide-react";
 import { BackgroundVariant } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { useApiKeys, type ProviderId } from "@/lib/api-keys";
 import { useBackgroundSettings } from "@/lib/hooks/useBackgroundSettings";
+import { useAuth } from "@/lib/auth";
 
 const PROVIDERS: { id: ProviderId; label: string; placeholder: string }[] = [
   { id: "openai", label: "OpenAI", placeholder: "sk-..." },
@@ -51,6 +52,7 @@ export function SettingsDialogControlled({
 }: SettingsDialogControlledProps) {
   const { keys, setKey, removeKey, isDevMode, getKeyStatuses, unlockWithPassword, isUnlocking } = useApiKeys();
   const { settings: bgSettings, updateSettings: updateBgSettings, resetSettings: resetBgSettings } = useBackgroundSettings();
+  const { user, signOut } = useAuth();
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const [password, setPassword] = useState("");
@@ -100,9 +102,10 @@ export function SettingsDialogControlled({
         </DialogHeader>
 
         <Tabs defaultValue="api" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="api">API Keys</TabsTrigger>
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
+            <TabsTrigger value="reset">Reset</TabsTrigger>
           </TabsList>
 
           <TabsContent value="api" className="space-y-4 pt-4">
@@ -353,6 +356,78 @@ export function SettingsDialogControlled({
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="reset" className="space-y-4 pt-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <div className="text-sm font-medium">Sign out</div>
+                  <div className="text-xs text-muted-foreground">
+                    Sign out of your Google account
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    signOut();
+                    onOpenChange(false);
+                  }}
+                  disabled={!user}
+                  className="shrink-0"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign out
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <div className="text-sm font-medium">Reset localStorage</div>
+                  <div className="text-xs text-muted-foreground">
+                    Clear all local data including API keys
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    localStorage.clear();
+                    window.location.reload();
+                  }}
+                  className="shrink-0"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Reset
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <div className="text-sm font-medium">Reset NUX</div>
+                  <div className="text-xs text-muted-foreground">
+                    Show the welcome dialog again
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    localStorage.removeItem("avy-nux-step");
+                    window.location.reload();
+                  }}
+                  className="shrink-0"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Reset
+                </Button>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground border-t pt-4">
+              Reset actions may require page reload to take effect.
+            </p>
           </TabsContent>
         </Tabs>
       </DialogContent>
