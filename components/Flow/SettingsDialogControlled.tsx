@@ -175,7 +175,15 @@ export function SettingsDialogControlled({
               return (
                 <div key={provider.id} className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">{provider.label}</label>
+                    <div>
+                      <label className="text-sm font-medium">{provider.label}</label>
+                      {provider.id === "google" && (
+                        <p className="text-xs text-muted-foreground">Required for image to image</p>
+                      )}
+                      {provider.id === "anthropic" && (
+                        <p className="text-xs text-muted-foreground">Required for Composer AI</p>
+                      )}
+                    </div>
                     {hasKey ? (
                       <span className="flex items-center gap-1 text-xs text-green-500">
                         <Check className="h-3 w-3" />
@@ -249,11 +257,16 @@ export function SettingsDialogControlled({
               );
             })}
 
-            {!isDevMode && (
-              <p className="text-xs text-muted-foreground border-t pt-4">
-                API keys are stored locally in your browser.
+            <div className="text-xs text-muted-foreground border-t pt-4 space-y-2">
+              {!isDevMode && (
+                <p>API keys are stored locally in your browser.</p>
+              )}
+              <p>
+                <a href="/privacy.html" target="_blank" className="underline hover:text-foreground">Privacy Policy</a>
+                {" · "}
+                <a href="/terms.html" target="_blank" className="underline hover:text-foreground">Terms of Service</a>
               </p>
-            )}
+            </div>
           </TabsContent>
 
           <TabsContent value="appearance" className="space-y-5 pt-4">
@@ -356,6 +369,12 @@ export function SettingsDialogControlled({
                 </div>
               </div>
             </div>
+
+            <p className="text-xs text-muted-foreground border-t pt-4">
+              <a href="/privacy.html" target="_blank" className="underline hover:text-foreground">Privacy Policy</a>
+              {" · "}
+              <a href="/terms.html" target="_blank" className="underline hover:text-foreground">Terms of Service</a>
+            </p>
           </TabsContent>
 
           <TabsContent value="reset" className="space-y-4 pt-4">
@@ -425,9 +444,14 @@ export function SettingsDialogControlled({
               </div>
             </div>
 
-            <p className="text-xs text-muted-foreground border-t pt-4">
-              Reset actions may require page reload to take effect.
-            </p>
+            <div className="text-xs text-muted-foreground border-t pt-4 space-y-2">
+              <p>Reset actions may require page reload to take effect.</p>
+              <p>
+                <a href="/privacy.html" target="_blank" className="underline hover:text-foreground">Privacy Policy</a>
+                {" · "}
+                <a href="/terms.html" target="_blank" className="underline hover:text-foreground">Terms of Service</a>
+              </p>
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>

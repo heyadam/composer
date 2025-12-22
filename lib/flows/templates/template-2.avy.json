@@ -1,0 +1,138 @@
+{
+  "metadata": {
+    "name": "basic-text",
+    "schemaVersion": 1,
+    "createdAt": "2025-12-22T21:14:44.017Z",
+    "updatedAt": "2025-12-22T21:14:44.017Z"
+  },
+  "nodes": [
+    {
+      "id": "autopilot-text-input-1702500001",
+      "type": "text-input",
+      "position": {
+        "x": 0,
+        "y": 336.25
+      },
+      "data": {
+        "label": "User Input",
+        "inputValue": "Write a joke about noodles"
+      },
+      "measured": {
+        "width": 280,
+        "height": 182
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "autopilot-text-generation-1702500002",
+      "type": "text-generation",
+      "position": {
+        "x": 402.5,
+        "y": 15
+      },
+      "data": {
+        "label": "Gemini Response",
+        "systemPrompt": "",
+        "provider": "google",
+        "model": "gemini-3-flash-preview"
+      },
+      "measured": {
+        "width": 280,
+        "height": 530
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "autopilot-text-generation-1702500003",
+      "type": "text-generation",
+      "position": {
+        "x": 400,
+        "y": 500
+      },
+      "data": {
+        "label": "GPT Response",
+        "systemPrompt": "",
+        "provider": "openai",
+        "model": "gpt-5.2",
+        "verbosity": "low"
+      },
+      "measured": {
+        "width": 280,
+        "height": 546
+      },
+      "selected": false
+    },
+    {
+      "id": "autopilot-preview-output-1702500004",
+      "type": "preview-output",
+      "position": {
+        "x": 750,
+        "y": 100
+      },
+      "data": {
+        "label": "Gemini Output"
+      },
+      "measured": {
+        "width": 280,
+        "height": 141
+      }
+    },
+    {
+      "id": "autopilot-preview-output-1702500005",
+      "type": "preview-output",
+      "position": {
+        "x": 750,
+        "y": 500
+      },
+      "data": {
+        "label": "GPT Output"
+      },
+      "measured": {
+        "width": 280,
+        "height": 157
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-input-to-gemini",
+      "source": "autopilot-text-input-1702500001",
+      "target": "autopilot-text-generation-1702500002",
+      "targetHandle": "prompt",
+      "type": "colored",
+      "data": {
+        "dataType": "string"
+      }
+    },
+    {
+      "id": "edge-input-to-gpt",
+      "source": "autopilot-text-input-1702500001",
+      "target": "autopilot-text-generation-1702500003",
+      "targetHandle": "prompt",
+      "type": "colored",
+      "data": {
+        "dataType": "string"
+      }
+    },
+    {
+      "id": "edge-gemini-to-output",
+      "source": "autopilot-text-generation-1702500002",
+      "target": "autopilot-preview-output-1702500004",
+      "type": "colored",
+      "data": {
+        "dataType": "response"
+      }
+    },
+    {
+      "id": "edge-gpt-to-output",
+      "source": "autopilot-text-generation-1702500003",
+      "target": "autopilot-preview-output-1702500005",
+      "type": "colored",
+      "data": {
+        "dataType": "response"
+      }
+    }
+  ]
+}

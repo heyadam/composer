@@ -370,7 +370,7 @@ export function AutopilotChat({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground gap-1"
+                    className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground gap-1 bg-muted"
                   >
                     {(() => {
                       const CurrentIcon = MODES.find((m) => m.id === mode)?.icon ?? Zap;

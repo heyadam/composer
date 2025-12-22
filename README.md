@@ -6,6 +6,7 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
 
 ## Features
 
+- **Desktop Only**: Optimized for larger screens; mobile devices show a branded blocker page with animated 3D orb
 - **3D Animated Logo**: Fluid sphere logo with rainbow shader effects and liquid deformation
 - **Visual Flow Editor**: Build AI workflows by connecting nodes in a React Flow canvas
 - **Origami-Style Controls**: Drag to select multiple nodes, hold spacebar to pan

@@ -1,5 +1,5 @@
 import type { Node, Edge } from "@xyflow/react";
-import type { FlowChanges } from "@/lib/autopilot/types";
+import type { FlowChanges, PendingAutopilotMessage } from "@/lib/autopilot/types";
 import type { Suggestion } from "@/lib/hooks/useSuggestions";
 
 export interface AppliedChanges {
@@ -17,4 +17,7 @@ export interface AutopilotSidebarProps {
   suggestions: Suggestion[];
   suggestionsLoading: boolean;
   onRefreshSuggestions: () => void;
+  onMessageSent?: () => void;
+  pendingMessage?: PendingAutopilotMessage;
+  onPendingMessageConsumed?: () => void;
 }

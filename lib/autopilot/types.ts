@@ -136,6 +136,14 @@ export interface AutopilotMessage {
 
 export type AutopilotModel = "sonnet-4-5" | "opus-4-5";
 
+// Pending message from templates modal to autopilot sidebar
+export interface PendingAutopilotMessage {
+  prompt: string;
+  mode: AutopilotMode;
+  model: AutopilotModel;
+  thinkingEnabled: boolean;
+}
+
 // API request/response types
 export interface AutopilotRequest {
   messages: Array<{ role: "user" | "assistant"; content: string }>;

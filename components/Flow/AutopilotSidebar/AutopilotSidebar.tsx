@@ -34,6 +34,9 @@ export function AutopilotSidebar({
   suggestions,
   suggestionsLoading,
   onRefreshSuggestions,
+  onMessageSent,
+  pendingMessage,
+  onPendingMessageConsumed,
 }: AutopilotSidebarProps) {
   const [width, setWidth] = useState(getInitialWidth);
   const [isResizing, setIsResizing] = useState(false);
@@ -57,6 +60,25 @@ export function AutopilotSidebar({
     retryFix,
     clearHistory,
   } = useAutopilotChat({ nodes, edges, onApplyChanges, onUndoChanges });
+
+  // Wrap sendMessage to notify parent when a message is sent
+  const handleSendMessage = useCallback(
+    (...args: Parameters<typeof sendMessage>) => {
+      onMessageSent?.();
+      return sendMessage(...args);
+    },
+    [sendMessage, onMessageSent]
+  );
+
+  // Handle pending message from templates modal
+  useEffect(() => {
+    if (pendingMessage) {
+      setMode(pendingMessage.mode);
+      setThinkingEnabled(pendingMessage.thinkingEnabled);
+      sendMessage(pendingMessage.prompt, pendingMessage.model);
+      onPendingMessageConsumed?.();
+    }
+  }, [pendingMessage, setMode, setThinkingEnabled, sendMessage, onPendingMessageConsumed]);
 
   // Save width to localStorage when it changes (but not during active drag)
   useEffect(() => {
@@ -146,7 +168,7 @@ export function AutopilotSidebar({
           onModeChange={setMode}
           thinkingEnabled={thinkingEnabled}
           onThinkingChange={setThinkingEnabled}
-          onSendMessage={sendMessage}
+          onSendMessage={handleSendMessage}
           onApprovePlan={approvePlan}
           onUndoChanges={undoChanges}
           onApplyAnyway={applyAnyway}

@@ -200,6 +200,15 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 
 **Example Flow** (`lib/example-flow.ts`): Default flow configuration loaded on startup.
 
+**Mobile Blocker** (`components/Flow/MobileBlocker.tsx`): Full-screen blocker for mobile devices:
+- Detects mobile via user agent (not screen width) using `useMobileDetection` hook
+- Shows animated 3D orb with "composer" branding
+- Renders via portal to `document.body` for proper iOS Safari coverage
+- Uses `100svh` and `-webkit-fill-available` for full viewport coverage
+- Prevents heavy flow editor from loading on mobile (checked in `app/page.tsx`)
+
+**Mobile Detection Hook** (`lib/hooks/useMobileDetection.ts`): SSR-safe hook that returns `null` until checked, then `true`/`false` based on user agent regex matching mobile devices.
+
 **Welcome Dialog (NUX)** (`components/Flow/WelcomeDialog/`): Two-step onboarding flow for new users:
 - `index.tsx`: Main dialog controller with step logic
 - `DialogShell.tsx`: Shared two-column layout (content left, hero right)
