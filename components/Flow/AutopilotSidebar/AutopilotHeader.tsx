@@ -22,7 +22,7 @@ export function AutopilotHeader({
     <div className="flex items-center justify-between px-4 py-3 border-b bg-background">
       <div className="flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-purple-500" />
-        <span className="font-medium text-sm">Autopilot</span>
+        <span className="font-medium text-sm">Composer AI</span>
         {process.env.NEXT_PUBLIC_DEV_MODE === "true" && onTestModeChange && (
           <Button
             variant="ghost"

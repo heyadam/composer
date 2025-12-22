@@ -126,7 +126,7 @@ export function AgentFlow() {
   }, []);
 
   // Sidebar and palette states
-  const [autopilotOpen, setAutopilotOpen] = useState(false);
+  const [autopilotOpen, setAutopilotOpen] = useState(true);
   const [autopilotHighlightedIds, setAutopilotHighlightedIds] = useState<Set<string>>(new Set());
   const [nodesPaletteOpen, setNodesPaletteOpen] = useState(false);
   const [responsesOpen, setResponsesOpen] = useState(true);
@@ -1291,7 +1291,7 @@ export function AgentFlow() {
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="bg-neutral-800 text-white border-neutral-700">
-                Autopilot
+                Composer AI
               </TooltipContent>
             </Tooltip>
             {/* Flow dropdown */}

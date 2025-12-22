@@ -146,7 +146,7 @@ export function AutopilotChat({
               <Sparkles className="h-8 w-8" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-medium text-sm">Autopilot</h3>
+              <h3 className="font-medium text-sm">Composer AI</h3>
               <p className="text-muted-foreground text-xs">
                 Describe what to build
               </p>

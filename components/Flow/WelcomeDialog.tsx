@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { ReactFlow } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,8 +13,65 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
 import { ArrowLeft, KeyRound, Play, Sparkles, X } from "lucide-react";
+import { nodeTypes } from "./nodes";
+import { edgeTypes } from "./edges/ColoredEdge";
+import { welcomePreviewEdges, welcomePreviewNodes } from "@/lib/welcome-preview-flow";
 
 const STORAGE_KEY = "avy-nux-step";
+
+function HeroPanel({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative h-full w-full overflow-hidden border bg-muted/40">
+      {/* Background polish */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(1200px_circle_at_30%_20%,hsl(var(--primary)/0.20),transparent_55%),radial-gradient(900px_circle_at_70%_80%,hsl(var(--foreground)/0.10),transparent_50%)]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-70 [background-image:linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] [background-size:48px_48px]"
+      />
+      {children}
+
+      {/* Soft vignette */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent"
+      />
+    </div>
+  );
+}
+
+function MiniNodeCanvasDemo() {
+  return (
+    <HeroPanel>
+      <div className="pointer-events-none absolute inset-0 z-20">
+        <ReactFlow
+          nodes={welcomePreviewNodes}
+          edges={welcomePreviewEdges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          fitView
+          fitViewOptions={{ padding: 0.18 }}
+          proOptions={{ hideAttribution: true }}
+          nodesDraggable={false}
+          nodesConnectable={false}
+          elementsSelectable={false}
+          zoomOnScroll={false}
+          zoomOnPinch={false}
+          zoomOnDoubleClick={false}
+          panOnScroll={false}
+          panOnDrag={false}
+        />
+      </div>
+
+      <div className="pointer-events-none absolute bottom-5 left-5 z-30 max-w-[340px] rounded-xl border bg-background/75 p-4 text-sm text-muted-foreground shadow-sm backdrop-blur-sm">
+        <div className="font-medium text-foreground">Build flows visually</div>
+        <div className="mt-1">Connect nodes to turn inputs into outputs</div>
+      </div>
+    </HeroPanel>
+  );
+}
 
 function StepIndicator({ currentStep }: { currentStep: 1 | 2 }) {
   return (
@@ -109,17 +167,7 @@ function HeroVideo({
   };
 
   return (
-    <div className="relative h-full w-full overflow-hidden border bg-muted/40">
-      {/* Background polish */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(1200px_circle_at_30%_20%,hsl(var(--primary)/0.20),transparent_55%),radial-gradient(900px_circle_at_70%_80%,hsl(var(--foreground)/0.10),transparent_50%)]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-70 [background-image:linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] [background-size:48px_48px]"
-      />
-
+    <HeroPanel>
       <button
         type="button"
         onClick={togglePlayback}
@@ -160,12 +208,6 @@ function HeroVideo({
         {!hasError && <source src={src} type="video/mp4" />}
       </video>
 
-      {/* Soft vignette */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent"
-      />
-
       {hasError && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center px-6 text-center">
           <div className="max-w-sm rounded-xl border bg-background/75 p-4 text-sm text-muted-foreground shadow-sm backdrop-blur-sm">
@@ -179,7 +221,7 @@ function HeroVideo({
       )}
 
       {overlay}
-    </div>
+    </HeroPanel>
   );
 }
 
@@ -189,12 +231,14 @@ function DialogShell({
   description,
   children,
   onBack,
+  hero,
 }: {
   step: 1 | 2;
   title: ReactNode;
   description: ReactNode;
   children: ReactNode;
   onBack?: () => void;
+  hero?: ReactNode;
 }) {
   return (
     <DialogContent
@@ -259,7 +303,7 @@ function DialogShell({
 
         {/* Right: hero */}
         <div className="min-h-[220px] border-t md:min-h-0 md:border-t-0 md:border-l">
-          <HeroVideo />
+          {hero ?? <HeroVideo />}
         </div>
       </div>
     </DialogContent>
@@ -406,6 +450,7 @@ export function WelcomeDialog({ onOpenSettings }: WelcomeDialogProps) {
         step={1}
         title="Welcome to Composer"
         description="Design, run, and iterate on visual AI workflows"
+        hero={<MiniNodeCanvasDemo />}
       >
         <div className="grid gap-6">
           <div className="grid gap-3">
