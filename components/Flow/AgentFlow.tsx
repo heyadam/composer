@@ -23,7 +23,9 @@ import { NodeToolbar } from "./NodeToolbar";
 import { AutopilotSidebar } from "./AutopilotSidebar";
 import { ActionBar } from "./ActionBar";
 import { AvyLogo } from "./AvyLogo";
-import { SaveFlowDialog } from "./SaveFlowDialog";
+import { SaveFlowDialog, type SaveMode } from "./SaveFlowDialog";
+import { MyFlowsDialog } from "./MyFlowsDialog";
+import { createFlow, updateFlow, loadFlow } from "@/lib/flows/api";
 import { FlowContextMenu } from "./FlowContextMenu";
 import { CommentEditContext } from "./CommentEditContext";
 import { initialNodes, initialEdges, defaultFlow } from "@/lib/example-flow";
@@ -31,7 +33,7 @@ import { useCommentSuggestions } from "@/lib/hooks/useCommentSuggestions";
 import { useSuggestions } from "@/lib/hooks/useSuggestions";
 import { useClipboard } from "@/lib/hooks/useClipboard";
 import type { NodeType, CommentColor } from "@/types/flow";
-import { Github, Settings, Folder, FilePlus, FolderOpen, Save, PanelLeft, PanelRight } from "lucide-react";
+import { Github, Settings, Folder, FilePlus, FolderOpen, Save, PanelLeft, PanelRight, Cloud } from "lucide-react";
 import { SettingsDialogControlled } from "./SettingsDialogControlled";
 import {
   DropdownMenu,
@@ -100,6 +102,9 @@ export function AgentFlow() {
     defaultFlow.metadata as FlowMetadata
   );
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [myFlowsDialogOpen, setMyFlowsDialogOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [currentFlowId, setCurrentFlowId] = useState<string | null>(null);
 
   const [isRunning, setIsRunning] = useState(false);
   const [previewEntries, setPreviewEntries] = useState<PreviewEntry[]>([]);
@@ -1103,16 +1108,69 @@ export function AgentFlow() {
       updatedAt: now,
       schemaVersion: 1,
     });
+    setCurrentFlowId(null);
     resetExecution();
     setAutopilotHighlightedIds(new Set());
     updateIdCounter([]);
   }, [setNodes, setEdges, resetExecution]);
 
-  const handleSaveFlow = useCallback((name: string) => {
+  const handleSaveFlow = useCallback(async (name: string, mode: SaveMode) => {
     const flow = createSavedFlow(nodes, edges, name, flowMetadata);
     setFlowMetadata(flow.metadata);
-    downloadFlow(flow);
-  }, [nodes, edges, flowMetadata]);
+
+    if (mode === "download") {
+      downloadFlow(flow);
+      setSaveDialogOpen(false);
+    } else {
+      // Cloud save
+      setIsSaving(true);
+      try {
+        let result;
+        if (currentFlowId) {
+          // Update existing flow
+          result = await updateFlow(currentFlowId, flow);
+        } else {
+          // Create new flow
+          result = await createFlow(flow);
+        }
+
+        if (result.success && result.flow) {
+          setCurrentFlowId(result.flow.id);
+          setSaveDialogOpen(false);
+        } else {
+          alert(result.error || "Failed to save flow");
+        }
+      } catch (error) {
+        console.error("Error saving flow:", error);
+        alert("Failed to save flow");
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  }, [nodes, edges, flowMetadata, currentFlowId]);
+
+  const handleLoadCloudFlow = useCallback(async (flowId: string) => {
+    const result = await loadFlow(flowId);
+    if (result.success && result.flow) {
+      setNodes(result.flow.nodes);
+      setEdges(result.flow.edges);
+      setFlowMetadata(result.flow.metadata);
+      setCurrentFlowId(flowId);
+      resetExecution();
+      setAutopilotHighlightedIds(new Set());
+
+      // Update node ID counter to avoid collisions
+      updateIdCounter(result.flow.nodes);
+
+      // Fit view to show loaded flow (with small delay for state to settle)
+      setTimeout(() => {
+        reactFlowInstance.current?.fitView({ padding: 0.2 });
+      }, 50);
+    } else {
+      console.error("Failed to load cloud flow:", result.error);
+      alert(`Failed to load flow: ${result.error}`);
+    }
+  }, [setNodes, setEdges, resetExecution]);
 
   const handleOpenFlow = useCallback(async () => {
     const result = await openFlowFilePicker();
@@ -1120,6 +1178,7 @@ export function AgentFlow() {
       setNodes(result.flow.nodes);
       setEdges(result.flow.edges);
       setFlowMetadata(result.flow.metadata);
+      setCurrentFlowId(null); // Clear cloud flow ID when loading from file
       resetExecution();
       setAutopilotHighlightedIds(new Set());
 
@@ -1262,11 +1321,18 @@ export function AgentFlow() {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-neutral-700" />
                 <DropdownMenuItem
+                  onClick={() => setMyFlowsDialogOpen(true)}
+                  className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
+                >
+                  <Cloud className="h-4 w-4 mr-2" />
+                  My Flows
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   onClick={handleOpenFlow}
                   className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
                 >
                   <FolderOpen className="h-4 w-4 mr-2" />
-                  Open...
+                  Open from file...
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => setSaveDialogOpen(true)}
@@ -1366,6 +1432,13 @@ export function AgentFlow() {
         onOpenChange={setSaveDialogOpen}
         onSave={handleSaveFlow}
         defaultName={flowMetadata?.name || "My Flow"}
+        isSaving={isSaving}
+        existingFlowId={currentFlowId}
+      />
+      <MyFlowsDialog
+        open={myFlowsDialogOpen}
+        onOpenChange={setMyFlowsDialogOpen}
+        onLoadFlow={handleLoadCloudFlow}
       />
       <SettingsDialogControlled
         open={settingsOpen}
