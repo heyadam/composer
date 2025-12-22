@@ -13,6 +13,7 @@ import {
   type ReactFlowInstance,
   type Connection,
   type Node,
+  type Edge,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -28,7 +29,8 @@ import { MyFlowsDialog } from "./MyFlowsDialog";
 import { createFlow, updateFlow, loadFlow } from "@/lib/flows/api";
 import { FlowContextMenu } from "./FlowContextMenu";
 import { CommentEditContext } from "./CommentEditContext";
-import { initialNodes, initialEdges, defaultFlow } from "@/lib/example-flow";
+// Removed: import { initialNodes, initialEdges, defaultFlow } from "@/lib/example-flow";
+// Canvas now starts empty, templates modal offers starter flows
 import { useCommentSuggestions } from "@/lib/hooks/useCommentSuggestions";
 import { useSuggestions } from "@/lib/hooks/useSuggestions";
 import { useClipboard } from "@/lib/hooks/useClipboard";
@@ -36,6 +38,11 @@ import type { NodeType, CommentColor } from "@/types/flow";
 import { Settings, Folder, FilePlus, FolderOpen, Save, PanelLeft, PanelRight, Cloud } from "lucide-react";
 import { SettingsDialogControlled } from "./SettingsDialogControlled";
 import { WelcomeDialog, isNuxComplete } from "./WelcomeDialog";
+import { TemplatesModal } from "./TemplatesModal";
+import {
+  useTemplatesModalState,
+  shouldShowTemplatesModal,
+} from "./TemplatesModal/hooks";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,8 +85,7 @@ const updateIdCounter = (nodes: Node[]) => {
   id = maxId + 1;
 };
 
-// Initialize counter based on initial nodes
-updateIdCounter(initialNodes);
+// ID counter initialized at 0, updated when loading templates or flows
 
 const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
   "text-input": { label: "Input Text", inputValue: "" },
@@ -94,13 +100,13 @@ const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
 
 export function AgentFlow() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
 
   // Flow metadata state
   const [flowMetadata, setFlowMetadata] = useState<FlowMetadata | undefined>(
-    defaultFlow.metadata as FlowMetadata
+    undefined
   );
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [myFlowsDialogOpen, setMyFlowsDialogOpen] = useState(false);
@@ -174,6 +180,17 @@ export function AgentFlow() {
       setSettingsOpen(true);
     }
   }, [isLoaded, isDevMode, hasAnyKey]);
+
+  // Templates modal state
+  const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
+  const { dismissPermanently: dismissTemplatesPermanently } = useTemplatesModalState();
+
+  // Auto-open templates modal on app load (after NUX is complete)
+  useEffect(() => {
+    if (isLoaded && isNuxComplete() && shouldShowTemplatesModal()) {
+      setTemplatesModalOpen(true);
+    }
+  }, [isLoaded]);
 
   // Background settings
   const { settings: bgSettings } = useBackgroundSettings();
@@ -1121,8 +1138,7 @@ export function AgentFlow() {
   }, []);
 
   // Flow file operations
-  const handleNewFlow = useCallback(() => {
-    // Start with a blank canvas
+  const loadBlankCanvas = useCallback(() => {
     const now = new Date().toISOString();
     setNodes([]);
     setEdges([]);
@@ -1138,6 +1154,33 @@ export function AgentFlow() {
     setAutopilotHighlightedIds(new Set());
     updateIdCounter([]);
   }, [setNodes, setEdges, resetExecution]);
+
+  const handleNewFlow = useCallback(() => {
+    // Show templates modal if not permanently dismissed
+    if (shouldShowTemplatesModal()) {
+      setTemplatesModalOpen(true);
+    } else {
+      loadBlankCanvas();
+    }
+  }, [loadBlankCanvas]);
+
+  const handleSelectTemplate = useCallback(
+    (flow: import("@/lib/flow-storage/types").SavedFlow) => {
+      setNodes(flow.nodes);
+      setEdges(flow.edges);
+      setFlowMetadata(flow.metadata);
+      setCurrentFlowId(null);
+      resetExecution();
+      setAutopilotHighlightedIds(new Set());
+      updateIdCounter(flow.nodes);
+
+      // Fit view to show loaded template
+      setTimeout(() => {
+        reactFlowInstance.current?.fitView({ padding: 0.2 });
+      }, 50);
+    },
+    [setNodes, setEdges, resetExecution]
+  );
 
   const handleSaveFlow = useCallback(async (name: string, mode: SaveMode) => {
     const flow = createSavedFlow(nodes, edges, name, flowMetadata);
@@ -1461,6 +1504,13 @@ export function AgentFlow() {
       <SettingsDialogControlled
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
+      />
+      <TemplatesModal
+        open={templatesModalOpen}
+        onOpenChange={setTemplatesModalOpen}
+        onSelectTemplate={handleSelectTemplate}
+        onDismiss={loadBlankCanvas}
+        onDismissPermanently={dismissTemplatesPermanently}
       />
       <WelcomeDialog onOpenSettings={() => setSettingsOpen(true)} />
     </div>

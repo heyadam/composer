@@ -1,0 +1,11 @@
+{
+  "metadata": {
+    "name": "Template 1",
+    "description": "Placeholder template - replace with your own",
+    "schemaVersion": 1,
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  },
+  "nodes": [],
+  "edges": []
+}
