@@ -50,7 +50,7 @@ export function ProfileDropdown() {
         <TooltipTrigger asChild>
           <button
             onClick={signInWithGoogle}
-            className="p-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm"
+            className="p-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm cursor-pointer"
           >
             <User className="w-5 h-5" />
           </button>
@@ -70,7 +70,7 @@ export function ProfileDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm transition-colors overflow-hidden">
+        <button className="rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm transition-colors overflow-hidden cursor-pointer">
           <Avatar className="w-9 h-9">
             <AvatarImage src={avatarUrl} alt={displayName} />
             <AvatarFallback className="bg-neutral-700 text-xs font-medium text-white">

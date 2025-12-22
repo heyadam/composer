@@ -125,11 +125,34 @@ export function AgentFlow() {
     };
   }, []);
 
+  // Track canvas width for responsive label hiding
+  useEffect(() => {
+    if (!reactFlowWrapper.current) return;
+
+    // Set initial width
+    setCanvasWidth(reactFlowWrapper.current.getBoundingClientRect().width);
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setCanvasWidth(entry.contentRect.width);
+      }
+    });
+
+    resizeObserver.observe(reactFlowWrapper.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   // Sidebar and palette states
   const [autopilotOpen, setAutopilotOpen] = useState(true);
   const [autopilotHighlightedIds, setAutopilotHighlightedIds] = useState<Set<string>>(new Set());
   const [nodesPaletteOpen, setNodesPaletteOpen] = useState(false);
   const [responsesOpen, setResponsesOpen] = useState(true);
+  
+  // Canvas width for responsive label hiding
+  const [canvasWidth, setCanvasWidth] = useState<number>(0);
 
   // Flow ID for future collaboration feature
   const [flowId] = useState(() => Math.floor(Math.random() * 900 + 100).toString());
@@ -1280,14 +1303,16 @@ export function AgentFlow() {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setAutopilotOpen(!autopilotOpen)}
-                  className={`flex items-center gap-1.5 px-2.5 py-2 transition-colors rounded-full border bg-background/50 backdrop-blur-sm text-sm ${
+                  className={`flex items-center px-2.5 py-2 transition-colors rounded-full border bg-background/50 backdrop-blur-sm text-sm cursor-pointer ${
+                    canvasWidth > 800 ? "gap-1.5" : ""
+                  } ${
                     autopilotOpen
                       ? "text-foreground border-muted-foreground/40"
                       : "text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-muted-foreground/40"
                   }`}
                 >
-                  <PanelLeft className="w-4 h-4" />
-                  <span>AI</span>
+                  <PanelLeft className="w-4 h-4 shrink-0" />
+                  {canvasWidth > 800 && <span>AI</span>}
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="bg-neutral-800 text-white border-neutral-700">
@@ -1298,14 +1323,19 @@ export function AgentFlow() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="flex items-center gap-1.5 px-2.5 py-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm text-sm"
+                  className={`flex items-center px-2.5 py-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm text-sm cursor-pointer ${
+                    canvasWidth > 800 ? "gap-1.5" : ""
+                  }`}
                   title="Files"
                 >
-                  <Folder className="w-4 h-4" />
-                  <span>Flow</span>
-                  <span className="w-px h-4 bg-muted-foreground/30 mx-1" />
-                  <span className="w-2 h-2 rounded-full bg-green-500" title="Connected" />
-                  <span className="font-mono">{flowId}</span>
+                  <Folder className="w-4 h-4 shrink-0" />
+                  {canvasWidth > 800 && (
+                    <>
+                      <span>Flow</span>
+                      <span className="w-px h-4 bg-muted-foreground/30 mx-1 shrink-0" />
+                      <span className="font-mono">{flowId}</span>
+                    </>
+                  )}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -1356,7 +1386,7 @@ export function AgentFlow() {
                   href="https://github.com/heyadam/avy"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm"
+                  className="p-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm cursor-pointer"
                 >
                   <Github className="w-5 h-5" />
                 </a>
@@ -1370,7 +1400,7 @@ export function AgentFlow() {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setSettingsOpen(true)}
-                  className={`p-2 transition-colors rounded-full border bg-background/50 backdrop-blur-sm relative ${
+                  className={`p-2 transition-colors rounded-full border bg-background/50 backdrop-blur-sm relative cursor-pointer ${
                     showSettingsWarning
                       ? "text-amber-400 hover:text-amber-300 border-amber-500/50 hover:border-amber-400/50"
                       : "text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-muted-foreground/40"
@@ -1393,14 +1423,16 @@ export function AgentFlow() {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setResponsesOpen(!responsesOpen)}
-                  className={`flex items-center gap-1.5 px-2.5 py-2 transition-colors rounded-full border bg-background/50 backdrop-blur-sm text-sm ${
+                  className={`flex items-center px-2.5 py-2 transition-colors rounded-full border bg-background/50 backdrop-blur-sm text-sm cursor-pointer ${
+                    canvasWidth > 800 ? "gap-1.5" : ""
+                  } ${
                     responsesOpen
                       ? "text-foreground border-muted-foreground/40"
                       : "text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-muted-foreground/40"
                   }`}
                 >
-                  <span>Preview</span>
-                  <PanelRight className="w-4 h-4" />
+                  {canvasWidth > 800 && <span>Preview</span>}
+                  <PanelRight className="w-4 h-4 shrink-0" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="bg-neutral-800 text-white border-neutral-700">

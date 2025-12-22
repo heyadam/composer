@@ -846,7 +846,7 @@ function DialogShell({
   return (
     <DialogContent
       showCloseButton={false}
-      className="max-h-[calc(100vh-2rem)] p-0 gap-0 overflow-hidden sm:max-w-[980px]"
+      className="h-[100dvh] w-screen max-w-none rounded-none border-0 p-0 gap-0 sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:max-w-[980px] sm:rounded-lg sm:border"
       onInteractOutside={preventOutsideClose ? (e) => e.preventDefault() : undefined}
       onEscapeKeyDown={preventOutsideClose ? (e) => e.preventDefault() : undefined}
     >
@@ -855,9 +855,9 @@ function DialogShell({
       ) : (
         <DialogClose asChild>{closeButton}</DialogClose>
       )}
-      <div className="grid h-full md:min-h-[560px] grid-rows-[auto_minmax(220px,1fr)] md:grid-cols-[1fr_1.15fr] md:grid-rows-1">
+      <div className="flex h-full flex-col overflow-y-auto sm:grid sm:overflow-hidden md:min-h-[560px] md:grid-cols-[1fr_1.15fr]">
         {/* Left: content */}
-        <div className="relative flex min-h-0 flex-col justify-between p-6 sm:p-8">
+        <div className="relative flex shrink-0 flex-col justify-between p-6 sm:p-8">
           <div className="flex h-8 items-center justify-between gap-3 pr-12 md:pr-0">
             <div className="flex h-8 items-center">
               {onBack ? (
@@ -885,24 +885,24 @@ function DialogShell({
             <StepIndicator currentStep={step} />
           </div>
 
-          <div className="mt-10 min-h-0">
+          <div className="mt-6 sm:mt-10">
             <DialogHeader className="text-left">
-              <DialogTitle className="text-3xl font-semibold tracking-tight sm:text-4xl">
+              <DialogTitle className="text-2xl font-semibold tracking-tight sm:text-4xl">
                 {title}
               </DialogTitle>
-              <DialogDescription className="mt-3 text-base sm:text-[15px]">
+              <DialogDescription className="mt-2 text-sm sm:mt-3 sm:text-[15px]">
                 {description}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="mt-7">{children}</div>
+            <div className="mt-5 sm:mt-7">{children}</div>
           </div>
 
-          <div className="mt-10" />
+          <div className="mt-6 sm:mt-10" />
         </div>
 
         {/* Right: hero */}
-        <div className="min-h-[220px] border-t md:min-h-0 md:border-t-0 md:border-l">
+        <div className="min-h-[280px] flex-1 border-t sm:min-h-[220px] md:border-t-0 md:border-l">
           {hero}
         </div>
       </div>
