@@ -17,7 +17,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
-import { ArrowLeft, Check, ChevronRight, Cloud, KeyRound, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, KeyRound, Link, Loader2, RotateCcw, Sparkles, Wand2, X } from "lucide-react";
 import { isImageOutput, parseImageOutput, getImageDataUrl } from "@/lib/image-utils";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { nodeTypes } from "./nodes";
@@ -996,8 +996,8 @@ export function WelcomeDialog({ onOpenSettings }: WelcomeDialogProps) {
       >
         <DialogShell
           step={2}
-          title="Connect Your AI Providers"
-          description="Add at least one API key to run nodes"
+          title="Bring Your Own API Keys"
+          description="Connect your providers to start building"
           onBack={!user ? handleBackToSignIn : undefined}
           hero={<ProvidersToComposerHero />}
         >
@@ -1005,12 +1005,12 @@ export function WelcomeDialog({ onOpenSettings }: WelcomeDialogProps) {
             <div className="grid gap-3">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 grid h-9 w-9 place-items-center rounded-lg border bg-foreground/5">
-                  <Cloud className="h-4 w-4" />
+                  <KeyRound className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-medium">Bring your own keys</div>
+                  <div className="text-sm font-medium">You stay in control</div>
                   <div className="mt-1 text-sm text-muted-foreground">
-                    Add OpenAI, Anthropic, and more in Settings
+                    Your keys, your costs, your privacy
                   </div>
                 </div>
               </div>
@@ -1020,9 +1020,9 @@ export function WelcomeDialog({ onOpenSettings }: WelcomeDialogProps) {
                   <Sparkles className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-medium">Instant previews</div>
+                  <div className="text-sm font-medium">Mix and match providers</div>
                   <div className="mt-1 text-sm text-muted-foreground">
-                    Run nodes and inspect outputs as you build
+                    Use OpenAI, Anthropic, and Google together
                   </div>
                 </div>
               </div>
@@ -1045,7 +1045,7 @@ export function WelcomeDialog({ onOpenSettings }: WelcomeDialogProps) {
       <DialogShell
         step={1}
         title="Welcome to Composer"
-        description="Design, run, and iterate on visual AI workflows"
+        description="A canvas for chaining AI models into creative workflows"
         hero={<MiniNodeCanvasDemo />}
         preventOutsideClose
         onClose={completeNux}
@@ -1054,24 +1054,24 @@ export function WelcomeDialog({ onOpenSettings }: WelcomeDialogProps) {
           <div className="grid gap-3">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 grid h-9 w-9 place-items-center rounded-lg border bg-foreground/5">
-                <Sparkles className="h-4 w-4" />
+                <Link className="h-4 w-4" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-medium">Build like a canvas</div>
+                <div className="text-sm font-medium">Chain any AI model</div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  Connect nodes to shape prompts, tools, and transforms
+                  Chain multiple AI models from different providers
                 </div>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
               <div className="mt-0.5 grid h-9 w-9 place-items-center rounded-lg border bg-foreground/5">
-                <Cloud className="h-4 w-4" />
+                <Wand2 className="h-4 w-4" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-medium">Save work anywhere</div>
+                <div className="text-sm font-medium">Composer AI builds with you</div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  Sign in to sync flows across devices
+                  An AI agent that edits your flow as you describe changes
                 </div>
               </div>
             </div>

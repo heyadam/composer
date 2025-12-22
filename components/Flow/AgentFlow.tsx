@@ -33,7 +33,7 @@ import { useCommentSuggestions } from "@/lib/hooks/useCommentSuggestions";
 import { useSuggestions } from "@/lib/hooks/useSuggestions";
 import { useClipboard } from "@/lib/hooks/useClipboard";
 import type { NodeType, CommentColor } from "@/types/flow";
-import { Github, Settings, Folder, FilePlus, FolderOpen, Save, PanelLeft, PanelRight, Cloud } from "lucide-react";
+import { Settings, Folder, FilePlus, FolderOpen, Save, PanelLeft, PanelRight, Cloud } from "lucide-react";
 import { SettingsDialogControlled } from "./SettingsDialogControlled";
 import { WelcomeDialog } from "./WelcomeDialog";
 import {
@@ -1293,7 +1293,7 @@ export function AgentFlow() {
         </CommentEditContext.Provider>
         {/* Top center branding */}
         <div className="absolute top-0 left-0 right-0 z-10 flex justify-center pt-4 pb-8 bg-gradient-to-b from-black/90 to-transparent">
-          <AvyLogo isPanning={isPanning} />
+          <AvyLogo isPanning={isPanning} canvasWidth={canvasWidth} />
         </div>
         {/* Autopilot and Flow (top left) */}
         <TooltipProvider delayDuration={200}>
@@ -1376,25 +1376,9 @@ export function AgentFlow() {
             </DropdownMenu>
           </div>
         </TooltipProvider>
-        {/* GitHub, Settings, and Profile icons (top right, left of responses sidebar) */}
+        {/* Settings, Profile, and Preview icons (top right, left of responses sidebar) */}
         <TooltipProvider delayDuration={200}>
           <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-            {/* GitHub */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a
-                  href="https://github.com/heyadam/avy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm cursor-pointer"
-                >
-                  <Github className="w-5 h-5" />
-                </a>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="bg-neutral-800 text-white border-neutral-700">
-                View on GitHub
-              </TooltipContent>
-            </Tooltip>
             {/* Settings */}
             <Tooltip>
               <TooltipTrigger asChild>

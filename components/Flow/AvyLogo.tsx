@@ -6,6 +6,7 @@ import * as THREE from "three";
 
 interface AvyLogoProps {
   isPanning?: boolean;
+  canvasWidth?: number;
 }
 
 const vertexShader = `
@@ -140,10 +141,14 @@ function FluidSphere({ isPanning }: { isPanning?: boolean }) {
   );
 }
 
-export function AvyLogo({ isPanning }: AvyLogoProps) {
+export function AvyLogo({ isPanning, canvasWidth }: AvyLogoProps) {
+  const isCompact = canvasWidth !== undefined && canvasWidth <= 800;
+  const iconSize = isCompact ? 32 : 48;
+  const textSize = isCompact ? "text-base" : "text-lg";
+  
   return (
     <div className="flex items-center gap-2 pointer-events-none select-none">
-      <div style={{ width: 48, height: 48 }}>
+      <div style={{ width: iconSize, height: iconSize }}>
         <Canvas
           camera={{ position: [0, 0, 3.5], fov: 45 }}
           gl={{ antialias: true, alpha: true }}
@@ -153,7 +158,7 @@ export function AvyLogo({ isPanning }: AvyLogoProps) {
           <FluidSphere isPanning={isPanning} />
         </Canvas>
       </div>
-      <span className="text-white font-medium text-xl tracking-wide">composer</span>
+      <span className={`text-white font-medium ${textSize} tracking-wide`}>composer</span>
     </div>
   );
 }
