@@ -51,6 +51,7 @@ export interface Collaborator {
   avatar?: string | null;
   cursor?: { x: number; y: number };
   isOwner?: boolean;
+  isSelf?: boolean;
 }
 
 // Payload shape for Supabase Presence tracking
@@ -674,13 +675,14 @@ export function useCollaboration({
             name: presence.name,
             avatar: presence.avatar,
             isOwner: presence.isOwner,
+            isSelf: presence.userId === currentUserId,
             cursor: cursorMap.get(presence.userId),
           });
         }
         return newCollaborators;
       });
     },
-    []
+    [currentUserId]
   );
 
   // Set up realtime channel with Presence
