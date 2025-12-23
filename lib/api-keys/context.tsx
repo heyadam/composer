@@ -15,6 +15,8 @@ import type {
   ApiKeyStatus,
 } from "./types";
 import { loadApiKeys, saveApiKeys, clearApiKeys, saveVipCode, loadVipCode } from "./storage";
+import { storeUserKeys } from "@/lib/flows/api";
+import { useAuth } from "@/lib/auth";
 
 async function fetchEnvKeys(password: string): Promise<{ keys?: ApiKeys; error?: string }> {
   try {
@@ -45,6 +47,7 @@ const PROVIDER_LABELS: Record<ProviderId, string> = {
 const ApiKeysContext = createContext<ApiKeysContextValue | null>(null);
 
 export function ApiKeysProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [keys, setKeys] = useState<ApiKeys>({});
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -75,6 +78,21 @@ export function ApiKeysProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     saveApiKeys(keys);
   }, [keys]);
+
+  // Sync keys to server when user is logged in (for owner-funded execution)
+  // This runs whenever keys change, which is fine since storeUserKeys is idempotent
+  useEffect(() => {
+    const hasAnyKey = !!(keys.openai || keys.google || keys.anthropic);
+    if (user && hasAnyKey) {
+      storeUserKeys({
+        openai: keys.openai || undefined,
+        google: keys.google || undefined,
+        anthropic: keys.anthropic || undefined,
+      }).catch(() => {
+        // Ignore errors - server storage is optional
+      });
+    }
+  }, [user, keys]);
 
   const setKey = useCallback((provider: ProviderId, key: string) => {
     setKeys((prev) => ({ ...prev, [provider]: key }));
@@ -121,6 +139,7 @@ export function ApiKeysProvider({ children }: { children: ReactNode }) {
           setKeys((prev) => ({ ...prev, ...result.keys }));
           // Save VIP code for future use
           saveVipCode(password);
+          // Server-side sync is handled by the useEffect that watches for keys + user
           return { success: true };
         }
         return { success: false, error: "No keys returned" };
