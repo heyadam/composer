@@ -46,6 +46,7 @@
     "nanoid": "^5.1.6",
     "next": "16.0.10",
     "openai": "^6.10.0",
+    "perfect-cursors": "^1.0.5",
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "shiki": "^3.19.0",

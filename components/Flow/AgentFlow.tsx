@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type DragEvent, type MouseEvent } from "react";
 import {
   ReactFlow,
   Background,
@@ -28,6 +28,7 @@ import { SaveFlowDialog, type SaveMode } from "./SaveFlowDialog";
 import { MyFlowsDialog } from "./MyFlowsDialog";
 import { FlowContextMenu } from "./FlowContextMenu";
 import { CommentEditContext } from "./CommentEditContext";
+import { CollaboratorCursors } from "./CollaboratorCursors";
 // Removed: import { initialNodes, initialEdges, defaultFlow } from "@/lib/example-flow";
 // Canvas now starts empty, templates modal offers starter flows
 import { useCommentSuggestions } from "@/lib/hooks/useCommentSuggestions";
@@ -74,6 +75,7 @@ import { loadFlow } from "@/lib/flows/api";
 let id = 0;
 const getId = () => `node_${id++}`;
 const setIdCounter = (newId: number) => { id = newId; };
+const CURSOR_BROADCAST_THROTTLE_MS = 50;
 
 // ID counter initialized at 0, updated when loading templates or flows
 
@@ -97,6 +99,8 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
+  const lastCursorBroadcastRef = useRef<number>(0);
+  const lastCursorPositionRef = useRef<{ x: number; y: number } | null>(null);
 
   // API keys context
   const { keys: apiKeys, hasRequiredKey, getKeyStatuses, isDevMode, isLoaded } = useApiKeys();
@@ -232,6 +236,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     lastSaveError: collaborationSaveError,
     isRealtimeConnected,
     collaborators,
+    broadcastCursor,
   } = useCollaboration({
     collaborationMode,
     nodes,
@@ -472,6 +477,36 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     event.dataTransfer.dropEffect = "move";
   }, []);
 
+  const handlePaneMouseMove = useCallback(
+    (event: MouseEvent) => {
+      if (!isCollaborating || !reactFlowInstance.current) return;
+
+      const now = Date.now();
+      if (now - lastCursorBroadcastRef.current < CURSOR_BROADCAST_THROTTLE_MS) {
+        return;
+      }
+
+      const position = reactFlowInstance.current.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+
+      const lastPosition = lastCursorPositionRef.current;
+      if (
+        lastPosition &&
+        Math.abs(lastPosition.x - position.x) < 0.25 &&
+        Math.abs(lastPosition.y - position.y) < 0.25
+      ) {
+        return;
+      }
+
+      lastCursorBroadcastRef.current = now;
+      lastCursorPositionRef.current = position;
+      broadcastCursor(position);
+    },
+    [broadcastCursor, isCollaborating]
+  );
+
   const onDrop = useCallback(
     (event: DragEvent<HTMLDivElement>) => {
       event.preventDefault();
@@ -625,7 +660,11 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
         onPendingMessageConsumed={() => setPendingAutopilotMessage(null)}
         clearHistoryTrigger={autopilotClearTrigger}
       />
-      <div ref={reactFlowWrapper} className="flex-1 h-full bg-muted/10 relative">
+      <div
+        ref={reactFlowWrapper}
+        className="flex-1 h-full bg-muted/10 relative"
+        onMouseMove={handlePaneMouseMove}
+      >
         <NodeToolbar
           isOpen={nodesPaletteOpen}
           onClose={() => setNodesPaletteOpen(false)}
@@ -674,6 +713,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
                 style={{ backgroundColor: bgSettings.bgColor }}
               />
               <Controls />
+              <CollaboratorCursors collaborators={collaborators} />
             </ReactFlow>
             </FlowContextMenu>
           </ConnectionContext.Provider>
