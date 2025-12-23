@@ -21,7 +21,12 @@ import {
   Globe,
   Key,
 } from "lucide-react";
-import { publishFlow, unpublishFlow } from "@/lib/flows/api";
+import {
+  publishFlow,
+  unpublishFlow,
+  getUserKeysStatus,
+  updatePublishSettings,
+} from "@/lib/flows/api";
 import { useAuth } from "@/lib/auth";
 
 interface ShareDialogProps {
@@ -31,6 +36,7 @@ interface ShareDialogProps {
   flowName: string;
   initialLiveId?: string | null;
   initialShareToken?: string | null;
+  initialUseOwnerKeys?: boolean;
 }
 
 export function ShareDialog({
@@ -40,6 +46,7 @@ export function ShareDialog({
   flowName,
   initialLiveId,
   initialShareToken,
+  initialUseOwnerKeys,
 }: ShareDialogProps) {
   const { user } = useAuth();
   const [isPublishing, setIsPublishing] = useState(false);
@@ -51,14 +58,39 @@ export function ShareDialog({
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Owner-funded execution state
+  const [useOwnerKeys, setUseOwnerKeys] = useState(initialUseOwnerKeys || false);
+  const [hasStoredKeys, setHasStoredKeys] = useState(false);
+  const [isLoadingKeyStatus, setIsLoadingKeyStatus] = useState(false);
+  const [isTogglingOwnerKeys, setIsTogglingOwnerKeys] = useState(false);
+
   // Reset state when dialog opens with new props
   useEffect(() => {
     if (open) {
       setLiveId(initialLiveId || null);
       setShareToken(initialShareToken || null);
+      setUseOwnerKeys(initialUseOwnerKeys || false);
       setError(null);
     }
-  }, [open, initialLiveId, initialShareToken]);
+  }, [open, initialLiveId, initialShareToken, initialUseOwnerKeys]);
+
+  // Fetch owner key status when dialog opens with a published flow
+  useEffect(() => {
+    if (open && liveId && flowId) {
+      setIsLoadingKeyStatus(true);
+      getUserKeysStatus()
+        .then((status) => {
+          // Compute hasKeys from individual provider flags
+          const hasKeys = !!(
+            status.hasOpenai ||
+            status.hasGoogle ||
+            status.hasAnthropic
+          );
+          setHasStoredKeys(hasKeys);
+        })
+        .finally(() => setIsLoadingKeyStatus(false));
+    }
+  }, [open, liveId, flowId]);
 
   const isPublished = liveId && shareToken;
   const shareUrl = isPublished
@@ -115,6 +147,30 @@ export function ShareDialog({
   const handleOpenInNewTab = () => {
     if (!shareUrl) return;
     window.open(shareUrl, "_blank");
+  };
+
+  const handleToggleOwnerKeys = async (enabled: boolean) => {
+    // Use flowId (owner-authenticated) NOT shareToken (collaborator-accessible)
+    if (!flowId) return;
+
+    setIsTogglingOwnerKeys(true);
+    setError(null);
+
+    try {
+      const result = await updatePublishSettings(flowId, {
+        useOwnerKeys: enabled,
+      });
+      if (result.success) {
+        setUseOwnerKeys(enabled);
+      } else {
+        setError(result.error || "Failed to update owner keys setting");
+      }
+    } catch (err) {
+      console.error("Failed to update owner keys setting:", err);
+      setError("Failed to update setting");
+    } finally {
+      setIsTogglingOwnerKeys(false);
+    }
   };
 
   // Not signed in
@@ -236,6 +292,38 @@ export function ShareDialog({
             <div className="flex items-center justify-between text-sm">
               <span className="text-neutral-400">Live ID</span>
               <span className="font-mono text-neutral-200">{liveId}</span>
+            </div>
+
+            {/* Owner-funded execution toggle */}
+            <div className="space-y-3 pt-3 border-t border-neutral-700">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <Key className="h-4 w-4" />
+                    Owner-Funded Execution
+                  </Label>
+                  <p className="text-xs text-neutral-400 mt-1">
+                    Use your API keys for collaborators&apos; executions
+                  </p>
+                </div>
+                <Switch
+                  checked={useOwnerKeys}
+                  onCheckedChange={handleToggleOwnerKeys}
+                  disabled={
+                    !hasStoredKeys || isLoadingKeyStatus || isTogglingOwnerKeys
+                  }
+                />
+              </div>
+              {!hasStoredKeys && !isLoadingKeyStatus && (
+                <p className="text-xs text-amber-400">
+                  Store your API keys in Settings to enable this feature
+                </p>
+              )}
+              {isLoadingKeyStatus && (
+                <p className="text-xs text-neutral-500">
+                  Checking stored keys...
+                </p>
+              )}
             </div>
 
             {/* Unpublish */}

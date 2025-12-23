@@ -60,7 +60,36 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const body = await request.json().catch(() => ({}));
     const { inputs = {} } = body;
 
-    // Check execution quota atomically
+    // Check minute-level rate limit first
+    // Note: RPC returns TABLE, use .single() to get object instead of array
+    const { data: minuteLimit, error: minuteError } = await supabase
+      .rpc("check_minute_rate_limit", {
+        p_share_token: token,
+        p_limit: 10,
+      })
+      .single<{ allowed: boolean; current_count: number; reset_at: string }>();
+
+    if (minuteError || !minuteLimit?.allowed) {
+      const retryAfter = minuteLimit?.reset_at
+        ? Math.ceil(
+            (new Date(minuteLimit.reset_at).getTime() - Date.now()) / 1000
+          )
+        : 60;
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Rate limit exceeded",
+          message: `Too many requests. Try again in ${retryAfter} seconds.`,
+          retryAfter,
+        },
+        {
+          status: 429,
+          headers: { "Retry-After": String(retryAfter) },
+        }
+      );
+    }
+
+    // Check daily execution quota atomically
     const { data: quotaResult, error: quotaError } = await supabase.rpc(
       "execute_live_flow_check",
       {
@@ -86,6 +115,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         { status: 403 }
       );
     }
+
+    // Log execution for minute-level rate limiting
+    await supabase.rpc("log_execution", { p_share_token: token });
 
     // Try to get owner's stored keys (if use_owner_keys is enabled)
     let apiKeys: ApiKeys = {};

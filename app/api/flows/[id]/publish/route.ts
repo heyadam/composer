@@ -173,3 +173,67 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     );
   }
 }
+
+/**
+ * PATCH /api/flows/[id]/publish - Update publish settings (owner only)
+ *
+ * Only the flow owner can update publish settings (use_owner_keys, allow_public_execute).
+ * This is separate from the token-gated updateLiveFlow to prevent collaborators from
+ * enabling owner-funded execution.
+ */
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = await params;
+    const supabase = await createClient();
+
+    // Get the current user (owner authentication)
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const { useOwnerKeys, allowPublicExecute } = body;
+
+    // Build update object with only provided fields
+    const updates: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+    if (typeof useOwnerKeys === "boolean") {
+      updates.use_owner_keys = useOwnerKeys;
+    }
+    if (typeof allowPublicExecute === "boolean") {
+      updates.allow_public_execute = allowPublicExecute;
+    }
+
+    // Update with owner verification (user_id check)
+    const { error: updateError } = await supabase
+      .from("flows")
+      .update(updates)
+      .eq("id", id)
+      .eq("user_id", user.id);
+
+    if (updateError) {
+      console.error("Error updating publish settings:", updateError);
+      return NextResponse.json(
+        { success: false, error: "Failed to update settings" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error in PATCH /api/flows/[id]/publish:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

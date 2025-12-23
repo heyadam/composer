@@ -69,6 +69,7 @@ import { useBackgroundSettings } from "@/lib/hooks/useBackgroundSettings";
 import { ProfileDropdown } from "./ProfileDropdown";
 import { ShareDialog } from "./ShareDialog";
 import { useCollaboration, type CollaborationModeProps } from "@/lib/hooks/useCollaboration";
+import { loadFlow } from "@/lib/flows/api";
 
 let id = 0;
 const getId = () => `node_${id++}`;
@@ -257,6 +258,38 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
 
   // Share dialog state
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+
+  // Published flow info state (for pre-populating ShareDialog)
+  const [publishedFlowInfo, setPublishedFlowInfo] = useState<{
+    liveId: string;
+    shareToken: string;
+    useOwnerKeys: boolean;
+  } | null>(null);
+
+  // Fetch published state when flow loads
+  useEffect(() => {
+    if (currentFlowId) {
+      loadFlow(currentFlowId).then((result) => {
+        // Access result.metadata (FlowRecord), not result.flow (SavedFlow)
+        if (result.success && result.metadata) {
+          const record = result.metadata;
+          if (record.live_id && record.share_token) {
+            setPublishedFlowInfo({
+              liveId: record.live_id,
+              shareToken: record.share_token,
+              useOwnerKeys: record.use_owner_keys,
+            });
+          } else {
+            setPublishedFlowInfo(null);
+          }
+        } else {
+          setPublishedFlowInfo(null);
+        }
+      });
+    } else {
+      setPublishedFlowInfo(null);
+    }
+  }, [currentFlowId]);
 
   // Auto-open settings dialog when no API keys are configured
   // Only show if NUX is complete (step 2 of NUX guides users to API keys)
@@ -864,6 +897,9 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
         onOpenChange={setShareDialogOpen}
         flowId={currentFlowId}
         flowName={flowMetadata?.name || "Untitled Flow"}
+        initialLiveId={publishedFlowInfo?.liveId}
+        initialShareToken={publishedFlowInfo?.shareToken}
+        initialUseOwnerKeys={publishedFlowInfo?.useOwnerKeys}
       />
       <TemplatesModal
         open={templatesModalOpen}

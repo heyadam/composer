@@ -212,6 +212,38 @@ export async function unpublishFlow(id: string): Promise<FlowDeleteResponse> {
 }
 
 /**
+ * Update publish settings (owner only, flow ID authenticated)
+ *
+ * This uses the owner-authenticated PATCH endpoint, NOT the token-gated route,
+ * to prevent collaborators from enabling owner-funded execution.
+ */
+export async function updatePublishSettings(
+  flowId: string,
+  settings: {
+    useOwnerKeys?: boolean;
+    allowPublicExecute?: boolean;
+  }
+): Promise<FlowDeleteResponse> {
+  try {
+    const res = await fetch(`/api/flows/${flowId}/publish`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settings),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return { success: false, error: data.error || `Failed: ${res.status}` };
+    }
+    return await res.json();
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update settings",
+    };
+  }
+}
+
+/**
  * Load a live flow by share token
  */
 export async function loadLiveFlow(token: string): Promise<LiveFlowResponse> {
