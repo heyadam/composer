@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev      # Start development server (http://localhost:3000)
 npm run build    # Production build
 npm run lint     # Run ESLint
-npm test         # Run Vitest unit tests (66 tests)
+npm test         # Run Vitest unit tests (65 tests)
 npm run start    # Start production server
 ```
 
@@ -165,11 +165,11 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 **Templates Modal** (`components/Flow/TemplatesModal/`): New flow creation dialog with AI prompt input:
 - `index.tsx`: Main modal component with AI prompt input and template selection
 - `templates.ts`: Template definitions loading from `lib/flows/templates/*.avy.json`
-- `TemplateCard.tsx`: Individual template display card
+- `hooks/useTemplatesModal.ts`: Unified hook managing open/close state, auto-open logic, and "don't show again" persistence
 - Features mode selector (Execute/Plan), model selector (Sonnet/Opus), and extended thinking toggle
 - Three pre-built templates: Story & Image Gen, Basic Text Gen, Image to Image
 - "Start blank" option to dismiss and begin with empty canvas
-- "Don't show again" checkbox persisted to localStorage
+- Auto-opens when: NUX complete, not collaborating, flow is empty, no cloud flow loaded
 
 **Node Toolbar** (`components/Flow/NodeToolbar.tsx`): Floating toolbar for quick node insertion with icons for each node type.
 
@@ -211,7 +211,7 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 - `useClipboard.ts`: Clipboard operations for copy/paste functionality.
 - `useFlowExecution.ts`: Manages flow execution state, preview/debug entries, run/cancel/reset operations. Extracted from AgentFlow for testability.
 - `useNodeParenting.ts`: Handles node parenting behavior within comments - auto-parenting when dragged into comments, unparenting when dragged out, comment deletion with cascading unparenting, and resize capture/release.
-- `useFlowOperations.ts`: Manages flow file operations - new/blank flow creation, template selection, cloud save/load, file picker operations, and flow metadata state.
+- `useFlowOperations.ts`: Manages flow file operations - new/blank flow creation, template selection, cloud save/load, file picker operations, and flow metadata state. Does not manage templates modal state (see `useTemplatesModal`).
 - `useUndoRedo.ts`: Snapshot-based undo/redo for flow state with keyboard shortcuts (Cmd+Z/Ctrl+Z for undo, Shift+Cmd+Z/Ctrl+Y for redo). Maintains history stack up to 50 snapshots.
 - `useCollaboration.ts`: Core real-time collaboration logic - Supabase Realtime sync, presence tracking, auto-save, smooth position interpolation.
 - `usePerfectCursor.ts`: Wrapper around `perfect-cursors` npm package for smooth cursor/position animations.
@@ -287,7 +287,7 @@ Unit tests use **Vitest** with React Testing Library. Test files are in `lib/hoo
 - `useFlowOperations.test.ts`: Tests for flow file operations (save, load, templates)
 - `useUndoRedo.test.ts`: Tests for undo/redo functionality (snapshot management, keyboard shortcuts)
 
-Run tests with `npm test` (66 tests) or `npm run test:watch` for watch mode.
+Run tests with `npm test` (65 tests) or `npm run test:watch` for watch mode.
 
 **Mobile Blocker** (`components/Flow/MobileBlocker.tsx`): Full-screen blocker for mobile devices:
 - Detects mobile via user agent (not screen width) using `useMobileDetection` hook
