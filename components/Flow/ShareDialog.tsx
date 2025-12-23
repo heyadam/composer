@@ -37,7 +37,12 @@ interface ShareDialogProps {
   initialLiveId?: string | null;
   initialShareToken?: string | null;
   initialUseOwnerKeys?: boolean;
-  onPublish?: (liveId: string, shareToken: string, useOwnerKeys: boolean) => void;
+  onPublish?: (
+    flowId: string,
+    liveId: string,
+    shareToken: string,
+    useOwnerKeys: boolean
+  ) => void;
   onSaveFlow?: (name: string) => Promise<string | null>;
   isSaving?: boolean;
 }
@@ -124,7 +129,12 @@ export function ShareDialog({
     if (result.success && result.live_id && result.share_token) {
       setLiveId(result.live_id);
       setShareToken(result.share_token);
-      onPublish?.(result.live_id, result.share_token, result.use_owner_keys ?? true);
+      onPublish?.(
+        flowId,
+        result.live_id,
+        result.share_token,
+        result.use_owner_keys ?? true
+      );
       // Close dialog after successful publish since Live popover is now available
       onOpenChange(false);
     } else {
@@ -231,7 +241,12 @@ export function ShareDialog({
         if (result.success && result.live_id && result.share_token) {
           setLiveId(result.live_id);
           setShareToken(result.share_token);
-          onPublish?.(result.live_id, result.share_token, result.use_owner_keys ?? true);
+          onPublish?.(
+            savedFlowId,
+            result.live_id,
+            result.share_token,
+            result.use_owner_keys ?? true
+          );
           onOpenChange(false);
         } else {
           setError(result.error || "Failed to publish flow");

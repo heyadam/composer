@@ -221,6 +221,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
 
   // Published flow info state (for owner collaboration mode and ShareDialog)
   const [publishedFlowInfo, setPublishedFlowInfo] = useState<{
+    flowId: string;
     liveId: string;
     shareToken: string;
     useOwnerKeys: boolean;
@@ -291,27 +292,37 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
 
   // Fetch published state when flow loads
   useEffect(() => {
-    if (currentFlowId) {
-      loadFlow(currentFlowId).then((result) => {
-        // Access result.metadata (FlowRecord), not result.flow (SavedFlow)
-        if (result.success && result.metadata) {
-          const record = result.metadata;
-          if (record.live_id && record.share_token) {
-            setPublishedFlowInfo({
-              liveId: record.live_id,
-              shareToken: record.share_token,
-              useOwnerKeys: record.use_owner_keys,
-            });
-          } else {
-            setPublishedFlowInfo(null);
-          }
-        } else {
-          setPublishedFlowInfo(null);
-        }
-      });
-    } else {
+    if (!currentFlowId) {
       setPublishedFlowInfo(null);
+      return;
     }
+
+    let isActive = true;
+    const flowId = currentFlowId;
+
+    loadFlow(flowId).then((result) => {
+      if (!isActive) return;
+      // Access result.metadata (FlowRecord), not result.flow (SavedFlow)
+      if (result.success && result.metadata) {
+        const record = result.metadata;
+        if (record.live_id && record.share_token) {
+          setPublishedFlowInfo({
+            flowId,
+            liveId: record.live_id,
+            shareToken: record.share_token,
+            useOwnerKeys: record.use_owner_keys,
+          });
+        } else {
+          setPublishedFlowInfo((prev) => (prev?.flowId === flowId ? prev : null));
+        }
+      } else {
+        setPublishedFlowInfo((prev) => (prev?.flowId === flowId ? prev : null));
+      }
+    });
+
+    return () => {
+      isActive = false;
+    };
   }, [currentFlowId]);
 
   // Unpublish flow when owner leaves the page
@@ -1021,8 +1032,8 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
         initialLiveId={publishedFlowInfo?.liveId}
         initialShareToken={publishedFlowInfo?.shareToken}
         initialUseOwnerKeys={publishedFlowInfo?.useOwnerKeys}
-        onPublish={(liveId, shareToken, useOwnerKeys) => {
-          setPublishedFlowInfo({ liveId, shareToken, useOwnerKeys });
+        onPublish={(flowId, liveId, shareToken, useOwnerKeys) => {
+          setPublishedFlowInfo({ flowId, liveId, shareToken, useOwnerKeys });
           // Open the live settings popover after a brief delay to let the dialog close
           setTimeout(() => setLivePopoverOpen(true), 100);
         }}
