@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 const STORAGE_KEY = "avy-nux-step";
 
-export type NuxStep = "1" | "2" | "done";
+export type NuxStep = "1" | "2" | "3" | "done";
 
 /**
  * Check if NUX is complete (safe to call during render).
@@ -23,8 +23,10 @@ interface UseNuxStateReturn {
   step: NuxStep;
   isLoaded: boolean;
   advanceToStep2: () => void;
+  advanceToStep3: () => void;
   completeNux: () => void;
   backToStep1: () => void;
+  backToStep2: () => void;
 }
 
 // Helper to read from localStorage (safe for SSR)
@@ -32,7 +34,7 @@ function getInitialStep(): NuxStep {
   if (typeof window === "undefined") return "1";
   try {
     const stored = localStorage.getItem(STORAGE_KEY) as NuxStep | null;
-    if (stored === "1" || stored === "2" || stored === "done") {
+    if (stored === "1" || stored === "2" || stored === "3" || stored === "done") {
       return stored;
     }
   } catch {
@@ -62,6 +64,15 @@ export function useNuxState(): UseNuxStateReturn {
     setStep("2");
   }, []);
 
+  const advanceToStep3 = useCallback(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, "3");
+    } catch {
+      // localStorage unavailable
+    }
+    setStep("3");
+  }, []);
+
   const completeNux = useCallback(() => {
     try {
       localStorage.setItem(STORAGE_KEY, "done");
@@ -80,11 +91,22 @@ export function useNuxState(): UseNuxStateReturn {
     setStep("1");
   }, []);
 
+  const backToStep2 = useCallback(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, "2");
+    } catch {
+      // localStorage unavailable
+    }
+    setStep("2");
+  }, []);
+
   return {
     step,
     isLoaded,
     advanceToStep2,
+    advanceToStep3,
     completeNux,
     backToStep1,
+    backToStep2,
   };
 }

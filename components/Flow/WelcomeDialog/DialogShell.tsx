@@ -13,7 +13,7 @@ import { ArrowLeft, X } from "lucide-react";
 import { StepIndicator } from "./StepIndicator";
 
 interface DialogShellProps {
-  step: 1 | 2;
+  step: 1 | 2 | 3;
   title: ReactNode;
   description: ReactNode;
   children: ReactNode;

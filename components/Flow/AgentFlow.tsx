@@ -792,7 +792,7 @@ export function AgentFlow() {
         onDismissPermanently={dismissTemplatesPermanently}
         onSubmitPrompt={handleTemplatesPromptSubmit}
       />
-      <WelcomeDialog onOpenSettings={() => setSettingsOpen(true)} />
+      <WelcomeDialog onDone={handleNewFlow} />
     </div>
   );
 }
