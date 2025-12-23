@@ -30,6 +30,7 @@ import { MyFlowsDialog } from "./MyFlowsDialog";
 import { FlowContextMenu } from "./FlowContextMenu";
 import { CommentEditContext } from "./CommentEditContext";
 import { CollaboratorCursors } from "./CollaboratorCursors";
+import { AvatarStack } from "@/components/avatar-stack";
 // Removed: import { initialNodes, initialEdges, defaultFlow } from "@/lib/example-flow";
 // Canvas now starts empty, templates modal offers starter flows
 import { useCommentSuggestions } from "@/lib/hooks/useCommentSuggestions";
@@ -943,9 +944,16 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
                     <>
                       <span>Live</span>
                       {isRealtimeConnected && (
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                          <span className="text-xs text-green-400">{collaborators.length + 1}</span>
+                          <AvatarStack
+                            avatars={collaborators.map(c => ({
+                              name: c.name ?? 'Guest',
+                              image: c.avatar ?? ''
+                            }))}
+                            maxAvatarsAmount={3}
+                            className="-space-x-2 [&_[data-slot=avatar]]:size-6 [&_[data-slot=avatar]]:ring-2 [&_[data-slot=avatar]]:ring-background [&_[data-slot=avatar-fallback]]:text-xs"
+                          />
                         </span>
                       )}
                     </>

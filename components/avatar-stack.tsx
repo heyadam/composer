@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { User } from 'lucide-react'
 import * as React from 'react'
 
 const avatarStackVariants = cva('flex -space-x-4 -space-y-4', {
@@ -46,13 +47,17 @@ const AvatarStack = ({
         <Tooltip key={`${name}-${image}-${index}`}>
           <TooltipTrigger asChild>
             <Avatar className="hover:z-10">
-              <AvatarImage src={image} />
-              <AvatarFallback>
-                {name
-                  ?.split(' ')
-                  ?.map((word) => word[0])
-                  ?.join('')
-                  ?.toUpperCase()}
+              {image && <AvatarImage src={image} />}
+              <AvatarFallback className={!image ? 'bg-neutral-700' : undefined}>
+                {image ? (
+                  name
+                    ?.split(' ')
+                    ?.map((word) => word[0])
+                    ?.join('')
+                    ?.toUpperCase()
+                ) : (
+                  <User className="h-1/2 w-1/2 text-neutral-400" />
+                )}
               </AvatarFallback>
             </Avatar>
           </TooltipTrigger>
