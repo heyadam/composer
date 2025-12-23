@@ -477,9 +477,12 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     event.dataTransfer.dropEffect = "move";
   }, []);
 
-  const handlePaneMouseMove = useCallback(
-    (event: MouseEvent) => {
+  const broadcastCursorFromClient = useCallback(
+    (clientX: number, clientY: number) => {
       if (!isCollaborating || !reactFlowInstance.current) return;
+
+      const wrapper = reactFlowWrapper.current;
+      if (!wrapper) return;
 
       const now = Date.now();
       if (now - lastCursorBroadcastRef.current < CURSOR_BROADCAST_THROTTLE_MS) {
@@ -487,8 +490,8 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
       }
 
       const position = reactFlowInstance.current.screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY,
+        x: clientX,
+        y: clientY,
       });
 
       const lastPosition = lastCursorPositionRef.current;
@@ -506,6 +509,29 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     },
     [broadcastCursor, isCollaborating]
   );
+
+  const handlePaneMouseMove = useCallback(
+    (event: MouseEvent) => {
+      broadcastCursorFromClient(event.clientX, event.clientY);
+    },
+    [broadcastCursorFromClient]
+  );
+
+  useEffect(() => {
+    if (!isCollaborating) return;
+
+    const handlePointerMove = (event: PointerEvent) => {
+      const wrapper = reactFlowWrapper.current;
+      if (!wrapper) return;
+      const target = event.target as Node | null;
+      if (target && !wrapper.contains(target)) return;
+
+      broadcastCursorFromClient(event.clientX, event.clientY);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    return () => window.removeEventListener("pointermove", handlePointerMove);
+  }, [broadcastCursorFromClient, isCollaborating]);
 
   const onDrop = useCallback(
     (event: DragEvent<HTMLDivElement>) => {
