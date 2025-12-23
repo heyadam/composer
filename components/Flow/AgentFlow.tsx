@@ -523,8 +523,8 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     const handlePointerMove = (event: PointerEvent) => {
       const wrapper = reactFlowWrapper.current;
       if (!wrapper) return;
-      const target = event.target as Node | null;
-      if (target && !wrapper.contains(target)) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && !wrapper.contains(target)) return;
 
       broadcastCursorFromClient(event.clientX, event.clientY);
     };
