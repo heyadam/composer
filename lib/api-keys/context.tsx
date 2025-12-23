@@ -14,7 +14,7 @@ import type {
   ProviderId,
   ApiKeyStatus,
 } from "./types";
-import { loadApiKeys, saveApiKeys, clearApiKeys } from "./storage";
+import { loadApiKeys, saveApiKeys, clearApiKeys, saveVipCode, loadVipCode } from "./storage";
 
 async function fetchEnvKeys(password: string): Promise<{ keys?: ApiKeys; error?: string }> {
   try {
@@ -56,6 +56,19 @@ export function ApiKeysProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setKeys(loadApiKeys());
     setIsLoaded(true);
+
+    // Check for ?code= URL param and save to localStorage
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      if (code) {
+        saveVipCode(code);
+        // Clean up URL without reload
+        const url = new URL(window.location.href);
+        url.searchParams.delete("code");
+        window.history.replaceState({}, "", url.pathname + url.search);
+      }
+    }
   }, []);
 
   // Save keys to localStorage when they change
@@ -106,6 +119,8 @@ export function ApiKeysProvider({ children }: { children: ReactNode }) {
         if (result.keys) {
           // Set all keys from env
           setKeys((prev) => ({ ...prev, ...result.keys }));
+          // Save VIP code for future use
+          saveVipCode(password);
           return { success: true };
         }
         return { success: false, error: "No keys returned" };

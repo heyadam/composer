@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useApiKeys, type ProviderId } from "@/lib/api-keys";
+import { loadVipCode } from "@/lib/api-keys/storage";
 import { useNuxState } from "./hooks";
 import { DialogShell } from "./DialogShell";
 import { ProvidersHero, DemoHero } from "./heroes";
@@ -40,7 +41,7 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
   // Step 3 form state
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [editValues, setEditValues] = useState<Record<string, string>>({});
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState(() => loadVipCode() || "");
   const [passwordError, setPasswordError] = useState("");
   const [vipSuccess, setVipSuccess] = useState(false);
 
@@ -53,6 +54,22 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
       advanceToStep2();
     }
   }, [isLoaded, user, step, advanceToStep2]);
+
+  // Auto-submit VIP code when reaching step 3 with pre-filled code
+  useEffect(() => {
+    if (step === "3" && password && !vipSuccess && !isUnlocking) {
+      // Auto-unlock with pre-filled code
+      unlockWithPassword(password.trim()).then((result) => {
+        if (result.success) {
+          setPassword("");
+          setVipSuccess(true);
+        } else {
+          setPasswordError(result.error || "Invalid password");
+        }
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   const handleSkipSignIn = () => {
     advanceToStep2();
