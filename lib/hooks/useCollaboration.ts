@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Node, Edge, ReactFlowInstance } from "@xyflow/react";
 import { createClient, RealtimeChannel } from "@supabase/supabase-js";
+import { PerfectCursor } from "perfect-cursors";
 import { recordToNode, recordToEdge, nodeToRecord, edgeToRecord } from "@/lib/flows/transform";
 import { updateLiveFlow, type LiveFlowChanges } from "@/lib/flows/api";
 import type { FlowNodeRecord, FlowEdgeRecord, LiveFlowData } from "@/lib/flows/types";
@@ -116,8 +117,6 @@ const getSupabaseClient = () => {
 };
 
 const BROADCAST_THROTTLE_MS = 50;
-const POSITION_INTERPOLATION = 0.35;
-const POSITION_SNAP_EPSILON = 0.5;
 
 /**
  * Hook for collaboration mode - handles live flow initialization, debounced saving, and realtime sync
@@ -147,6 +146,7 @@ export function useCollaboration({
   const sessionIdRef = useRef<string>(generateSessionId());
   const channelRef = useRef<RealtimeChannel | null>(null);
   const isApplyingRemoteRef = useRef(false); // Flag to prevent re-broadcasting received changes
+  const skipInitialBroadcastRef = useRef(false); // Skip first broadcast in owner mode
 
   // Track previous state for diffing
   const prevNodesRef = useRef<Node[]>([]);
@@ -154,10 +154,12 @@ export function useCollaboration({
   const lastBroadcastTimeRef = useRef<number>(0);
   const lastBroadcastNodesRef = useRef<Node[]>([]);
   const lastBroadcastEdgesRef = useRef<Edge[]>([]);
-  const targetPositionsRef = useRef<Map<string, PositionPayload["position"]>>(new Map());
-  const interpolationRafRef = useRef<number | null>(null);
   const positionVersionRef = useRef<Map<string, number>>(new Map());
   const lastAppliedPositionVersionRef = useRef<Map<string, number>>(new Map());
+  // Track nodes we're actively dragging - ignore incoming updates for these
+  const draggingNodesRef = useRef<Set<string>>(new Set());
+  // PerfectCursor instances for smooth position interpolation (one per node)
+  const nodeCursorsRef = useRef<Map<string, PerfectCursor>>(new Map());
 
   // Debounce timer
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -234,12 +236,16 @@ export function useCollaboration({
     if (!collaborationMode || initialized) return;
 
     // Owner mode: initialFlow is null, owner already has the flow loaded
-    // We just need to initialize refs and mark as initialized
+    // Initialize refs with current state to prevent spurious initial broadcast
     if (collaborationMode.isOwner && !collaborationMode.initialFlow) {
-      prevNodesRef.current = [...nodes];
-      prevEdgesRef.current = [...edges];
-      lastBroadcastNodesRef.current = [...nodes];
-      lastBroadcastEdgesRef.current = [...edges];
+      // Capture current state as baseline - any future changes will be diffed against this
+      prevNodesRef.current = nodes;
+      prevEdgesRef.current = edges;
+      lastBroadcastNodesRef.current = nodes;
+      lastBroadcastEdgesRef.current = edges;
+      // Skip the first broadcast to avoid sync conflicts on join
+      // The owner's state is already loaded; wait for remote updates first
+      skipInitialBroadcastRef.current = true;
       setInitialized(true);
       return;
     }
@@ -371,15 +377,17 @@ export function useCollaboration({
     await performSave();
   }, [isCollaborating, performSave]);
 
-  // Cleanup timeout on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
-      if (interpolationRafRef.current !== null) {
-        cancelAnimationFrame(interpolationRafRef.current);
+      // Dispose all PerfectCursor instances
+      for (const cursor of nodeCursorsRef.current.values()) {
+        cursor.dispose();
       }
+      nodeCursorsRef.current.clear();
     };
   }, []);
 
@@ -413,26 +421,80 @@ export function useCollaboration({
     data: edge.data as Record<string, unknown> | undefined,
   }), []);
 
+  // Get or create a PerfectCursor for a node
+  // The cursor smoothly interpolates positions and calls back with each frame
+  const getNodeCursor = useCallback((nodeId: string): PerfectCursor => {
+    let cursor = nodeCursorsRef.current.get(nodeId);
+    if (!cursor) {
+      cursor = new PerfectCursor((point) => {
+        // This callback is called by PerfectCursor on each animation frame
+        // Update the node position smoothly
+        setNodes((currentNodes) => {
+          const idx = currentNodes.findIndex((n) => n.id === nodeId);
+          if (idx === -1) return currentNodes;
+
+          const node = currentNodes[idx];
+          const newPosition = { x: point[0], y: point[1] };
+
+          // Skip if position is unchanged
+          if (node.position.x === newPosition.x && node.position.y === newPosition.y) {
+            return currentNodes;
+          }
+
+          const updated = [...currentNodes];
+          updated[idx] = { ...node, position: newPosition };
+
+          // Update refs to prevent re-broadcasting this interpolated position
+          prevNodesRef.current = updated;
+          lastBroadcastNodesRef.current = updated;
+
+          return updated;
+        });
+      });
+      nodeCursorsRef.current.set(nodeId, cursor);
+    }
+    return cursor;
+  }, [setNodes]);
+
   // Apply incoming node updates from remote collaborators
+  // Uses PerfectCursor for smooth position interpolation
   const applyRemoteNodeUpdates = useCallback((payloads: NodePayload[], senderId: string) => {
     if (senderId === sessionIdRef.current) return;
 
     isApplyingRemoteRef.current = true;
+
     setNodes((currentNodes) => {
       const nodeMap = new Map(currentNodes.map((n) => [n.id, n]));
 
       for (const payload of payloads) {
         const existing = nodeMap.get(payload.id);
         if (existing) {
+          // Skip position updates for nodes we're actively dragging
+          const isDragging = draggingNodesRef.current.has(payload.id);
+
+          // Check if position changed
+          const posChanged =
+            existing.position.x !== payload.position.x ||
+            existing.position.y !== payload.position.y;
+
+          // Apply non-position properties immediately
           nodeMap.set(payload.id, {
             ...existing,
-            position: payload.position,
+            // Keep current position - PerfectCursor will handle interpolation
+            position: existing.position,
             width: payload.width,
             height: payload.height,
             data: payload.data,
             parentId: payload.parentId,
           });
+
+          // Use PerfectCursor for smooth position interpolation (unless dragging)
+          if (posChanged && !isDragging) {
+            const cursor = getNodeCursor(payload.id);
+            cursor.addPoint([payload.position.x, payload.position.y]);
+          }
         } else {
+          // New node - apply position immediately (no flicker since it's new)
           nodeMap.set(payload.id, {
             id: payload.id,
             type: payload.type,
@@ -446,12 +508,14 @@ export function useCollaboration({
       }
 
       const result = Array.from(nodeMap.values());
-      prevNodesRef.current = result; // Update prev ref to avoid re-broadcasting
+      prevNodesRef.current = result;
       lastBroadcastNodesRef.current = result;
       return result;
     });
+
+    // Reset flag after current event loop
     setTimeout(() => { isApplyingRemoteRef.current = false; }, 0);
-  }, [setNodes]);
+  }, [setNodes, getNodeCursor]);
 
   // Apply incoming position-only updates from remote collaborators
   const applyRemotePositionUpdates = useCallback(
@@ -460,84 +524,30 @@ export function useCollaboration({
       if (positions.length === 0) return;
 
       isApplyingRemoteRef.current = true;
+
       for (const update of positions) {
+        // Skip nodes we're actively dragging
+        if (draggingNodesRef.current.has(update.id)) {
+          continue;
+        }
+
+        // Version check to ignore stale updates
         const versionKey = `${senderId}:${update.id}`;
         const lastVersion = lastAppliedPositionVersionRef.current.get(versionKey) ?? 0;
         if (update.version <= lastVersion) {
           continue;
         }
         lastAppliedPositionVersionRef.current.set(versionKey, update.version);
-        targetPositionsRef.current.set(update.id, update.position);
+
+        // Use PerfectCursor for smooth interpolation
+        const cursor = getNodeCursor(update.id);
+        cursor.addPoint([update.position.x, update.position.y]);
       }
 
-      if (targetPositionsRef.current.size === 0) {
-        isApplyingRemoteRef.current = false;
-        return;
-      }
-
-      if (interpolationRafRef.current !== null) return;
-
-      const animate = () => {
-        interpolationRafRef.current = requestAnimationFrame(() => {
-          setNodes((currentNodes) => {
-            const targetMap = targetPositionsRef.current;
-            if (targetMap.size === 0) {
-              interpolationRafRef.current = null;
-              isApplyingRemoteRef.current = false;
-              return currentNodes;
-            }
-
-            let hasActive = false;
-            const nodeIds = new Set(currentNodes.map((node) => node.id));
-            const result = currentNodes.map((node) => {
-              const target = targetMap.get(node.id);
-              if (!target) return node;
-
-              const dx = target.x - node.position.x;
-              const dy = target.y - node.position.y;
-              const distanceSq = dx * dx + dy * dy;
-
-              if (distanceSq <= POSITION_SNAP_EPSILON * POSITION_SNAP_EPSILON) {
-                targetMap.delete(node.id);
-                if (node.position.x === target.x && node.position.y === target.y) {
-                  return node;
-                }
-                return { ...node, position: target };
-              }
-
-              hasActive = true;
-              return {
-                ...node,
-                position: {
-                  x: node.position.x + dx * POSITION_INTERPOLATION,
-                  y: node.position.y + dy * POSITION_INTERPOLATION,
-                },
-              };
-            });
-
-            for (const targetId of targetMap.keys()) {
-              if (!nodeIds.has(targetId)) {
-                targetMap.delete(targetId);
-              }
-            }
-
-            if (!hasActive && targetMap.size === 0) {
-              interpolationRafRef.current = null;
-              isApplyingRemoteRef.current = false;
-            } else {
-              animate();
-            }
-
-            prevNodesRef.current = result;
-            lastBroadcastNodesRef.current = result;
-            return result;
-          });
-        });
-      };
-
-      animate();
+      // Reset flag after current event loop
+      setTimeout(() => { isApplyingRemoteRef.current = false; }, 0);
     },
-    [setNodes]
+    [getNodeCursor]
   );
 
   // Apply incoming edge updates from remote collaborators
@@ -586,6 +596,17 @@ export function useCollaboration({
     if (senderId === sessionIdRef.current) return;
 
     isApplyingRemoteRef.current = true;
+
+    // Clean up PerfectCursor instances for deleted nodes
+    for (const nodeId of nodeIds) {
+      const cursor = nodeCursorsRef.current.get(nodeId);
+      if (cursor) {
+        cursor.dispose();
+        nodeCursorsRef.current.delete(nodeId);
+      }
+      draggingNodesRef.current.delete(nodeId);
+    }
+
     setNodes((currentNodes) => {
       const result = currentNodes.filter((n) => !nodeIds.includes(n.id));
       prevNodesRef.current = result;
@@ -743,8 +764,21 @@ export function useCollaboration({
 
   // Broadcast local changes to other collaborators
   useEffect(() => {
-    if (!isCollaborating || !initialized || !isRealtimeConnected || isApplyingRemoteRef.current) return;
+    if (!isCollaborating || !initialized || !isRealtimeConnected) {
+      return;
+    }
+    if (isApplyingRemoteRef.current) return;
     if (!channelRef.current) return;
+
+    // Skip initial broadcast in owner mode to avoid sync conflicts
+    if (skipInitialBroadcastRef.current) {
+      skipInitialBroadcastRef.current = false;
+      lastBroadcastNodesRef.current = nodes;
+      lastBroadcastEdgesRef.current = edges;
+      prevNodesRef.current = nodes;
+      prevEdgesRef.current = edges;
+      return;
+    }
 
     const prevNodes = lastBroadcastNodesRef.current;
     const prevEdges = lastBroadcastEdgesRef.current;
@@ -824,11 +858,25 @@ export function useCollaboration({
       });
     }
 
-    // Broadcast node updates (all nodes for simplicity)
+    // Broadcast node updates
     if (nodes.length > 0 && nodesChanged) {
       if (positionOnly && nodeChange.type === "position") {
         const positionPayloads = buildPositionPayloads(nodeChange.positions);
         if (positionPayloads.length === 0) return;
+
+        // Update dragging set - only nodes being moved right now
+        const movingNodeIds = new Set(positionPayloads.map((p) => p.id));
+        // Remove nodes that stopped moving
+        for (const nodeId of draggingNodesRef.current) {
+          if (!movingNodeIds.has(nodeId)) {
+            draggingNodesRef.current.delete(nodeId);
+          }
+        }
+        // Add currently moving nodes
+        for (const pos of positionPayloads) {
+          draggingNodesRef.current.add(pos.id);
+        }
+
         channelRef.current.send({
           type: "broadcast",
           event: "sync",
@@ -839,6 +887,9 @@ export function useCollaboration({
           } as BroadcastMessage,
         });
       } else {
+        // Full node update - clear dragging state
+        draggingNodesRef.current.clear();
+
         channelRef.current.send({
           type: "broadcast",
           event: "sync",
@@ -849,6 +900,9 @@ export function useCollaboration({
           } as BroadcastMessage,
         });
       }
+    } else if (!nodesChanged) {
+      // No position changes - clear dragging state
+      draggingNodesRef.current.clear();
     }
 
     // Broadcast edge updates
