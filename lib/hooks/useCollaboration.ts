@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Node, Edge, ReactFlowInstance } from "@xyflow/react";
-import { createClient, RealtimeChannel } from "@supabase/supabase-js";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { PerfectCursor } from "perfect-cursors";
 import { recordToNode, recordToEdge, nodeToRecord, edgeToRecord } from "@/lib/flows/transform";
 import { updateLiveFlow, type LiveFlowChanges } from "@/lib/flows/api";
 import type { FlowNodeRecord, FlowEdgeRecord, LiveFlowData } from "@/lib/flows/types";
+import { useCurrentUserName } from "@/hooks/use-current-user-name";
+import { useCurrentUserImage } from "@/hooks/use-current-user-image";
+import { useAuth } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/client";
 
 type SetNodes = React.Dispatch<React.SetStateAction<Node[]>>;
 type SetEdges = React.Dispatch<React.SetStateAction<Edge[]>>;
@@ -16,9 +20,7 @@ type BroadcastMessage =
   | { type: "edges_updated"; edges: EdgePayload[]; senderId: string }
   | { type: "nodes_deleted"; nodeIds: string[]; senderId: string }
   | { type: "edges_deleted"; edgeIds: string[]; senderId: string }
-  | { type: "cursor_moved"; userId: string; position: { x: number; y: number } }
-  | { type: "user_joined"; userId: string; name?: string; isOwner?: boolean }
-  | { type: "user_left"; userId: string };
+  | { type: "cursor_moved"; userId: string; position: { x: number; y: number } };
 
 interface NodePayload {
   id: string;
@@ -46,9 +48,17 @@ interface EdgePayload {
 export interface Collaborator {
   userId: string;
   name?: string;
+  avatar?: string | null;
   cursor?: { x: number; y: number };
-  lastSeen: number;
   isOwner?: boolean;
+}
+
+// Payload shape for Supabase Presence tracking
+interface PresencePayload {
+  userId: string;
+  name: string;
+  avatar: string | null;
+  isOwner: boolean;
 }
 
 // Generate a unique session ID for this client
@@ -108,14 +118,6 @@ const updateIdCounter = (nodes: Node[], setIdCounter: (id: number) => void) => {
   setIdCounter(maxId + 1);
 };
 
-// Initialize Supabase client for realtime
-const getSupabaseClient = () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key);
-};
-
 const BROADCAST_THROTTLE_MS = 50;
 
 /**
@@ -135,6 +137,13 @@ export function useCollaboration({
   const liveId = collaborationMode?.liveId ?? null;
   const isOwner = collaborationMode?.isOwner ?? false;
 
+  // Auth identity for presence
+  const { user } = useAuth();
+  const currentUserName = useCurrentUserName();
+  const currentUserImage = useCurrentUserImage();
+  const sessionIdRef = useRef<string>(generateSessionId());
+  const currentUserId = user?.id ?? sessionIdRef.current; // Fallback for anonymous
+
   const [flowName, setFlowName] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaveError, setLastSaveError] = useState<string | null>(null);
@@ -143,7 +152,6 @@ export function useCollaboration({
   // Realtime sync state
   const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
-  const sessionIdRef = useRef<string>(generateSessionId());
   const channelRef = useRef<RealtimeChannel | null>(null);
   const isApplyingRemoteRef = useRef(false); // Flag to prevent re-broadcasting received changes
   const skipInitialBroadcastRef = useRef(false); // Skip first broadcast in owner mode
@@ -459,7 +467,7 @@ export function useCollaboration({
   // Apply incoming node updates from remote collaborators
   // Uses PerfectCursor for smooth position interpolation
   const applyRemoteNodeUpdates = useCallback((payloads: NodePayload[], senderId: string) => {
-    if (senderId === sessionIdRef.current) return;
+    if (senderId === currentUserId) return;
 
     isApplyingRemoteRef.current = true;
 
@@ -515,12 +523,12 @@ export function useCollaboration({
 
     // Reset flag after current event loop
     setTimeout(() => { isApplyingRemoteRef.current = false; }, 0);
-  }, [setNodes, getNodeCursor]);
+  }, [setNodes, getNodeCursor, currentUserId]);
 
   // Apply incoming position-only updates from remote collaborators
   const applyRemotePositionUpdates = useCallback(
     (positions: PositionPayload[], senderId: string) => {
-      if (senderId === sessionIdRef.current) return;
+      if (senderId === currentUserId) return;
       if (positions.length === 0) return;
 
       isApplyingRemoteRef.current = true;
@@ -547,12 +555,12 @@ export function useCollaboration({
       // Reset flag after current event loop
       setTimeout(() => { isApplyingRemoteRef.current = false; }, 0);
     },
-    [getNodeCursor]
+    [getNodeCursor, currentUserId]
   );
 
   // Apply incoming edge updates from remote collaborators
   const applyRemoteEdgeUpdates = useCallback((payloads: EdgePayload[], senderId: string) => {
-    if (senderId === sessionIdRef.current) return;
+    if (senderId === currentUserId) return;
 
     isApplyingRemoteRef.current = true;
     setEdges((currentEdges) => {
@@ -589,11 +597,11 @@ export function useCollaboration({
       return result;
     });
     setTimeout(() => { isApplyingRemoteRef.current = false; }, 0);
-  }, [setEdges]);
+  }, [setEdges, currentUserId]);
 
   // Apply node deletions from remote collaborators
   const applyRemoteNodeDeletions = useCallback((nodeIds: string[], senderId: string) => {
-    if (senderId === sessionIdRef.current) return;
+    if (senderId === currentUserId) return;
 
     isApplyingRemoteRef.current = true;
 
@@ -622,11 +630,11 @@ export function useCollaboration({
       return result;
     });
     setTimeout(() => { isApplyingRemoteRef.current = false; }, 0);
-  }, [setNodes, setEdges]);
+  }, [setNodes, setEdges, currentUserId]);
 
   // Apply edge deletions from remote collaborators
   const applyRemoteEdgeDeletions = useCallback((edgeIds: string[], senderId: string) => {
-    if (senderId === sessionIdRef.current) return;
+    if (senderId === currentUserId) return;
 
     isApplyingRemoteRef.current = true;
     setEdges((currentEdges) => {
@@ -636,58 +644,66 @@ export function useCollaboration({
       return result;
     });
     setTimeout(() => { isApplyingRemoteRef.current = false; }, 0);
-  }, [setEdges]);
+  }, [setEdges, currentUserId]);
 
   // Handle collaborator cursor update
   const handleRemoteCursor = useCallback((userId: string, position: { x: number; y: number }) => {
-    if (userId === sessionIdRef.current) return;
-
     setCollaborators((current) => {
-      const existing = current.find((c) => c.userId === userId);
-      if (existing) {
-        return current.map((c) =>
-          c.userId === userId ? { ...c, cursor: position, lastSeen: Date.now() } : c
-        );
-      }
-      return [...current, { userId, cursor: position, lastSeen: Date.now() }];
+      const idx = current.findIndex((c) => c.userId === userId);
+      if (idx === -1) return current; // Not in presence yet
+      const updated = [...current];
+      updated[idx] = { ...updated[idx], cursor: position };
+      return updated;
     });
   }, []);
 
-  // Handle user joined
-  const handleUserJoined = useCallback((userId: string, name?: string, userIsOwner?: boolean) => {
-    if (userId === sessionIdRef.current) return;
+  // Sync collaborators from Supabase Presence state
+  // Preserves cursor positions across syncs
+  const syncCollaboratorsFromPresence = useCallback(
+    (presenceState: Record<string, PresencePayload[]>) => {
+      setCollaborators((current) => {
+        // Preserve existing cursor positions
+        const cursorMap = new Map(current.map((c) => [c.userId, c.cursor]));
 
-    setCollaborators((current) => {
-      if (current.find((c) => c.userId === userId)) {
-        return current.map((c) =>
-          c.userId === userId ? { ...c, name, isOwner: userIsOwner, lastSeen: Date.now() } : c
-        );
-      }
-      return [...current, { userId, name, isOwner: userIsOwner, lastSeen: Date.now() }];
-    });
-  }, []);
+        const newCollaborators: Collaborator[] = [];
+        for (const [, presences] of Object.entries(presenceState)) {
+          if (presences.length === 0) continue;
+          const presence = presences[0]; // First presence entry for this key
+          newCollaborators.push({
+            userId: presence.userId,
+            name: presence.name,
+            avatar: presence.avatar,
+            isOwner: presence.isOwner,
+            cursor: cursorMap.get(presence.userId),
+          });
+        }
+        return newCollaborators;
+      });
+    },
+    []
+  );
 
-  // Handle user left
-  const handleUserLeft = useCallback((userId: string) => {
-    setCollaborators((current) => current.filter((c) => c.userId !== userId));
-  }, []);
-
-  // Set up realtime channel
+  // Set up realtime channel with Presence
   useEffect(() => {
     if (!shareToken || !isCollaborating || !initialized) return;
 
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      console.warn("Supabase client not available for realtime sync");
-      return;
-    }
+    const supabase = createClient(); // Auth-aware client
 
     const channelName = `flow:${shareToken}`;
     const channel = supabase.channel(channelName, {
-      config: { broadcast: { self: false } },
+      config: {
+        broadcast: { self: false },
+        presence: { key: currentUserId }, // Auth user ID or session fallback
+      },
     });
 
-    // Listen for all broadcast events
+    // Listen for presence sync events (handles join/leave implicitly)
+    channel.on("presence", { event: "sync" }, () => {
+      const presenceState = channel.presenceState<PresencePayload>();
+      syncCollaboratorsFromPresence(presenceState);
+    });
+
+    // Listen for broadcast events (node/edge sync, cursors)
     channel.on("broadcast", { event: "*" }, (payload) => {
       const message = payload.payload as BroadcastMessage;
 
@@ -710,23 +726,18 @@ export function useCollaboration({
         case "cursor_moved":
           handleRemoteCursor(message.userId, message.position);
           break;
-        case "user_joined":
-          handleUserJoined(message.userId, message.name, message.isOwner);
-          break;
-        case "user_left":
-          handleUserLeft(message.userId);
-          break;
       }
     });
 
-    channel.subscribe((status) => {
+    channel.subscribe(async (status) => {
       if (status === "SUBSCRIBED") {
         setIsRealtimeConnected(true);
-        // Announce presence with owner status
-        channel.send({
-          type: "broadcast",
-          event: "presence",
-          payload: { type: "user_joined", userId: sessionIdRef.current, isOwner } as BroadcastMessage,
+        // Track presence with auth identity
+        await channel.track({
+          userId: currentUserId,
+          name: currentUserName,
+          avatar: currentUserImage,
+          isOwner,
         });
       } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
         setIsRealtimeConnected(false);
@@ -736,12 +747,8 @@ export function useCollaboration({
     channelRef.current = channel;
 
     return () => {
-      // Announce we're leaving
-      channel.send({
-        type: "broadcast",
-        event: "presence",
-        payload: { type: "user_left", userId: sessionIdRef.current } as BroadcastMessage,
-      });
+      // Untrack presence (guard for SUBSCRIBED state)
+      channel.untrack().catch(() => {}); // Ignore errors on cleanup
       supabase.removeChannel(channel);
       channelRef.current = null;
       setIsRealtimeConnected(false);
@@ -752,14 +759,16 @@ export function useCollaboration({
     isCollaborating,
     initialized,
     isOwner,
+    currentUserId,
+    currentUserName,
+    currentUserImage,
     applyRemoteNodeUpdates,
     applyRemotePositionUpdates,
     applyRemoteEdgeUpdates,
     applyRemoteNodeDeletions,
     applyRemoteEdgeDeletions,
     handleRemoteCursor,
-    handleUserJoined,
-    handleUserLeft,
+    syncCollaboratorsFromPresence,
   ]);
 
   // Broadcast local changes to other collaborators
@@ -821,7 +830,7 @@ export function useCollaboration({
           payload: {
             type: "positions_updated",
             positions: positionPayloads,
-            senderId: sessionIdRef.current,
+            senderId: currentUserId,
           } as BroadcastMessage,
         });
       }, BROADCAST_THROTTLE_MS - timeSinceLastBroadcast);
@@ -841,7 +850,7 @@ export function useCollaboration({
         payload: {
           type: "nodes_deleted",
           nodeIds: deletedNodeIds,
-          senderId: sessionIdRef.current,
+          senderId: currentUserId,
         } as BroadcastMessage,
       });
     }
@@ -853,7 +862,7 @@ export function useCollaboration({
         payload: {
           type: "edges_deleted",
           edgeIds: deletedEdgeIds,
-          senderId: sessionIdRef.current,
+          senderId: currentUserId,
         } as BroadcastMessage,
       });
     }
@@ -883,7 +892,7 @@ export function useCollaboration({
           payload: {
             type: "positions_updated",
             positions: positionPayloads,
-            senderId: sessionIdRef.current,
+            senderId: currentUserId,
           } as BroadcastMessage,
         });
       } else {
@@ -896,7 +905,7 @@ export function useCollaboration({
           payload: {
             type: "nodes_updated",
             nodes: nodes.map(nodeToPayload),
-            senderId: sessionIdRef.current,
+            senderId: currentUserId,
           } as BroadcastMessage,
         });
       }
@@ -913,7 +922,7 @@ export function useCollaboration({
         payload: {
           type: "edges_updated",
           edges: edges.map(edgeToPayload),
-          senderId: sessionIdRef.current,
+          senderId: currentUserId,
         } as BroadcastMessage,
       });
     }
@@ -928,19 +937,8 @@ export function useCollaboration({
     getNodeChangeSummary,
     areEdgesEquivalent,
     buildPositionPayloads,
+    currentUserId,
   ]);
-
-  // Clean up stale collaborators
-  useEffect(() => {
-    if (!isCollaborating) return;
-
-    const interval = setInterval(() => {
-      const now = Date.now();
-      setCollaborators((current) => current.filter((c) => now - c.lastSeen < 30000));
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, [isCollaborating]);
 
   // Broadcast cursor position
   const broadcastCursor = useCallback((position: { x: number; y: number }) => {
@@ -951,11 +949,11 @@ export function useCollaboration({
       event: "cursor",
       payload: {
         type: "cursor_moved",
-        userId: sessionIdRef.current,
+        userId: currentUserId,
         position,
       } as BroadcastMessage,
     });
-  }, [isRealtimeConnected]);
+  }, [isRealtimeConnected, currentUserId]);
 
   return {
     isCollaborating,

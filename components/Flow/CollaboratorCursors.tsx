@@ -56,7 +56,12 @@ const CollaboratorCursor = memo(
             {collaborator.isOwner && (
               <Crown className="h-3 w-3 text-yellow-400" />
             )}
-            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+            {collaborator.avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={collaborator.avatar} alt="" className="h-3 w-3 rounded-full" />
+            ) : (
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+            )}
             <span>{collaborator.name ?? "Guest"}</span>
           </div>
         </div>
