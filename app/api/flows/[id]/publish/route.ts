@@ -10,10 +10,26 @@ interface RouteParams {
  * POST /api/flows/[id]/publish - Publish a flow (generate live_id + share_token)
  *
  * Only the flow owner can publish. Returns the share token for sharing.
+ * Also handles _method: "DELETE" for sendBeacon-based unpublish on page unload.
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
+
+    // Check for method override (used by sendBeacon for unpublish on page unload)
+    const contentType = request.headers.get("content-type");
+    if (contentType?.includes("application/json")) {
+      try {
+        const body = await request.clone().json();
+        if (body._method === "DELETE") {
+          // Delegate to DELETE handler
+          return DELETE(request, { params: Promise.resolve({ id }) });
+        }
+      } catch {
+        // Not JSON or parse error, continue with normal POST
+      }
+    }
+
     const supabase = await createClient();
 
     // Get the current user

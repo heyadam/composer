@@ -312,6 +312,22 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     }
   }, [currentFlowId]);
 
+  // Unpublish flow when owner leaves the page
+  useEffect(() => {
+    if (!isOwner || !currentFlowId || !publishedFlowInfo) return;
+
+    const handleBeforeUnload = () => {
+      // Use sendBeacon for reliable delivery during page unload
+      navigator.sendBeacon(
+        `/api/flows/${currentFlowId}/publish`,
+        new Blob([JSON.stringify({ _method: "DELETE" })], { type: "application/json" })
+      );
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isOwner, currentFlowId, publishedFlowInfo]);
+
   // Auto-open settings dialog when no API keys are configured
   // Only show if NUX is complete (step 2 of NUX guides users to API keys)
   // Skip in collaboration mode - collaborators may use owner's keys
