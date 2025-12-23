@@ -27,14 +27,16 @@ import {
 } from "@/lib/flows/api";
 
 interface LiveSettingsPopoverProps {
-  flowId: string;
+  flowId?: string;
   liveId: string;
   shareToken: string;
   useOwnerKeys: boolean;
   isOwner: boolean;
   collaboratorCount: number;
-  onUnpublish: () => void;
-  onOwnerKeysChange: (enabled: boolean) => void;
+  onUnpublish?: () => void;
+  onOwnerKeysChange?: (enabled: boolean) => void;
+  onDisconnect?: () => void;
+  disconnectLabel?: string;
   children: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -49,6 +51,8 @@ export function LiveSettingsPopover({
   collaboratorCount,
   onUnpublish,
   onOwnerKeysChange,
+  onDisconnect,
+  disconnectLabel = "Disconnect and start fresh",
   children,
   open,
   onOpenChange,
@@ -98,6 +102,15 @@ export function LiveSettingsPopover({
   };
 
   const handleUnpublish = async () => {
+    if (!flowId) {
+      setError("Missing flow ID for unpublish");
+      return;
+    }
+    if (!onUnpublish) {
+      setError("Unpublish is not available");
+      return;
+    }
+
     setIsUnpublishing(true);
     setError(null);
 
@@ -114,6 +127,10 @@ export function LiveSettingsPopover({
 
   const handleToggleOwnerKeys = async (enabled: boolean) => {
     if (!isOwner) return;
+    if (!flowId) {
+      setError("Missing flow ID for settings");
+      return;
+    }
 
     setIsTogglingOwnerKeys(true);
     setError(null);
@@ -124,7 +141,7 @@ export function LiveSettingsPopover({
       });
       if (result.success) {
         setUseOwnerKeys(enabled);
-        onOwnerKeysChange(enabled);
+        onOwnerKeysChange?.(enabled);
       } else {
         setError(result.error || "Failed to update owner keys setting");
       }
@@ -195,6 +212,19 @@ export function LiveSettingsPopover({
             </div>
           </div>
 
+          {onDisconnect && (
+            <div className="pt-2 border-t border-neutral-700">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onDisconnect}
+                className="w-full h-8 text-xs"
+              >
+                {disconnectLabel}
+              </Button>
+            </div>
+          )}
+
           {/* Owner-only settings */}
           {isOwner && (
             <>
@@ -231,7 +261,7 @@ export function LiveSettingsPopover({
                   variant="destructive"
                   size="sm"
                   onClick={handleUnpublish}
-                  disabled={isUnpublishing}
+                  disabled={isUnpublishing || !flowId || !onUnpublish}
                   className="w-full h-8 text-xs"
                 >
                   {isUnpublishing ? (

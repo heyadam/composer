@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent } from "react";
+import { useRouter } from "next/navigation";
 import {
   ReactFlow,
   Background,
@@ -93,6 +94,7 @@ const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
 };
 
 export function AgentFlow({ collaborationMode }: AgentFlowProps) {
+  const router = useRouter();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -244,6 +246,8 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
   // Collaboration mode hook
   const {
     isCollaborating,
+    liveId,
+    shareToken,
     flowName: collaborationFlowName,
     isSaving: isCollaborationSaving,
     isRealtimeConnected,
@@ -259,6 +263,28 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     reactFlowInstance,
     setIdCounter,
   });
+
+  const liveSession = useMemo(() => {
+    if (publishedFlowInfo && currentFlowId) {
+      return {
+        flowId: currentFlowId,
+        liveId: publishedFlowInfo.liveId,
+        shareToken: publishedFlowInfo.shareToken,
+        useOwnerKeys: publishedFlowInfo.useOwnerKeys,
+      };
+    }
+
+    if (isCollaborating && liveId && shareToken) {
+      return {
+        flowId: undefined,
+        liveId,
+        shareToken,
+        useOwnerKeys: collaborationMode?.initialFlow?.flow.use_owner_keys ?? false,
+      };
+    }
+
+    return null;
+  }, [publishedFlowInfo, currentFlowId, isCollaborating, liveId, shareToken, collaborationMode]);
 
   // Templates modal hook (after useCollaboration so we have isCollaborating)
   const {
@@ -289,6 +315,11 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
 
   // Live settings popover state
   const [livePopoverOpen, setLivePopoverOpen] = useState(false);
+
+  const handleDisconnect = useCallback(() => {
+    setLivePopoverOpen(false);
+    router.replace("/");
+  }, [router]);
 
   // Fetch published state when flow loads
   useEffect(() => {
@@ -887,16 +918,19 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
               </DropdownMenuContent>
             </DropdownMenu>
             {/* Live button - always shown */}
-            {publishedFlowInfo && currentFlowId ? (
+            {liveSession ? (
               <LiveSettingsPopover
-                flowId={currentFlowId}
-                liveId={publishedFlowInfo.liveId}
-                shareToken={publishedFlowInfo.shareToken}
-                useOwnerKeys={publishedFlowInfo.useOwnerKeys}
+                flowId={liveSession.flowId}
+                liveId={liveSession.liveId}
+                shareToken={liveSession.shareToken}
+                useOwnerKeys={liveSession.useOwnerKeys}
                 isOwner={isOwner}
                 collaboratorCount={collaborators.length}
-                onUnpublish={() => setPublishedFlowInfo(null)}
-                onOwnerKeysChange={(enabled) => setPublishedFlowInfo(prev => prev ? { ...prev, useOwnerKeys: enabled } : null)}
+                onUnpublish={isOwner ? () => setPublishedFlowInfo(null) : undefined}
+                onOwnerKeysChange={isOwner
+                  ? (enabled) => setPublishedFlowInfo(prev => prev ? { ...prev, useOwnerKeys: enabled } : null)
+                  : undefined}
+                onDisconnect={!isOwner && isCollaborating ? handleDisconnect : undefined}
                 open={livePopoverOpen}
                 onOpenChange={setLivePopoverOpen}
               >
