@@ -9,7 +9,7 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
 - **Desktop Only**: Optimized for larger screens; mobile devices show a branded blocker page with animated 3D orb
 - **3D Animated Logo**: Fluid sphere logo with rainbow shader effects and liquid deformation
 - **Visual Flow Editor**: Build AI workflows by connecting nodes in a React Flow canvas
-- **Origami-Style Controls**: Drag to select multiple nodes, hold spacebar to pan
+- **Origami-Style Controls**: Drag to pan, hold spacebar + drag for selection box
 - **Node Types**:
   - **Text Input**: Entry point that receives user text input
   - **Image Input**: Entry point for image uploads
@@ -35,7 +35,9 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
 - **AI Autopilot**: Natural language flow editing - describe changes and Claude builds them
   - Add, remove, connect, and insert nodes between existing ones
   - Collapsible JSON preview with syntax highlighting and auto-scroll during streaming
-  - Powered by Claude Opus 4.5 with configurable effort levels (Low/Medium/High)
+  - **Two modes**: Execute (immediate changes) or Plan (shows step-by-step plan for approval)
+  - **Model selection**: Claude Sonnet 4.5 (default) or Claude Opus 4.5
+  - **Extended thinking**: Toggle for Claude's extended thinking capability
   - LLM-based validation using Claude Haiku 4.5 with auto-retry on failure
   - Auto-apply with full undo support (restores removed nodes/edges)
   - Dynamic LLM-generated prompt suggestions based on current flow
@@ -45,6 +47,16 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
   - 3D animated hero with provider icons flowing into Composer
   - Google sign-in or continue without account
   - Guided API keys setup
+- **Templates Modal**: Quick-start dialog when creating new flows
+  - AI prompt input with mode/model/thinking options
+  - Three pre-built templates: Story & Image Gen, Basic Text Gen, Image to Image
+  - "Don't show again" option
+- **Undo/Redo**: Full undo/redo support for flow changes
+  - Keyboard shortcuts: Cmd+Z / Ctrl+Z (undo), Shift+Cmd+Z / Ctrl+Y (redo)
+  - Maintains up to 50 history snapshots
+- **Debug View**: Detailed request/response inspection in sidebar
+  - Collapsible sections for prompts, responses, and raw data
+  - Copy-to-clipboard for debugging
 
 ### Supported Models
 
@@ -97,7 +109,7 @@ https://your-domain.com/auth/callback
 
 ```bash
 npm run dev      # Start development server
-npm test         # Run unit tests (55 tests)
+npm test         # Run unit tests (66 tests)
 npm run build    # Production build
 ```
 

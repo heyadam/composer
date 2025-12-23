@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev      # Start development server (http://localhost:3000)
 npm run build    # Production build
 npm run lint     # Run ESLint
-npm test         # Run Vitest unit tests
+npm test         # Run Vitest unit tests (66 tests)
 npm run start    # Start production server
 ```
 
@@ -101,9 +101,12 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 **NodeStatusBadge** (`components/Flow/nodes/NodeStatusBadge.tsx`): Visual indicator for node execution status (running/success/error).
 
 **Responses Sidebar** (`components/Flow/ResponsesSidebar/`): Resizable right sidebar that displays preview-output node results:
-- `ResponsesSidebar.tsx`: Main container with run/reset controls and drag-to-resize
+- `ResponsesSidebar.tsx`: Main container with run/reset controls, tab switching (Preview/Debug), and drag-to-resize
 - `ResponsesHeader.tsx`: Header with action buttons
 - `ResponsesContent.tsx`: Scrollable content area for responses
+- `DebugContent.tsx`: Debug view showing detailed request/response info per node with collapsible sections and copy-to-clipboard
+- `ReactPreview.tsx`: Sandboxed iframe preview for React component node outputs with code view toggle
+- `types.ts`: PreviewEntry and DebugEntry interfaces
 - Streams responses in real-time as they generate
 - Width persisted to localStorage (min: 240px, max: 800px)
 
@@ -159,17 +162,28 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 - Delete flows with confirmation
 - Refresh list button
 
+**Templates Modal** (`components/Flow/TemplatesModal/`): New flow creation dialog with AI prompt input:
+- `index.tsx`: Main modal component with AI prompt input and template selection
+- `templates.ts`: Template definitions loading from `lib/flows/templates/*.avy.json`
+- `TemplateCard.tsx`: Individual template display card
+- Features mode selector (Execute/Plan), model selector (Sonnet/Opus), and extended thinking toggle
+- Three pre-built templates: Story & Image Gen, Basic Text Gen, Image to Image
+- "Start blank" option to dismiss and begin with empty canvas
+- "Don't show again" checkbox persisted to localStorage
+
 **Node Toolbar** (`components/Flow/NodeToolbar.tsx`): Floating toolbar for quick node insertion with icons for each node type.
 
 **Flow Context Menu** (`components/Flow/FlowContextMenu.tsx`): Right-click context menu on canvas with "Comment Around" option for selected nodes.
 
 **Autopilot Sidebar** (`components/Flow/AutopilotSidebar/`): AI-powered chat interface for natural language flow editing:
 - `AutopilotSidebar.tsx`: Main container with resizable width (320-600px)
-- `AutopilotChat.tsx`: Chat UI with effort level selector (Low/Medium/High) and dynamic LLM-generated suggestions
+- `AutopilotChat.tsx`: Chat UI with mode selector (Execute/Plan), model selector (Sonnet 4.5/Opus 4.5), and extended thinking toggle
 - `AutopilotHeader.tsx`: Header with clear history button
 - `CollapsibleJson.tsx`: Collapsible JSON preview with syntax highlighting, auto-scroll during streaming, auto-collapse when done
 - `ChangesPreview.tsx`: Visual diff of pending changes (added/removed nodes and edges)
-- Uses Claude Opus 4.5 with configurable effort levels via the `effort` beta parameter
+- **Modes**: Execute (immediately applies changes) or Plan (shows step-by-step plan for user approval)
+- **Models**: Claude Sonnet 4.5 (default) or Claude Opus 4.5
+- **Extended Thinking**: Toggle for Claude's extended thinking capability
 - Supports actions: `addNode`, `addEdge`, `removeEdge`, `removeNode`
 - Auto-applies changes with full undo capability (restores removed nodes/edges)
 - New nodes highlighted with purple glow until interacted with
@@ -177,14 +191,14 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 - Shimmer loading effects during AI operations
 
 **Autopilot System** (`lib/autopilot/`):
-- `types.ts`: Action types, FlowChanges, AutopilotMessage, EvaluationResult, EvaluationState
+- `types.ts`: Action types, FlowChanges, AutopilotMessage, EvaluationResult, EvaluationState, AutopilotMode, AutopilotModel, FlowPlan, PendingAutopilotMessage
 - `parser.ts`: Extracts and validates JSON actions from Claude's responses. Valid node types: `text-input`, `image-input`, `text-generation`, `image-generation`, `ai-logic`, `preview-output`, `react-component`, `comment`
 - `snapshot.ts`: Serializes current flow state for context
 - `system-prompt.ts`: Builds prompt with node types, edge rules, valid model IDs, and insertion examples
 - `evaluator.ts`: LLM-based validation of generated flow changes using Claude Haiku 4.5. Checks semantic match, structural validity, model ID correctness, and completeness. Returns issues and suggestions.
 
 **Autopilot API Routes**:
-- `app/api/autopilot/route.ts`: Streams responses from Claude Opus 4.5 with effort parameter
+- `app/api/autopilot/route.ts`: Streams responses from Claude with mode (execute/plan), model selection (sonnet-4-5/opus-4-5), and extended thinking support
 - `app/api/autopilot/evaluate/route.ts`: Validates flow changes using Claude Haiku 4.5
 - `app/api/autopilot/suggestions/route.ts`: Generates dynamic prompt suggestions based on current flow state
 
@@ -194,11 +208,11 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 - `useAutopilotChat.ts`: Manages conversation state, streaming responses, post-stream evaluation, auto-retry on validation failure, auto-apply on success, and undo functionality.
 - `useAutopilotIntegration.ts`: Handles applying/undoing autopilot changes to the flow, highlight management for newly added nodes. Extracted from AgentFlow for testability.
 - `useSuggestions.ts`: Fetches dynamic LLM-generated prompt suggestions based on current flow state. Refreshable with default fallback suggestions.
-- `useBackgroundSettings.ts`: Canvas appearance settings (pattern variant, gap, colors) persisted to localStorage.
 - `useClipboard.ts`: Clipboard operations for copy/paste functionality.
 - `useFlowExecution.ts`: Manages flow execution state, preview/debug entries, run/cancel/reset operations. Extracted from AgentFlow for testability.
 - `useNodeParenting.ts`: Handles node parenting behavior within comments - auto-parenting when dragged into comments, unparenting when dragged out, comment deletion with cascading unparenting, and resize capture/release.
 - `useFlowOperations.ts`: Manages flow file operations - new/blank flow creation, template selection, cloud save/load, file picker operations, and flow metadata state.
+- `useUndoRedo.ts`: Snapshot-based undo/redo for flow state with keyboard shortcuts (Cmd+Z/Ctrl+Z for undo, Shift+Cmd+Z/Ctrl+Y for redo). Maintains history stack up to 50 snapshots.
 
 **Comment System**:
 - `CommentEditContext.tsx`: React context for tracking user-edited comments to prevent AI overwrites
@@ -214,8 +228,9 @@ Unit tests use **Vitest** with React Testing Library. Test files are in `lib/hoo
 - `useAutopilotIntegration.test.ts`: Tests for autopilot integration hook
 - `useNodeParenting.test.ts`: Tests for node parenting behavior (comment auto-parenting, deletion cascading)
 - `useFlowOperations.test.ts`: Tests for flow file operations (save, load, templates)
+- `useUndoRedo.test.ts`: Tests for undo/redo functionality (snapshot management, keyboard shortcuts)
 
-Run tests with `npm test` or `npm run test:watch` for watch mode.
+Run tests with `npm test` (66 tests) or `npm run test:watch` for watch mode.
 
 **Mobile Blocker** (`components/Flow/MobileBlocker.tsx`): Full-screen blocker for mobile devices:
 - Detects mobile via user agent (not screen width) using `useMobileDetection` hook
@@ -234,6 +249,7 @@ Run tests with `npm test` or `npm run test:watch` for watch mode.
 - `heroes/DemoHero.tsx`: Interactive React Flow demo that auto-executes on mount
 - `heroes/ProvidersHero.tsx`: 3D scene showing provider icons flowing into Composer
 - `heroes/DemoOutputsModal.tsx`: Modal for viewing demo execution outputs
+- `heroes/HeroPanel.tsx`: Shared panel wrapper for hero content
 - `three/`: 3D components (RoundedTile, CurvedLine, SvgIcon, GoogleIcon, ComposerIcon)
 - Step 1: Welcome with sign-in options (Google OAuth or skip)
 - Step 2: API keys setup with link to settings dialog
