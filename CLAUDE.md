@@ -150,6 +150,8 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 - Avatar with dropdown menu when signed in
 - Sign out option
 
+**Live Publishing** (`components/Flow/ShareDialog.tsx`, `components/Flow/LiveSettingsPopover.tsx`): Publish/unpublish flows and manage share links. The publish callback signature is `onPublish(flowId, liveId, shareToken, useOwnerKeys)`. Published state in `components/Flow/AgentFlow.tsx` is tied to `flowId` to avoid stale load responses overriding a fresh publish.
+
 **Settings Dialog** (`components/Flow/SettingsDialogControlled.tsx`): Tabbed settings modal:
 - API Keys tab: Configure provider API keys (OpenAI, Google, Anthropic), password unlock for pre-configured keys
 - Appearance tab: Canvas background customization (pattern, gap, colors)

@@ -36,6 +36,11 @@ Required for local auth + providers:
 - **Top Bar**: `components/Flow/AgentFlow.tsx` renders the profile control.
 - **Proxy**: `proxy.ts` uses `lib/supabase/proxy.ts` to refresh Supabase sessions.
 
+## Live Publishing
+- **UI**: `components/Flow/ShareDialog.tsx` (publish) + `components/Flow/LiveSettingsPopover.tsx` (live controls).
+- **Publish callback**: `onPublish(flowId, liveId, shareToken, useOwnerKeys)` in `components/Flow/ShareDialog.tsx`.
+- **State guard**: `components/Flow/AgentFlow.tsx` ties published state to `flowId` to avoid stale load overrides.
+
 ## Architecture Highlights
 - Node types live in `components/Flow/nodes/`.
 - Execution engine: `lib/execution/engine.ts`.
