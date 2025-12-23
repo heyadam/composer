@@ -62,8 +62,8 @@ interface PresencePayload {
   isOwner: boolean;
 }
 
-// Generate a unique session ID for this client
-const generateSessionId = () => `user_${Math.random().toString(36).substring(2, 11)}`;
+// Generate a unique session ID for this client (used for broadcast sender filtering)
+const generateSessionId = () => `session_${Math.random().toString(36).substring(2, 11)}`;
 
 export interface CollaborationModeProps {
   shareToken: string;
@@ -142,8 +142,11 @@ export function useCollaboration({
   const { user } = useAuth();
   const currentUserName = useCurrentUserName();
   const currentUserImage = useCurrentUserImage();
-  const sessionIdRef = useRef<string>(generateSessionId());
-  const currentUserId = user?.id ?? sessionIdRef.current; // Fallback for anonymous
+  // Session-scoped ID for broadcasts - unique per tab to allow same-user multi-tab sync
+  const sessionSenderIdRef = useRef<string>(generateSessionId());
+  const sessionSenderId = sessionSenderIdRef.current;
+  // Auth user ID for presence tracking (falls back to session ID for anonymous users)
+  const currentUserId = user?.id ?? sessionSenderId;
 
   const [flowName, setFlowName] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -468,7 +471,8 @@ export function useCollaboration({
   // Apply incoming node updates from remote collaborators
   // Uses PerfectCursor for smooth position interpolation
   const applyRemoteNodeUpdates = useCallback((payloads: NodePayload[], senderId: string) => {
-    if (senderId === currentUserId) return;
+    // Use session-scoped ID for filtering to allow same-user multi-tab sync
+    if (senderId === sessionSenderId) return;
 
     isApplyingRemoteRef.current = true;
 
@@ -524,12 +528,13 @@ export function useCollaboration({
 
     // Reset flag after current event loop
     setTimeout(() => { isApplyingRemoteRef.current = false; }, 0);
-  }, [setNodes, getNodeCursor, currentUserId]);
+  }, [setNodes, getNodeCursor, sessionSenderId]);
 
   // Apply incoming position-only updates from remote collaborators
   const applyRemotePositionUpdates = useCallback(
     (positions: PositionPayload[], senderId: string) => {
-      if (senderId === currentUserId) return;
+      // Use session-scoped ID for filtering to allow same-user multi-tab sync
+      if (senderId === sessionSenderId) return;
       if (positions.length === 0) return;
 
       isApplyingRemoteRef.current = true;
@@ -556,12 +561,13 @@ export function useCollaboration({
       // Reset flag after current event loop
       setTimeout(() => { isApplyingRemoteRef.current = false; }, 0);
     },
-    [getNodeCursor, currentUserId]
+    [getNodeCursor, sessionSenderId]
   );
 
   // Apply incoming edge updates from remote collaborators
   const applyRemoteEdgeUpdates = useCallback((payloads: EdgePayload[], senderId: string) => {
-    if (senderId === currentUserId) return;
+    // Use session-scoped ID for filtering to allow same-user multi-tab sync
+    if (senderId === sessionSenderId) return;
 
     isApplyingRemoteRef.current = true;
     setEdges((currentEdges) => {
@@ -598,11 +604,12 @@ export function useCollaboration({
       return result;
     });
     setTimeout(() => { isApplyingRemoteRef.current = false; }, 0);
-  }, [setEdges, currentUserId]);
+  }, [setEdges, sessionSenderId]);
 
   // Apply node deletions from remote collaborators
   const applyRemoteNodeDeletions = useCallback((nodeIds: string[], senderId: string) => {
-    if (senderId === currentUserId) return;
+    // Use session-scoped ID for filtering to allow same-user multi-tab sync
+    if (senderId === sessionSenderId) return;
 
     isApplyingRemoteRef.current = true;
 
@@ -631,11 +638,12 @@ export function useCollaboration({
       return result;
     });
     setTimeout(() => { isApplyingRemoteRef.current = false; }, 0);
-  }, [setNodes, setEdges, currentUserId]);
+  }, [setNodes, setEdges, sessionSenderId]);
 
   // Apply edge deletions from remote collaborators
   const applyRemoteEdgeDeletions = useCallback((edgeIds: string[], senderId: string) => {
-    if (senderId === currentUserId) return;
+    // Use session-scoped ID for filtering to allow same-user multi-tab sync
+    if (senderId === sessionSenderId) return;
 
     isApplyingRemoteRef.current = true;
     setEdges((currentEdges) => {
@@ -645,7 +653,7 @@ export function useCollaboration({
       return result;
     });
     setTimeout(() => { isApplyingRemoteRef.current = false; }, 0);
-  }, [setEdges, currentUserId]);
+  }, [setEdges, sessionSenderId]);
 
   // Handle collaborator cursor update
   const handleRemoteCursor = useCallback((userId: string, position: { x: number; y: number }) => {
@@ -832,7 +840,7 @@ export function useCollaboration({
           payload: {
             type: "positions_updated",
             positions: positionPayloads,
-            senderId: currentUserId,
+            senderId: sessionSenderId,
           } as BroadcastMessage,
         });
       }, BROADCAST_THROTTLE_MS - timeSinceLastBroadcast);
@@ -852,7 +860,7 @@ export function useCollaboration({
         payload: {
           type: "nodes_deleted",
           nodeIds: deletedNodeIds,
-          senderId: currentUserId,
+          senderId: sessionSenderId,
         } as BroadcastMessage,
       });
     }
@@ -864,7 +872,7 @@ export function useCollaboration({
         payload: {
           type: "edges_deleted",
           edgeIds: deletedEdgeIds,
-          senderId: currentUserId,
+          senderId: sessionSenderId,
         } as BroadcastMessage,
       });
     }
@@ -894,7 +902,7 @@ export function useCollaboration({
           payload: {
             type: "positions_updated",
             positions: positionPayloads,
-            senderId: currentUserId,
+            senderId: sessionSenderId,
           } as BroadcastMessage,
         });
       } else {
@@ -907,7 +915,7 @@ export function useCollaboration({
           payload: {
             type: "nodes_updated",
             nodes: nodes.map(nodeToPayload),
-            senderId: currentUserId,
+            senderId: sessionSenderId,
           } as BroadcastMessage,
         });
       }
@@ -924,7 +932,7 @@ export function useCollaboration({
         payload: {
           type: "edges_updated",
           edges: edges.map(edgeToPayload),
-          senderId: currentUserId,
+          senderId: sessionSenderId,
         } as BroadcastMessage,
       });
     }
@@ -939,7 +947,7 @@ export function useCollaboration({
     getNodeChangeSummary,
     areEdgesEquivalent,
     buildPositionPayloads,
-    currentUserId,
+    sessionSenderId,
   ]);
 
   // Broadcast cursor position
