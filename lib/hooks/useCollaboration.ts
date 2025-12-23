@@ -149,30 +149,40 @@ export function useCollaboration({
   // Debounce timer
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const isPositionOnlyChange = useCallback((prevNodes: Node[], newNodes: Node[]): boolean => {
-    if (prevNodes.length !== newNodes.length) return false;
+  const getNodeChangeSummary = useCallback(
+    (prevNodes: Node[], newNodes: Node[]):
+    | { type: "none" }
+    | { type: "position"; positions: PositionPayload[] }
+    | { type: "full" } => {
+      if (prevNodes.length !== newNodes.length) return { type: "full" };
 
-    const prevById = new Map(prevNodes.map((node) => [node.id, node]));
-    let sawPositionChange = false;
+      const prevById = new Map(prevNodes.map((node) => [node.id, node]));
+      const positions: PositionPayload[] = [];
 
-    for (const current of newNodes) {
-      const previous = prevById.get(current.id);
-      if (!previous) return false;
+      for (const current of newNodes) {
+        const previous = prevById.get(current.id);
+        if (!previous) return { type: "full" };
 
-      const posChanged =
-        previous.position.x !== current.position.x || previous.position.y !== current.position.y;
-      const dataChanged = previous.data !== current.data;
-      const sizeChanged =
-        previous.width !== current.width || previous.height !== current.height;
-      const typeChanged = previous.type !== current.type;
-      const parentChanged = previous.parentId !== current.parentId;
+        const posChanged =
+          previous.position.x !== current.position.x ||
+          previous.position.y !== current.position.y;
+        const dataChanged = previous.data !== current.data;
+        const sizeChanged =
+          previous.width !== current.width || previous.height !== current.height;
+        const typeChanged = previous.type !== current.type;
+        const parentChanged = previous.parentId !== current.parentId;
 
-      if (dataChanged || sizeChanged || typeChanged || parentChanged) return false;
-      if (posChanged) sawPositionChange = true;
-    }
+        if (dataChanged || sizeChanged || typeChanged || parentChanged) return { type: "full" };
+        if (posChanged) {
+          positions.push({ id: current.id, position: current.position });
+        }
+      }
 
-    return sawPositionChange;
-  }, []);
+      if (positions.length === 0) return { type: "none" };
+      return { type: "position", positions };
+    },
+    []
+  );
 
   // Initialize flow from collaboration data
   useEffect(() => {
@@ -328,11 +338,6 @@ export function useCollaboration({
     height: node.measured?.height ?? (node.height as number | undefined),
     data: node.data as Record<string, unknown>,
     parentId: node.parentId,
-  }), []);
-
-  const nodeToPositionPayload = useCallback((node: Node): PositionPayload => ({
-    id: node.id,
-    position: node.position,
   }), []);
 
   // Convert React Flow Edge to broadcast payload
@@ -628,20 +633,24 @@ export function useCollaboration({
     const deletedNodeIds = [...prevNodeIds].filter((id) => !currentNodeIds.has(id));
     const deletedEdgeIds = [...prevEdgeIds].filter((id) => !currentEdgeIds.has(id));
 
-    const positionOnly = isPositionOnlyChange(prevNodes, nodes);
+    const nodeChange = getNodeChangeSummary(prevNodes, nodes);
+    const positionOnly = nodeChange.type === "position";
+    const nodesChanged = nodeChange.type !== "none";
     const edgesChanged = edges !== prevEdges;
     const now = Date.now();
     const timeSinceLastBroadcast = now - lastBroadcastTimeRef.current;
 
     if (
       positionOnly &&
+      nodeChange.type === "position" &&
       deletedNodeIds.length === 0 &&
       deletedEdgeIds.length === 0 &&
       !edgesChanged &&
       timeSinceLastBroadcast < BROADCAST_THROTTLE_MS
     ) {
+      const pendingPositions = nodeChange.positions;
       const timeoutId = setTimeout(() => {
-        if (!channelRef.current || nodes.length === 0) return;
+        if (!channelRef.current || pendingPositions.length === 0) return;
 
         lastBroadcastTimeRef.current = Date.now();
         lastBroadcastNodesRef.current = nodes;
@@ -650,7 +659,7 @@ export function useCollaboration({
           event: "sync",
           payload: {
             type: "positions_updated",
-            positions: nodes.map(nodeToPositionPayload),
+            positions: pendingPositions,
             senderId: sessionIdRef.current,
           } as BroadcastMessage,
         });
@@ -689,14 +698,14 @@ export function useCollaboration({
     }
 
     // Broadcast node updates (all nodes for simplicity)
-    if (nodes.length > 0) {
-      if (positionOnly) {
+    if (nodes.length > 0 && nodesChanged) {
+      if (positionOnly && nodeChange.type === "position") {
         channelRef.current.send({
           type: "broadcast",
           event: "sync",
           payload: {
             type: "positions_updated",
-            positions: nodes.map(nodeToPositionPayload),
+            positions: nodeChange.positions,
             senderId: sessionIdRef.current,
           } as BroadcastMessage,
         });
@@ -714,7 +723,7 @@ export function useCollaboration({
     }
 
     // Broadcast edge updates
-    if (edges.length > 0) {
+    if (edges.length > 0 && edgesChanged) {
       channelRef.current.send({
         type: "broadcast",
         event: "sync",
@@ -732,9 +741,8 @@ export function useCollaboration({
     initialized,
     isRealtimeConnected,
     nodeToPayload,
-    nodeToPositionPayload,
     edgeToPayload,
-    isPositionOnlyChange,
+    getNodeChangeSummary,
   ]);
 
   // Clean up stale collaborators
