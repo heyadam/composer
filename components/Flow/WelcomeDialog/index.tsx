@@ -187,10 +187,13 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
                           onPaste={(e) => {
                             const pasted = e.clipboardData.getData("text").trim();
                             if (pasted) {
-                              setTimeout(() => {
+                              const input = e.target as HTMLInputElement;
+                              // Use queueMicrotask to run after React processes the paste
+                              queueMicrotask(() => {
                                 setKey(provider.id, pasted);
                                 setEditValues((prev) => ({ ...prev, [provider.id]: "" }));
-                              }, 0);
+                                input.blur();
+                              });
                             }
                           }}
                           className={[
