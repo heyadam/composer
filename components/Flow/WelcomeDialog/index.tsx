@@ -157,6 +157,7 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
           onBack={isStep3 ? handleBackToStep2 : (!user ? handleBackToSignIn : undefined)}
           hero={<ProvidersHero />}
           preventOutsideClose
+          onClose={completeNux}
         >
           {isStep3 ? (
             // Step 3: API Key form
@@ -305,6 +306,13 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
               >
                 Done
               </Button>
+              <Button
+                variant="outline"
+                onClick={completeNux}
+                className="mt-2 h-10 w-full cursor-pointer"
+              >
+                Skip for now
+              </Button>
             </div>
           ) : (
             // Step 2: API Keys intro
@@ -338,6 +346,13 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
               <div className="grid gap-2">
                 <Button onClick={handleSetupApiKeys} className="h-10 w-full cursor-pointer">
                   Set up API Keys
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={completeNux}
+                  className="mt-2 h-10 w-full cursor-pointer"
+                >
+                  Skip for now
                 </Button>
               </div>
             </div>
