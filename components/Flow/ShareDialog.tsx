@@ -37,7 +37,7 @@ interface ShareDialogProps {
   initialLiveId?: string | null;
   initialShareToken?: string | null;
   initialUseOwnerKeys?: boolean;
-  onPublish?: (liveId: string, shareToken: string) => void;
+  onPublish?: (liveId: string, shareToken: string, useOwnerKeys: boolean) => void;
 }
 
 export function ShareDialog({
@@ -113,7 +113,7 @@ export function ShareDialog({
     if (result.success && result.live_id && result.share_token) {
       setLiveId(result.live_id);
       setShareToken(result.share_token);
-      onPublish?.(result.live_id, result.share_token);
+      onPublish?.(result.live_id, result.share_token, result.use_owner_keys ?? true);
       // Close dialog after successful publish since Live popover is now available
       onOpenChange(false);
     } else {

@@ -71,11 +71,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         .update({
           live_id: candidateLiveId,
           share_token: candidateShareToken,
+          use_owner_keys: true, // Enable owner-funded execution by default
           updated_at: new Date().toISOString(),
         })
         .eq("id", id)
         .eq("user_id", user.id)
-        .select("live_id, share_token")
+        .select("live_id, share_token, use_owner_keys")
         .single();
 
       if (!updateError && updated) {
@@ -109,6 +110,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       success: true,
       live_id,
       share_token,
+      use_owner_keys: true,
       already_published: false,
     });
   } catch (error) {

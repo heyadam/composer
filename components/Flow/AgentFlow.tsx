@@ -999,7 +999,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
         initialLiveId={publishedFlowInfo?.liveId}
         initialShareToken={publishedFlowInfo?.shareToken}
         initialUseOwnerKeys={publishedFlowInfo?.useOwnerKeys}
-        onPublish={(liveId, shareToken) => setPublishedFlowInfo({ liveId, shareToken, useOwnerKeys: false })}
+        onPublish={(liveId, shareToken, useOwnerKeys) => setPublishedFlowInfo({ liveId, shareToken, useOwnerKeys })}
       />
       <TemplatesModal
         open={templatesModalOpen}

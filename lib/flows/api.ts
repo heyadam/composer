@@ -16,6 +16,7 @@ export interface PublishFlowResponse {
   success: boolean;
   live_id?: string;
   share_token?: string;
+  use_owner_keys?: boolean;
   already_published?: boolean;
   error?: string;
 }
