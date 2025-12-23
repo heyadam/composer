@@ -788,37 +788,6 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
                 Composer AI
               </TooltipContent>
             </Tooltip>
-            {/* Live settings popover (when collaborating) */}
-            {isCollaborating && publishedFlowInfo && currentFlowId && (
-              <LiveSettingsPopover
-                flowId={currentFlowId}
-                liveId={publishedFlowInfo.liveId}
-                shareToken={publishedFlowInfo.shareToken}
-                useOwnerKeys={publishedFlowInfo.useOwnerKeys}
-                isOwner={isOwner}
-                collaboratorCount={collaborators.length}
-                onUnpublish={() => setPublishedFlowInfo(null)}
-                onOwnerKeysChange={(enabled) => setPublishedFlowInfo(prev => prev ? { ...prev, useOwnerKeys: enabled } : null)}
-              >
-                <button
-                  className="flex items-center gap-1.5 px-2.5 py-2 text-cyan-400 hover:text-cyan-300 transition-colors rounded-full border border-cyan-500/30 hover:border-cyan-400/50 bg-background/50 backdrop-blur-sm text-sm cursor-pointer"
-                  title="Live settings"
-                >
-                  <Globe className="w-4 h-4 shrink-0" />
-                  {canvasWidth > 800 && (
-                    <>
-                      <span>Live</span>
-                      {isRealtimeConnected && (
-                        <span className="flex items-center gap-1">
-                          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                          <span className="text-xs text-green-400">{collaborators.length + 1}</span>
-                        </span>
-                      )}
-                    </>
-                  )}
-                </button>
-              </LiveSettingsPopover>
-            )}
             {/* Flow dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -904,6 +873,37 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
+            {/* Live settings popover (when collaborating) */}
+            {isCollaborating && publishedFlowInfo && currentFlowId && (
+              <LiveSettingsPopover
+                flowId={currentFlowId}
+                liveId={publishedFlowInfo.liveId}
+                shareToken={publishedFlowInfo.shareToken}
+                useOwnerKeys={publishedFlowInfo.useOwnerKeys}
+                isOwner={isOwner}
+                collaboratorCount={collaborators.length}
+                onUnpublish={() => setPublishedFlowInfo(null)}
+                onOwnerKeysChange={(enabled) => setPublishedFlowInfo(prev => prev ? { ...prev, useOwnerKeys: enabled } : null)}
+              >
+                <button
+                  className="flex items-center gap-1.5 px-2.5 py-2 text-cyan-400 hover:text-cyan-300 transition-colors rounded-full border border-cyan-500/30 hover:border-cyan-400/50 bg-background/50 backdrop-blur-sm text-sm cursor-pointer"
+                  title="Live settings"
+                >
+                  <Globe className="w-4 h-4 shrink-0" />
+                  {canvasWidth > 800 && (
+                    <>
+                      <span>Live</span>
+                      {isRealtimeConnected && (
+                        <span className="flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                          <span className="text-xs text-green-400">{collaborators.length + 1}</span>
+                        </span>
+                      )}
+                    </>
+                  )}
+                </button>
+              </LiveSettingsPopover>
+            )}
           </div>
         </TooltipProvider>
         {/* Settings, Profile, and Preview icons (top right, left of responses sidebar) */}
