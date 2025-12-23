@@ -1,4 +1,1 @@
-export {
-  useTemplatesModalState,
-  shouldShowTemplatesModal,
-} from "./useTemplatesModalState";
+export { useTemplatesModal } from "./useTemplatesModal";

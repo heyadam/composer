@@ -34,19 +34,17 @@ const MODELS: { id: AutopilotModel; name: string }[] = [
 
 interface TemplatesModalProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSelectTemplate: (flow: SavedFlow) => void;
-  onDismiss: () => void;
+  onClose: () => void;
   onDismissPermanently: () => void;
+  onSelectTemplate: (flow: SavedFlow) => void;
   onSubmitPrompt?: (prompt: string, mode: AutopilotMode, model: AutopilotModel, thinkingEnabled: boolean) => void;
 }
 
 export function TemplatesModal({
   open,
-  onOpenChange,
-  onSelectTemplate,
-  onDismiss,
+  onClose,
   onDismissPermanently,
+  onSelectTemplate,
   onSubmitPrompt,
 }: TemplatesModalProps) {
   const [dontShowAgain, setDontShowAgain] = useState(false);
@@ -72,10 +70,10 @@ export function TemplatesModal({
   const handleClose = useCallback(() => {
     if (dontShowAgain) {
       onDismissPermanently();
+    } else {
+      onClose();
     }
-    onDismiss();
-    onOpenChange(false);
-  }, [dontShowAgain, onDismiss, onDismissPermanently, onOpenChange]);
+  }, [dontShowAgain, onClose, onDismissPermanently]);
 
   // Handle clicks on the React Flow pane (the actual canvas background)
   useEffect(() => {
@@ -109,9 +107,10 @@ export function TemplatesModal({
   const handleSelect = (template: TemplateDefinition) => {
     if (dontShowAgain) {
       onDismissPermanently();
+    } else {
+      onClose();
     }
     onSelectTemplate(template.flow);
-    onOpenChange(false);
   };
 
   if (!open) return null;
@@ -136,6 +135,8 @@ export function TemplatesModal({
               if (text.trim() && onSubmitPrompt) {
                 if (dontShowAgain) {
                   onDismissPermanently();
+                } else {
+                  onClose();
                 }
                 onSubmitPrompt(text, mode, selectedModel, thinkingEnabled);
                 setInputValue("");

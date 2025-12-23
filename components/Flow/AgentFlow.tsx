@@ -44,10 +44,7 @@ import { Settings, Folder, FilePlus, FolderOpen, Save, PanelLeft, PanelRight, Cl
 import { SettingsDialogControlled } from "./SettingsDialogControlled";
 import { WelcomeDialog, isNuxComplete } from "./WelcomeDialog";
 import { TemplatesModal } from "./TemplatesModal";
-import {
-  useTemplatesModalState,
-  shouldShowTemplatesModal,
-} from "./TemplatesModal/hooks";
+import { useTemplatesModal } from "./TemplatesModal/hooks";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -192,10 +189,6 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
 
   const [responsesOpen, setResponsesOpen] = useState(false);
 
-  // Templates modal state
-  const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
-  const { dismissPermanently: dismissTemplatesPermanently } = useTemplatesModalState();
-
   // Flow operations hook
   const {
     flowMetadata,
@@ -205,7 +198,6 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     setSaveDialogOpen,
     myFlowsDialogOpen,
     setMyFlowsDialogOpen,
-    loadBlankCanvas,
     handleNewFlow,
     handleSelectTemplate,
     handleSaveFlow,
@@ -225,8 +217,6 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
       clearHistory(); // Clear undo history when loading a new flow
     },
     setIdCounter,
-    shouldShowTemplatesModal,
-    setTemplatesModalOpen,
   });
 
   // Published flow info state (for owner collaboration mode and ShareDialog)
@@ -267,6 +257,20 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     setEdges,
     reactFlowInstance,
     setIdCounter,
+  });
+
+  // Templates modal hook (after useCollaboration so we have isCollaborating)
+  const {
+    isOpen: templatesModalOpen,
+    open: openTemplatesModal,
+    close: closeTemplatesModal,
+    dismissPermanently: dismissTemplatesPermanently,
+  } = useTemplatesModal({
+    isLoaded,
+    isCollaborating,
+    nodes,
+    edges,
+    flowMetadata,
   });
 
   // Canvas width for responsive label hiding
@@ -337,14 +341,6 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
 
   const [pendingAutopilotMessage, setPendingAutopilotMessage] = useState<PendingAutopilotMessage | null>(null);
 
-  // Auto-open templates modal on app load (after NUX is complete)
-  // Skip in collaboration mode - flow is already loaded
-  useEffect(() => {
-    if (isLoaded && isNuxComplete() && shouldShowTemplatesModal() && !isCollaborating) {
-      setTemplatesModalOpen(true);
-    }
-  }, [isLoaded, setTemplatesModalOpen, isCollaborating]);
-
   // Dismiss templates modal when node palette opens (user clicks "Add Node")
   const prevNodesPaletteOpen = useRef(nodesPaletteOpen);
   useEffect(() => {
@@ -352,16 +348,16 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     prevNodesPaletteOpen.current = nodesPaletteOpen;
 
     if (wasClosedNowOpen && templatesModalOpen) {
-      setTemplatesModalOpen(false);
+      closeTemplatesModal();
     }
-  }, [nodesPaletteOpen, templatesModalOpen]);
+  }, [nodesPaletteOpen, templatesModalOpen, closeTemplatesModal]);
 
   // Dismiss templates modal when user sends autopilot message
   const handleAutopilotMessageSent = useCallback(() => {
     if (templatesModalOpen) {
-      setTemplatesModalOpen(false);
+      closeTemplatesModal();
     }
-  }, [templatesModalOpen]);
+  }, [templatesModalOpen, closeTemplatesModal]);
 
   // Handle prompt submission from templates modal
   const handleTemplatesPromptSubmit = useCallback((
@@ -372,7 +368,6 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
   ) => {
     setPendingAutopilotMessage({ prompt, mode, model, thinkingEnabled });
     setAutopilotOpen(true);
-    setTemplatesModalOpen(false);
   }, []);
 
   // Background settings
@@ -845,7 +840,10 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
                 ) : (
                   <>
                     <DropdownMenuItem
-                      onClick={handleNewFlow}
+                      onClick={() => {
+                        handleNewFlow();
+                        openTemplatesModal();
+                      }}
                       className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
                     >
                       <FilePlus className="h-4 w-4 mr-2" />
@@ -1033,13 +1031,15 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
       />
       <TemplatesModal
         open={templatesModalOpen}
-        onOpenChange={setTemplatesModalOpen}
-        onSelectTemplate={handleSelectTemplate}
-        onDismiss={loadBlankCanvas}
+        onClose={closeTemplatesModal}
         onDismissPermanently={dismissTemplatesPermanently}
+        onSelectTemplate={handleSelectTemplate}
         onSubmitPrompt={handleTemplatesPromptSubmit}
       />
-      <WelcomeDialog onDone={isCollaborating ? undefined : handleNewFlow} />
+      <WelcomeDialog onDone={isCollaborating ? undefined : () => {
+        handleNewFlow();
+        openTemplatesModal();
+      }} />
     </div>
   );
 }

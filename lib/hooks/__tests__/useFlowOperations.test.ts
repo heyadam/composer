@@ -43,8 +43,6 @@ describe("useFlowOperations", () => {
   const mockClearHighlights = vi.fn();
   const mockOnFlowChange = vi.fn();
   const mockSetIdCounter = vi.fn();
-  const mockShouldShowTemplatesModal = vi.fn().mockReturnValue(false);
-  const mockSetTemplatesModalOpen = vi.fn();
   const mockFitView = vi.fn();
   const mockReactFlowInstance = { current: { fitView: mockFitView } };
 
@@ -63,7 +61,6 @@ describe("useFlowOperations", () => {
     mockUpdateFlow.mockResolvedValue({ success: true, flow: { id: "updated-id" } });
     mockLoadFlow.mockResolvedValue({ success: true, flow: { nodes: [], edges: [], metadata: { name: "", description: "", createdAt: "", updatedAt: "", schemaVersion: 1 } } });
     mockOpenFlowFilePicker.mockResolvedValue({ success: false, error: "File selection cancelled" });
-    mockShouldShowTemplatesModal.mockReturnValue(false);
   });
 
   it("should initialize with default state", () => {
@@ -78,8 +75,6 @@ describe("useFlowOperations", () => {
         reactFlowInstance: mockReactFlowInstance as any,
         onFlowChange: mockOnFlowChange,
         setIdCounter: mockSetIdCounter,
-        shouldShowTemplatesModal: mockShouldShowTemplatesModal,
-        setTemplatesModalOpen: mockSetTemplatesModalOpen,
       })
     );
 
@@ -103,8 +98,6 @@ describe("useFlowOperations", () => {
           reactFlowInstance: mockReactFlowInstance as any,
           onFlowChange: mockOnFlowChange,
           setIdCounter: mockSetIdCounter,
-          shouldShowTemplatesModal: mockShouldShowTemplatesModal,
-          setTemplatesModalOpen: mockSetTemplatesModalOpen,
         })
       );
 
@@ -132,8 +125,6 @@ describe("useFlowOperations", () => {
           reactFlowInstance: mockReactFlowInstance as any,
           onFlowChange: mockOnFlowChange,
           setIdCounter: mockSetIdCounter,
-          shouldShowTemplatesModal: mockShouldShowTemplatesModal,
-          setTemplatesModalOpen: mockSetTemplatesModalOpen,
         })
       );
 
@@ -165,8 +156,6 @@ describe("useFlowOperations", () => {
           reactFlowInstance: mockReactFlowInstance as any,
           onFlowChange: mockOnFlowChange,
           setIdCounter: mockSetIdCounter,
-          shouldShowTemplatesModal: mockShouldShowTemplatesModal,
-          setTemplatesModalOpen: mockSetTemplatesModalOpen,
         })
       );
 
@@ -178,31 +167,6 @@ describe("useFlowOperations", () => {
       expect(mockSetEdges).toHaveBeenCalledWith([]);
     });
 
-    it("should show templates modal when configured", () => {
-      mockShouldShowTemplatesModal.mockReturnValue(true);
-
-      const { result } = renderHook(() =>
-        useFlowOperations({
-          nodes: defaultNodes,
-          edges: defaultEdges,
-          setNodes: mockSetNodes,
-          setEdges: mockSetEdges,
-          resetExecution: mockResetExecution,
-          clearHighlights: mockClearHighlights,
-          reactFlowInstance: mockReactFlowInstance as any,
-          onFlowChange: mockOnFlowChange,
-          setIdCounter: mockSetIdCounter,
-          shouldShowTemplatesModal: mockShouldShowTemplatesModal,
-          setTemplatesModalOpen: mockSetTemplatesModalOpen,
-        })
-      );
-
-      act(() => {
-        result.current.handleNewFlow();
-      });
-
-      expect(mockSetTemplatesModalOpen).toHaveBeenCalledWith(true);
-    });
   });
 
   describe("handleSelectTemplate", () => {
@@ -218,8 +182,6 @@ describe("useFlowOperations", () => {
           reactFlowInstance: mockReactFlowInstance as any,
           onFlowChange: mockOnFlowChange,
           setIdCounter: mockSetIdCounter,
-          shouldShowTemplatesModal: mockShouldShowTemplatesModal,
-          setTemplatesModalOpen: mockSetTemplatesModalOpen,
         })
       );
 
@@ -260,8 +222,6 @@ describe("useFlowOperations", () => {
           reactFlowInstance: mockReactFlowInstance as any,
           onFlowChange: mockOnFlowChange,
           setIdCounter: mockSetIdCounter,
-          shouldShowTemplatesModal: mockShouldShowTemplatesModal,
-          setTemplatesModalOpen: mockSetTemplatesModalOpen,
         })
       );
 
@@ -299,8 +259,6 @@ describe("useFlowOperations", () => {
           reactFlowInstance: mockReactFlowInstance as any,
           onFlowChange: mockOnFlowChange,
           setIdCounter: mockSetIdCounter,
-          shouldShowTemplatesModal: mockShouldShowTemplatesModal,
-          setTemplatesModalOpen: mockSetTemplatesModalOpen,
         })
       );
 
@@ -330,8 +288,6 @@ describe("useFlowOperations", () => {
           reactFlowInstance: mockReactFlowInstance as any,
           onFlowChange: mockOnFlowChange,
           setIdCounter: mockSetIdCounter,
-          shouldShowTemplatesModal: mockShouldShowTemplatesModal,
-          setTemplatesModalOpen: mockSetTemplatesModalOpen,
         })
       );
 
@@ -371,8 +327,6 @@ describe("useFlowOperations", () => {
           reactFlowInstance: mockReactFlowInstance as any,
           onFlowChange: mockOnFlowChange,
           setIdCounter: mockSetIdCounter,
-          shouldShowTemplatesModal: mockShouldShowTemplatesModal,
-          setTemplatesModalOpen: mockSetTemplatesModalOpen,
         })
       );
 
@@ -414,8 +368,6 @@ describe("useFlowOperations", () => {
           reactFlowInstance: mockReactFlowInstance as any,
           onFlowChange: mockOnFlowChange,
           setIdCounter: mockSetIdCounter,
-          shouldShowTemplatesModal: mockShouldShowTemplatesModal,
-          setTemplatesModalOpen: mockSetTemplatesModalOpen,
         })
       );
 
@@ -451,8 +403,6 @@ describe("useFlowOperations", () => {
           reactFlowInstance: mockReactFlowInstance as any,
           onFlowChange: mockOnFlowChange,
           setIdCounter: mockSetIdCounter,
-          shouldShowTemplatesModal: mockShouldShowTemplatesModal,
-          setTemplatesModalOpen: mockSetTemplatesModalOpen,
         })
       );
 
@@ -481,8 +431,6 @@ describe("useFlowOperations", () => {
           reactFlowInstance: mockReactFlowInstance as any,
           onFlowChange: mockOnFlowChange,
           setIdCounter: mockSetIdCounter,
-          shouldShowTemplatesModal: mockShouldShowTemplatesModal,
-          setTemplatesModalOpen: mockSetTemplatesModalOpen,
         })
       );
 
@@ -507,8 +455,6 @@ describe("useFlowOperations", () => {
           reactFlowInstance: mockReactFlowInstance as any,
           onFlowChange: mockOnFlowChange,
           setIdCounter: mockSetIdCounter,
-          shouldShowTemplatesModal: mockShouldShowTemplatesModal,
-          setTemplatesModalOpen: mockSetTemplatesModalOpen,
         })
       );
 

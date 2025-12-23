@@ -36,8 +36,6 @@ export interface UseFlowOperationsOptions {
   reactFlowInstance: MutableRefObject<ReactFlowInstance | null>;
   onFlowChange?: () => void; // Callback when flow is loaded/changed
   setIdCounter: (id: number) => void;
-  shouldShowTemplatesModal: () => boolean;
-  setTemplatesModalOpen: (open: boolean) => void;
 }
 
 export interface UseFlowOperationsReturn {
@@ -80,8 +78,6 @@ export function useFlowOperations({
   reactFlowInstance,
   onFlowChange,
   setIdCounter,
-  shouldShowTemplatesModal,
-  setTemplatesModalOpen,
 }: UseFlowOperationsOptions): UseFlowOperationsReturn {
   // Flow metadata state
   const [flowMetadata, setFlowMetadata] = useState<FlowMetadata | undefined>(undefined);
@@ -111,13 +107,10 @@ export function useFlowOperations({
     updateIdCounter([], setIdCounter);
   }, [setNodes, setEdges, resetExecution, clearHighlights, onFlowChange, setIdCounter]);
 
-  // Create a new flow (clears canvas, optionally shows templates)
+  // Create a new flow (clears canvas)
   const handleNewFlow = useCallback(() => {
     loadBlankCanvas();
-    if (shouldShowTemplatesModal()) {
-      setTemplatesModalOpen(true);
-    }
-  }, [loadBlankCanvas, shouldShowTemplatesModal, setTemplatesModalOpen]);
+  }, [loadBlankCanvas]);
 
   // Load a template flow
   const handleSelectTemplate = useCallback(
