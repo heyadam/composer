@@ -944,7 +944,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
                   <Globe className="w-4 h-4 shrink-0" />
                   {canvasWidth > 800 && (
                     <>
-                      <span>Live</span>
+                      <span>Share</span>
                       {isRealtimeConnected && (
                         <span className="flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
@@ -973,7 +973,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
                     title="Go Live"
                   >
                     <Globe className="w-4 h-4 shrink-0" />
-                    {canvasWidth > 800 && <span>Live</span>}
+                    {canvasWidth > 800 && <span>Share</span>}
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="bg-neutral-800 text-white border-neutral-700">

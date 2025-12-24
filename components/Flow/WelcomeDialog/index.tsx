@@ -155,7 +155,7 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
           title={isStep3 ? <span className="text-lg sm:text-xl">Add Your API Keys</span> : "Bring Your Own API Keys"}
           description={isStep3 ? <span className="text-xs">Enter your keys or unlock with password</span> : "Connect your providers to start building"}
           onBack={isStep3 ? handleBackToStep2 : (!user ? handleBackToSignIn : undefined)}
-          hero={<ProvidersHero />}
+          hero={<ProvidersHero step={isStep3 ? 3 : 2} />}
           preventOutsideClose
           onClose={completeNux}
         >

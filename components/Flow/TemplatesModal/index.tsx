@@ -54,18 +54,32 @@ export function TemplatesModal({
   const [inputValue, setInputValue] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // Track visibility separately to allow exit animation
+  const [isVisible, setIsVisible] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
   const currentModel = MODELS.find((m) => m.id === selectedModel) ?? MODELS[0];
 
-  // Reset state when modal opens
+  // Handle open/close state changes with animation
   useEffect(() => {
     if (open) {
+      setIsVisible(true);
+      setIsClosing(false);
       // Safe: resetting local UI state when modal opens
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setDontShowAgain(false);
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setInputValue("");
+    } else if (isVisible) {
+      // Start exit animation
+      setIsClosing(true);
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+        setIsClosing(false);
+      }, 150); // Match animation duration
+      return () => clearTimeout(timer);
     }
-  }, [open]);
+  }, [open, isVisible]);
 
   const handleClose = useCallback(() => {
     if (dontShowAgain) {
@@ -113,15 +127,15 @@ export function TemplatesModal({
     onSelectTemplate(template.flow);
   };
 
-  if (!open) return null;
+  if (!isVisible) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
       {/* Backdrop overlay - starts below header so nav remains visible */}
-      <div className="absolute top-14 left-0 right-0 bottom-0 bg-black/50 pointer-events-none animate-in fade-in-0 duration-200" />
+      <div className={`absolute top-14 left-0 right-0 bottom-0 bg-black/50 pointer-events-none transition-opacity duration-150 ${isClosing ? "opacity-0" : "animate-in fade-in-0 duration-200"}`} />
       <div
         ref={panelRef}
-        className="relative z-10 pointer-events-auto bg-background border rounded-lg shadow-2xl shadow-black/40 p-6 w-full max-w-2xl animate-in fade-in-0 zoom-in-95 duration-200"
+        className={`relative z-10 pointer-events-auto bg-background border rounded-lg shadow-2xl shadow-black/40 p-6 w-full max-w-2xl transition-all duration-150 ${isClosing ? "opacity-0 scale-95" : "animate-in fade-in-0 zoom-in-95 duration-200"}`}
       >
         {/* Close button */}
         <Button
