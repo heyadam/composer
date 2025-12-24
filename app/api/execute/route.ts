@@ -79,10 +79,15 @@ export async function POST(request: NextRequest) {
       }
 
       if (limitResult && !limitResult.allowed) {
-        return NextResponse.json(
-          { error: limitResult.reason || "Rate limit exceeded" },
-          { status: limitResult.reason?.includes("quota") ? 403 : 429 }
-        );
+        // Map reason to appropriate status code
+        const reason = limitResult.reason || "Rate limit exceeded";
+        let status = 429; // Default to rate limit
+        if (reason.includes("quota")) {
+          status = 403; // Daily quota exceeded
+        } else if (reason.includes("not found")) {
+          status = 404; // Flow not found
+        }
+        return NextResponse.json({ error: reason }, { status });
       }
 
       // Fetch owner's keys - RPC already checks use_owner_keys flag
