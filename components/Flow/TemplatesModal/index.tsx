@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sparkles, Wand2, Zap, ListTodo, ChevronDown, Brain, Check } from "lucide-react";
+import { Sparkles, Wand2, Zap, ListTodo, ChevronDown, Brain, Check, X } from "lucide-react";
 import {
   PromptInput,
   PromptInputTextarea,
@@ -123,6 +123,17 @@ export function TemplatesModal({
         ref={panelRef}
         className="relative z-10 pointer-events-auto bg-background border rounded-lg shadow-2xl shadow-black/40 p-6 w-full max-w-2xl animate-in fade-in-0 zoom-in-95 duration-200"
       >
+        {/* Close button */}
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={handleClose}
+          className="absolute right-4 top-4 z-30 cursor-pointer rounded-full border bg-background/70 backdrop-blur-sm hover:bg-background/80"
+          aria-label="Close"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+
         {/* Header */}
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold">What do you want to create?</h2>
