@@ -75,6 +75,8 @@ export interface CollaborationModeProps {
   } | null;
   /** True when the current user is the owner of the flow (editing at /) */
   isOwner?: boolean;
+  /** True when the owner has enabled API key sharing for collaborators */
+  useOwnerKeys?: boolean;
 }
 
 export interface UseCollaborationOptions {

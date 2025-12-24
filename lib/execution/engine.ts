@@ -19,6 +19,14 @@ interface ExecuteNodeResult {
   codeExplanation?: string;
 }
 
+/** Options for owner-funded execution */
+export interface ExecuteOptions {
+  /** Share token for owner-funded execution (grants access to owner's API keys) */
+  shareToken?: string;
+  /** Unique run ID for rate limit deduplication (same for all nodes in one execution) */
+  runId?: string;
+}
+
 // Default timeout for API requests (60 seconds)
 const DEFAULT_TIMEOUT_MS = 60000;
 
@@ -64,7 +72,8 @@ async function executeNode(
   context: Record<string, unknown>,
   apiKeys?: ApiKeys,
   onStreamUpdate?: (output: string, debugInfo?: DebugInfo, reasoning?: string) => void,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  options?: ExecuteOptions
 ): Promise<ExecuteNodeResult> {
   switch (node.type) {
     case "text-input":
@@ -96,19 +105,33 @@ async function executeNode(
       const provider = (node.data.provider as string) || "openai";
       const model = (node.data.model as string) || "gpt-5.2";
 
-      const requestBody = {
-        type: "text-generation" as const,
-        inputs: { prompt: promptInput, system: effectiveSystemPrompt },
-        provider,
-        model,
-        verbosity: node.data.verbosity,
-        thinking: node.data.thinking,
-        // Google-specific options
-        googleThinkingConfig: node.data.googleThinkingConfig,
-        googleSafetyPreset: node.data.googleSafetyPreset,
-        googleStructuredOutputs: node.data.googleStructuredOutputs,
-        apiKeys,
-      };
+      // Owner-funded: include shareToken + runId, omit apiKeys
+      const requestBody = options?.shareToken
+        ? {
+            type: "text-generation" as const,
+            inputs: { prompt: promptInput, system: effectiveSystemPrompt },
+            provider,
+            model,
+            verbosity: node.data.verbosity,
+            thinking: node.data.thinking,
+            googleThinkingConfig: node.data.googleThinkingConfig,
+            googleSafetyPreset: node.data.googleSafetyPreset,
+            googleStructuredOutputs: node.data.googleStructuredOutputs,
+            shareToken: options.shareToken,
+            runId: options.runId,
+          }
+        : {
+            type: "text-generation" as const,
+            inputs: { prompt: promptInput, system: effectiveSystemPrompt },
+            provider,
+            model,
+            verbosity: node.data.verbosity,
+            thinking: node.data.thinking,
+            googleThinkingConfig: node.data.googleThinkingConfig,
+            googleSafetyPreset: node.data.googleSafetyPreset,
+            googleStructuredOutputs: node.data.googleStructuredOutputs,
+            apiKeys,
+          };
 
       const debugInfo: DebugInfo = {
         startTime,
@@ -124,7 +147,12 @@ async function executeNode(
           googleSafetyPreset: node.data.googleSafetyPreset as string | undefined,
         },
         streamChunksReceived: 0,
-        rawRequestBody: JSON.stringify({ ...requestBody, apiKeys: "[REDACTED]" }, null, 2),
+        // Redact both apiKeys and shareToken in debug
+        rawRequestBody: JSON.stringify({
+          ...requestBody,
+          apiKeys: "apiKeys" in requestBody ? "[REDACTED]" : undefined,
+          shareToken: "shareToken" in requestBody ? "[REDACTED]" : undefined,
+        }, null, 2),
       };
 
       const response = await fetchWithTimeout(
@@ -242,20 +270,37 @@ async function executeNode(
       const partialImages = (node.data.partialImages as number) ?? 3;
       const aspectRatio = (node.data.aspectRatio as string) || "1:1";
 
-      const requestBody = {
-        type: "image-generation" as const,
-        prompt,
-        provider,
-        model,
-        outputFormat,
-        size,
-        quality,
-        partialImages,
-        aspectRatio,
-        input: promptInput,
-        imageInput, // Source image for image-to-image editing
-        apiKeys,
-      };
+      // Owner-funded: include shareToken + runId, omit apiKeys
+      const requestBody = options?.shareToken
+        ? {
+            type: "image-generation" as const,
+            prompt,
+            provider,
+            model,
+            outputFormat,
+            size,
+            quality,
+            partialImages,
+            aspectRatio,
+            input: promptInput,
+            imageInput,
+            shareToken: options.shareToken,
+            runId: options.runId,
+          }
+        : {
+            type: "image-generation" as const,
+            prompt,
+            provider,
+            model,
+            outputFormat,
+            size,
+            quality,
+            partialImages,
+            aspectRatio,
+            input: promptInput,
+            imageInput,
+            apiKeys,
+          };
 
       const debugInfo: DebugInfo = {
         startTime,
@@ -272,7 +317,13 @@ async function executeNode(
           partialImages,
         },
         streamChunksReceived: 0,
-        rawRequestBody: JSON.stringify({ ...requestBody, apiKeys: "[REDACTED]", imageInput: imageInput ? "[BASE64_IMAGE]" : undefined }, null, 2),
+        // Redact both apiKeys and shareToken in debug
+        rawRequestBody: JSON.stringify({
+          ...requestBody,
+          apiKeys: "apiKeys" in requestBody ? "[REDACTED]" : undefined,
+          shareToken: "shareToken" in requestBody ? "[REDACTED]" : undefined,
+          imageInput: imageInput ? "[BASE64_IMAGE]" : undefined,
+        }, null, 2),
       };
 
       const response = await fetchWithTimeout(
@@ -391,16 +442,17 @@ async function executeNode(
 
       // Helper to generate code via API
       const generateCode = async (prompt: string) => {
+        // Owner-funded: include shareToken + runId, omit apiKeys
+        const body = options?.shareToken
+          ? { type: "magic-generate", prompt, shareToken: options.shareToken, runId: options.runId }
+          : { type: "magic-generate", prompt, apiKeys };
+
         const response = await fetchWithTimeout(
           "/api/execute",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              type: "magic-generate",
-              prompt,
-              apiKeys,
-            }),
+            body: JSON.stringify(body),
             signal,
           }
         );
@@ -479,14 +531,25 @@ async function executeNode(
       const model = (node.data.model as string) || "gpt-5.2";
       const stylePreset = (node.data.stylePreset as string) || "simple";
 
-      const requestBody = {
-        type: "react-component" as const,
-        inputs: { prompt: promptInput, system: effectiveSystemPrompt },
-        provider,
-        model,
-        stylePreset,
-        apiKeys,
-      };
+      // Owner-funded: include shareToken + runId, omit apiKeys
+      const requestBody = options?.shareToken
+        ? {
+            type: "react-component" as const,
+            inputs: { prompt: promptInput, system: effectiveSystemPrompt },
+            provider,
+            model,
+            stylePreset,
+            shareToken: options.shareToken,
+            runId: options.runId,
+          }
+        : {
+            type: "react-component" as const,
+            inputs: { prompt: promptInput, system: effectiveSystemPrompt },
+            provider,
+            model,
+            stylePreset,
+            apiKeys,
+          };
 
       const debugInfo: DebugInfo = {
         startTime,
@@ -498,7 +561,12 @@ async function executeNode(
           systemPrompt: effectiveSystemPrompt,
         },
         streamChunksReceived: 0,
-        rawRequestBody: JSON.stringify({ ...requestBody, apiKeys: "[REDACTED]" }, null, 2),
+        // Redact both apiKeys and shareToken in debug
+        rawRequestBody: JSON.stringify({
+          ...requestBody,
+          apiKeys: "apiKeys" in requestBody ? "[REDACTED]" : undefined,
+          shareToken: "shareToken" in requestBody ? "[REDACTED]" : undefined,
+        }, null, 2),
       };
 
       const response = await fetchWithTimeout(
@@ -580,7 +648,8 @@ export async function executeFlow(
   edges: Edge[],
   onNodeStateChange: (nodeId: string, state: NodeExecutionState) => void,
   apiKeys?: ApiKeys,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  options?: ExecuteOptions
 ): Promise<string> {
   // Check if already cancelled
   if (signal?.aborted) {
@@ -705,7 +774,8 @@ export async function executeFlow(
             });
           }
         },
-        signal
+        signal,
+        options
       );
 
       // Store output

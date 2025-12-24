@@ -246,7 +246,8 @@ describe("useFlowExecution", () => {
       defaultEdges,
       expect.any(Function), // updateNodeExecutionState
       defaultApiKeys,
-      expect.any(AbortSignal)
+      expect.any(AbortSignal),
+      { shareToken: undefined, runId: undefined } // owner-funded execution options
     );
   });
 

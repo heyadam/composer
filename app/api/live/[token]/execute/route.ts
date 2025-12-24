@@ -62,6 +62,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Check minute-level rate limit first
     // Note: RPC returns TABLE, use .single() to get object instead of array
+    // IMPORTANT: Fail closed - if RPC errors, deny the request
     const { data: minuteLimit, error: minuteError } = await supabase
       .rpc("check_minute_rate_limit", {
         p_share_token: token,
@@ -69,7 +70,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       })
       .single<{ allowed: boolean; current_count: number; reset_at: string }>();
 
-    if (minuteError || !minuteLimit?.allowed) {
+    // Fail closed: RPC error means we can't verify rate limit
+    if (minuteError) {
+      console.error("Rate limit check failed:", minuteError);
+      return NextResponse.json(
+        { success: false, error: "Rate limit check unavailable" },
+        { status: 503 }
+      );
+    }
+
+    if (!minuteLimit?.allowed) {
       const retryAfter = minuteLimit?.reset_at
         ? Math.ceil(
             (new Date(minuteLimit.reset_at).getTime() - Date.now()) / 1000
@@ -117,14 +127,22 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Log execution for minute-level rate limiting
-    await supabase.rpc("log_execution", { p_share_token: token });
+    const { error: logError } = await supabase.rpc("log_execution", { p_share_token: token });
+    if (logError) {
+      // Log error but don't block - execution logging is non-critical
+      console.error("Failed to log execution:", logError);
+    }
 
     // Try to get owner's stored keys (if use_owner_keys is enabled)
     let apiKeys: ApiKeys = {};
-    const { data: encryptedKeys } = await supabase.rpc(
+    const { data: encryptedKeys, error: keysError } = await supabase.rpc(
       "get_owner_keys_for_execution",
       { p_share_token: token }
     );
+    if (keysError) {
+      // Log error but don't block - will fall back to collaborator's own keys
+      console.error("Failed to fetch owner keys:", keysError);
+    }
 
     if (encryptedKeys) {
       // Decrypt owner's keys

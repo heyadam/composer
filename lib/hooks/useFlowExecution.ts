@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import type { Node, Edge } from "@xyflow/react";
 import { executeFlow } from "@/lib/execution/engine";
 import type { NodeExecutionState, ExecutionStatus } from "@/lib/execution/types";
@@ -14,6 +15,10 @@ export interface UseFlowExecutionProps {
   apiKeys: ApiKeys;
   hasRequiredKey: (provider: ProviderId) => boolean;
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
+  /** Share token for owner-funded execution */
+  shareToken?: string;
+  /** Whether to use owner's API keys instead of client's */
+  useOwnerKeys?: boolean;
 }
 
 export interface UseFlowExecutionReturn {
@@ -34,6 +39,8 @@ export function useFlowExecution({
   apiKeys,
   hasRequiredKey,
   setNodes,
+  shareToken,
+  useOwnerKeys,
 }: UseFlowExecutionProps): UseFlowExecutionReturn {
   const [isRunning, setIsRunning] = useState(false);
   const [previewEntries, setPreviewEntries] = useState<PreviewEntry[]>([]);
@@ -219,26 +226,31 @@ export function useFlowExecution({
   const runFlow = useCallback(async () => {
     if (isRunning) return;
 
-    // Check which providers are needed based on nodes
-    const providersUsed = new Set<ProviderId>();
-    nodes.forEach((node) => {
-      if (node.type === "text-generation" || node.type === "image-generation") {
-        const provider = (node.data as { provider?: string }).provider || "openai";
-        providersUsed.add(provider as ProviderId);
-      }
-    });
+    // Owner-funded mode: skip local key validation when BOTH useOwnerKeys and shareToken are present
+    const isOwnerFunded = useOwnerKeys && shareToken;
 
-    // Validate required keys
-    const missingProviders: string[] = [];
-    for (const provider of providersUsed) {
-      if (!hasRequiredKey(provider)) {
-        missingProviders.push(provider);
-      }
-    }
+    if (!isOwnerFunded) {
+      // Check which providers are needed based on nodes
+      const providersUsed = new Set<ProviderId>();
+      nodes.forEach((node) => {
+        if (node.type === "text-generation" || node.type === "image-generation") {
+          const provider = (node.data as { provider?: string }).provider || "openai";
+          providersUsed.add(provider as ProviderId);
+        }
+      });
 
-    if (missingProviders.length > 0) {
-      setKeyError(`Missing API keys: ${missingProviders.join(", ")}. Open Settings to configure.`);
-      return;
+      // Validate required keys
+      const missingProviders: string[] = [];
+      for (const provider of providersUsed) {
+        if (!hasRequiredKey(provider)) {
+          missingProviders.push(provider);
+        }
+      }
+
+      if (missingProviders.length > 0) {
+        setKeyError(`Missing API keys: ${missingProviders.join(", ")}. Open Settings to configure.`);
+        return;
+      }
     }
 
     setKeyError(null);
@@ -248,13 +260,20 @@ export function useFlowExecution({
     // Create new AbortController for this execution
     abortControllerRef.current = new AbortController();
 
+    // Generate unique runId for rate limit deduplication in owner-funded mode
+    const runId = isOwnerFunded ? uuidv4() : undefined;
+
     try {
       await executeFlow(
         nodes,
         edges,
         updateNodeExecutionState,
         apiKeys,
-        abortControllerRef.current.signal
+        abortControllerRef.current.signal,
+        {
+          shareToken: isOwnerFunded ? shareToken : undefined,
+          runId,
+        }
       );
     } catch (error) {
       if (error instanceof Error && error.message === "Execution cancelled") {
@@ -266,7 +285,7 @@ export function useFlowExecution({
       setIsRunning(false);
       abortControllerRef.current = null;
     }
-  }, [nodes, edges, isRunning, updateNodeExecutionState, resetExecution, hasRequiredKey, apiKeys, setKeyError, setIsRunning]);
+  }, [nodes, edges, isRunning, updateNodeExecutionState, resetExecution, hasRequiredKey, apiKeys, setKeyError, setIsRunning, useOwnerKeys, shareToken]);
 
   const cancelFlow = useCallback(() => {
     if (abortControllerRef.current) {

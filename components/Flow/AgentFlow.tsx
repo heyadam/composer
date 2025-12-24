@@ -123,6 +123,8 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     apiKeys,
     hasRequiredKey,
     setNodes,
+    shareToken: collaborationMode?.shareToken,
+    useOwnerKeys: collaborationMode?.useOwnerKeys,
   });
 
   // Track canvas width for responsive label hiding

@@ -123,6 +123,7 @@ export default function CollaborationPage({ params }: CollaborationPageProps) {
         shareToken: token,
         liveId: code,
         initialFlow: flowData,
+        useOwnerKeys: flowData?.flow.use_owner_keys ?? false,
       }}
     />
   );
