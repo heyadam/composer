@@ -117,6 +117,27 @@ export function YourNode({ id, data }: NodeProps<YourNodeType>) {
 | Image | `"purple"` |
 | Response | `"amber"` |
 
+### Port Properties
+
+Each port object accepts these properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | string | Handle ID (must match port schema) |
+| `label` | string | Display label |
+| `colorClass` | string | Color: `"cyan"`, `"purple"`, or `"amber"` |
+| `isConnected` | boolean | Whether an edge is connected |
+| `required` | boolean | Optional. Shows visual indicator for required inputs |
+
+Example with optional input:
+```tsx
+<PortRow
+  nodeId={id}
+  input={{ id: "system", label: "System", colorClass: "cyan", isConnected: isSystemConnected, required: false }}
+  output={{ id: "output", label: "String", colorClass: "cyan", isConnected: isOutputConnected }}
+/>
+```
+
 ### InputWithHandle (for connectable inputs)
 
 Use when an input can be either connected or manually entered:
@@ -195,6 +216,15 @@ export { YourNode };
 | `ports` | ReactNode | No | PortRow components |
 | `children` | ReactNode | No | Main node content |
 | `footer` | ReactNode | No | Execution output area |
+
+## Real-World Examples
+
+Study these existing node implementations for reference:
+
+- **Simple input**: `InputNode.tsx` - Basic input with single output
+- **Simple output**: `OutputNode.tsx` - Terminal node with footer rendering
+- **Processing with AI**: `PromptNode.tsx` - Multiple inputs, provider/model selection, streaming
+- **Complex logic**: `MagicNode.tsx` - Code generation, collapsible sections, validation
 
 ## Validation
 

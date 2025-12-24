@@ -184,10 +184,12 @@ if (!response.ok) {
 
 ## API Route (if needed)
 
-If your node calls an API, add a handler in `app/api/execute/route.ts`:
+If your node calls an external API, add a handler in `app/api/execute/route.ts`.
+
+**Location**: Find the `POST` function and its main switch statement on `body.type`. Add your case after the existing node type handlers.
 
 ```typescript
-// In the POST handler switch:
+// app/api/execute/route.ts - in POST handler switch statement
 case "your-ai-node": {
   const { prompt, provider, model, apiKeys, shareToken, runId } = body;
 
@@ -207,6 +209,21 @@ case "your-ai-node": {
   // Call external API and stream response...
 }
 ```
+
+## Owner-Funded Execution
+
+When a flow is published with "Owner-Funded Execution" enabled, collaborators run the flow using the owner's API keys instead of their own.
+
+**How it works:**
+1. User visits a live share link (e.g., `/1234/abc123token`)
+2. The live page calls `/api/live/[token]/execute` instead of `/api/execute`
+3. The execution engine automatically passes `shareToken` and `runId` in `options`
+4. Your node's execution code checks for `options?.shareToken` to use owner-funded path
+5. Server-side code retrieves owner's encrypted keys via `getOwnerKeysForExecution()`
+
+**Your node must handle both paths:**
+- Normal execution: `apiKeys` provided, no `shareToken`
+- Owner-funded: `shareToken` provided, no `apiKeys` (server fetches owner's keys)
 
 ## Validation
 

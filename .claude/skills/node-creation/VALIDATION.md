@@ -8,6 +8,34 @@ Complete validation before considering the node done.
 - [ ] `npm run build` completes successfully
 - [ ] `npm test` passes (all tests)
 
+## Unit Testing (Optional)
+
+For complex nodes, consider adding unit tests in `lib/hooks/__tests__/`:
+
+**Test patterns to follow:**
+- `useFlowExecution.test.ts` - Tests for execution behavior
+- `useAutopilotIntegration.test.ts` - Tests for autopilot actions
+
+**What to test:**
+- Execution logic returns correct output for given inputs
+- Error handling produces appropriate error messages
+- Streaming callbacks are invoked correctly
+- Node data updates propagate properly
+
+**Example test structure:**
+```typescript
+import { describe, it, expect, vi } from "vitest";
+
+describe("your-node-type execution", () => {
+  it("should transform input correctly", async () => {
+    const node = { type: "your-node-type", data: { config: "value" } };
+    const inputs = { input: "test" };
+    const result = await executeNode(node, inputs, {});
+    expect(result.output).toBe("expected output");
+  });
+});
+```
+
 ## Visual Validation
 
 - [ ] Node renders correctly on canvas

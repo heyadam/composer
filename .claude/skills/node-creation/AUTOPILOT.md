@@ -2,6 +2,8 @@
 
 Integrate your node with the Autopilot AI assistant so it can create and configure your node type.
 
+> **IMPORTANT**: Always refer to `docs/AI_MODELS.md` for authoritative model IDs. Do NOT hardcode or assume model names - they change frequently. The system prompt dynamically generates model lists from `lib/providers.ts`.
+
 ## Checklist
 
 - [ ] Add to `VALID_NODE_TYPES` in `lib/autopilot/config.ts`
@@ -42,11 +44,13 @@ export const NODE_REQUIRED_FIELDS: Record<ValidNodeType, string[]> = {
 
 ## 2. system-prompt.ts Updates
 
-Add comprehensive documentation for the LLM in `buildSystemPrompt()`:
+Add documentation for the LLM in `lib/autopilot/system-prompt.ts`.
+
+**Location**: The `buildSystemPrompt()` function (starts ~line 12) returns a template string. Find the `## Available Node Types` section and add your node after the last numbered entry (e.g., after `### 7. image-input`).
 
 ### Node Type Documentation
 
-Add a new section under `## Available Node Types`:
+Add a new numbered section under `## Available Node Types`:
 
 ```typescript
 ### 8. your-node-type (Your Node Name)
@@ -162,9 +166,7 @@ Brief description explaining purpose and use cases. Mention any special behavior
 When connecting to this node, use \`targetHandle\` to specify which input:
 - To connect to handleId: \`targetHandle: "handleId"\`
 
-**Available Models (ONLY use these exact IDs):** (if applicable)
-- OpenAI: \`model-1\`, \`model-2\`
-- Google: \`model-1\`, \`model-2\`
+**Note:** Model IDs are dynamically generated from `lib/providers.ts` via `formatModelList()`. Do not hardcode model lists - they are injected automatically.
 ```
 
 ## Validation
