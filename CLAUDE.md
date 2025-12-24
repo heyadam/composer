@@ -56,6 +56,21 @@ A comprehensive Supabase development skill is available at `.claude/skills/supab
 
 The skill uses progressive disclosure: only the relevant guide is loaded based on the task.
 
+### Node Creation Skill
+
+A step-by-step guide for creating new nodes is available at `.claude/skills/node-creation/`. Invoke with `/node-creation` to load the router:
+
+| Step | Guide | What you'll do |
+|------|-------|----------------|
+| 1 | `TYPES.md` | Define node data interface and port schema |
+| 2 | `COMPONENT.md` | Create React component with NodeFrame |
+| 3 | `EXECUTION.md` | Add execution logic to engine.ts |
+| 4 | `AUTOPILOT.md` | Integrate with Autopilot system |
+| 5 | `SIDEBAR.md` | Register in sidebar and set defaults |
+| 6 | `VALIDATION.md` | Test and validate implementation |
+
+Copy-paste templates for input, processing, output, and transform nodes are in `TEMPLATES.md`.
+
 ## Architecture Overview
 
 This is an AI agent workflow builder using Next.js 16 App Router with React Flow for visual flow editing.
