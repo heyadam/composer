@@ -62,12 +62,21 @@ export async function POST(request: NextRequest) {
       const supabase = createServiceRoleClient();
 
       // Rate limit using runId for deduplication (handles parallel node execution)
-      const { data: limitResult } = await supabase.rpc("check_and_log_run", {
+      // IMPORTANT: Fail closed - if RPC errors, deny the request to prevent unlimited executions
+      const { data: limitResult, error: limitError } = await supabase.rpc("check_and_log_run", {
         p_share_token: body.shareToken,
         p_run_id: body.runId,
         p_minute_limit: 10,
         p_daily_limit: 100,
       });
+
+      if (limitError) {
+        console.error("Rate limit check failed:", limitError);
+        return NextResponse.json(
+          { error: "Rate limit check unavailable" },
+          { status: 503 }
+        );
+      }
 
       if (limitResult && !limitResult.allowed) {
         return NextResponse.json(
@@ -78,9 +87,17 @@ export async function POST(request: NextRequest) {
 
       // Fetch owner's keys - RPC already checks use_owner_keys flag
       // Returns null if: flow not found, use_owner_keys=false, or no keys stored
-      const { data: encryptedKeys } = await supabase.rpc("get_owner_keys_for_execution", {
+      const { data: encryptedKeys, error: keysError } = await supabase.rpc("get_owner_keys_for_execution", {
         p_share_token: body.shareToken,
       });
+
+      if (keysError) {
+        console.error("Failed to fetch owner keys:", keysError);
+        return NextResponse.json(
+          { error: "Failed to verify execution permissions" },
+          { status: 503 }
+        );
+      }
 
       if (!encryptedKeys) {
         return NextResponse.json(
