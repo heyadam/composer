@@ -66,6 +66,27 @@ import { ResponsesSidebar, type PreviewEntry, type DebugEntry } from "./Response
 import { useApiKeys, type ProviderId } from "@/lib/api-keys";
 import type { FlowMetadata } from "@/lib/flow-storage";
 import { useBackgroundSettings } from "@/lib/hooks/useBackgroundSettings";
+import { motion, AnimatePresence } from "motion/react";
+import { springs } from "@/lib/motion/presets";
+
+// Animated label that slides in/out with spring animation
+function AnimatedLabel({ show, children }: { show: boolean; children: React.ReactNode }) {
+  return (
+    <AnimatePresence initial={false}>
+      {show && (
+        <motion.span
+          className="overflow-hidden whitespace-nowrap"
+          initial={{ width: 0, opacity: 0 }}
+          animate={{ width: "auto", opacity: 1 }}
+          exit={{ width: 0, opacity: 0 }}
+          transition={springs.smooth}
+        >
+          {children}
+        </motion.span>
+      )}
+    </AnimatePresence>
+  );
+}
 import { ProfileDropdown } from "./ProfileDropdown";
 import { ShareDialog } from "./ShareDialog";
 import { LiveSettingsPopover } from "./LiveSettingsPopover";
@@ -305,6 +326,9 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
 
   // Canvas width for responsive label hiding
   const [canvasWidth, setCanvasWidth] = useState<number>(0);
+  // Effective width accounts for sidebar overlay
+  const effectiveWidth = canvasWidth - (autopilotOpen ? 380 : 0);
+  const showLabels = effectiveWidth > 800;
 
   const statuses = getKeyStatuses();
   const hasAnyKey = statuses.some((s) => s.hasKey);
@@ -815,27 +839,35 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
           </ConnectionContext.Provider>
         </CommentEditContext.Provider>
         {/* Top center branding */}
-        <div className="absolute top-0 left-0 right-0 z-10 flex justify-center pt-4 pb-8 bg-gradient-to-b from-black/90 to-transparent">
-          <AvyLogo isPanning={isPanning} canvasWidth={canvasWidth} />
-        </div>
+        <motion.div
+          className="absolute top-0 right-0 z-10 flex justify-center pt-4 pb-8 bg-gradient-to-b from-black/90 to-transparent"
+          initial={false}
+          animate={{ left: autopilotOpen ? 380 : 0 }}
+          transition={springs.smooth}
+        >
+          <AvyLogo isPanning={isPanning} canvasWidth={effectiveWidth} />
+        </motion.div>
         {/* Autopilot and Flow (top left) */}
         <TooltipProvider delayDuration={200}>
-          <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
+          <motion.div
+            className="absolute top-4 z-10 flex items-center gap-2"
+            initial={false}
+            animate={{ left: autopilotOpen ? 396 : 16 }}
+            transition={springs.smooth}
+          >
             {/* Autopilot */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setAutopilotOpen(!autopilotOpen)}
-                  className={`flex items-center px-2.5 py-2 transition-colors rounded-full border bg-background/50 backdrop-blur-sm text-sm cursor-pointer ${
-                    canvasWidth > 800 ? "gap-1.5" : ""
-                  } ${
+                  className={`flex items-center gap-1.5 px-2.5 py-2 transition-colors rounded-full border bg-background/50 backdrop-blur-sm text-sm cursor-pointer ${
                     autopilotOpen
                       ? "text-foreground border-muted-foreground/40"
                       : "text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-muted-foreground/40"
                   }`}
                 >
                   <PanelLeft className="w-4 h-4 shrink-0" />
-                  {canvasWidth > 800 && <span>AI</span>}
+                  <AnimatedLabel show={showLabels}>AI</AnimatedLabel>
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="bg-neutral-800 text-white border-neutral-700">
@@ -846,20 +878,16 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={`flex items-center px-2.5 py-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm text-sm cursor-pointer ${
-                    canvasWidth > 800 ? "gap-1.5" : ""
-                  }`}
+                  className="flex items-center gap-1.5 px-2.5 py-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm text-sm cursor-pointer"
                   title="Files"
                 >
                   <Folder className="w-4 h-4 shrink-0" />
-                  {canvasWidth > 800 && (
-                    <>
-                      <span>Flow</span>
-                      {isCollaborating && isCollaborationSaving && (
-                        <span className="ml-1 text-xs text-muted-foreground/50">Saving...</span>
-                      )}
-                    </>
-                  )}
+                  <AnimatedLabel show={showLabels}>
+                    Flow
+                    {isCollaborating && isCollaborationSaving && (
+                      <span className="ml-1 text-xs text-muted-foreground/50">Saving...</span>
+                    )}
+                  </AnimatedLabel>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -942,24 +970,22 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
                   title="Live settings"
                 >
                   <Globe className="w-4 h-4 shrink-0" />
-                  {canvasWidth > 800 && (
-                    <>
-                      <span>Share</span>
-                      {isRealtimeConnected && (
-                        <span className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                          <AvatarStack
-                            avatars={collaborators.map(c => ({
-                              name: c.name ?? 'Guest',
-                              image: c.avatar ?? ''
-                            }))}
-                            maxAvatarsAmount={3}
-                            className="-space-x-2 [&_[data-slot=avatar]]:size-6 [&_[data-slot=avatar]]:ring-2 [&_[data-slot=avatar]]:ring-background [&_[data-slot=avatar-fallback]]:text-xs"
-                          />
-                        </span>
-                      )}
-                    </>
-                  )}
+                  <AnimatedLabel show={showLabels}>
+                    Share
+                    {isRealtimeConnected && (
+                      <span className="flex items-center gap-1.5 ml-1">
+                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <AvatarStack
+                          avatars={collaborators.map(c => ({
+                            name: c.name ?? 'Guest',
+                            image: c.avatar ?? ''
+                          }))}
+                          maxAvatarsAmount={3}
+                          className="-space-x-2 [&_[data-slot=avatar]]:size-6 [&_[data-slot=avatar]]:ring-2 [&_[data-slot=avatar]]:ring-background [&_[data-slot=avatar-fallback]]:text-xs"
+                        />
+                      </span>
+                    )}
+                  </AnimatedLabel>
                 </button>
               </LiveSettingsPopover>
             ) : (
@@ -967,13 +993,11 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => setShareDialogOpen(true)}
-                    className={`flex items-center px-2.5 py-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm text-sm cursor-pointer ${
-                      canvasWidth > 800 ? "gap-1.5" : ""
-                    }`}
+                    className="flex items-center gap-1.5 px-2.5 py-2 text-muted-foreground/60 hover:text-foreground transition-colors rounded-full border border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm text-sm cursor-pointer"
                     title="Go Live"
                   >
                     <Globe className="w-4 h-4 shrink-0" />
-                    {canvasWidth > 800 && <span>Share</span>}
+                    <AnimatedLabel show={showLabels}>Share</AnimatedLabel>
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="bg-neutral-800 text-white border-neutral-700">
@@ -981,7 +1005,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
                 </TooltipContent>
               </Tooltip>
             )}
-          </div>
+          </motion.div>
         </TooltipProvider>
         {/* Settings, Profile, and Preview icons (top right, left of responses sidebar) */}
         <TooltipProvider delayDuration={200}>
@@ -1014,15 +1038,13 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setResponsesOpen(!responsesOpen)}
-                  className={`flex items-center px-2.5 py-2 transition-colors rounded-full border bg-background/50 backdrop-blur-sm text-sm cursor-pointer ${
-                    canvasWidth > 800 ? "gap-1.5" : ""
-                  } ${
+                  className={`flex items-center gap-1.5 px-2.5 py-2 transition-colors rounded-full border bg-background/50 backdrop-blur-sm text-sm cursor-pointer ${
                     responsesOpen
                       ? "text-foreground border-muted-foreground/40"
                       : "text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-muted-foreground/40"
                   }`}
                 >
-                  {canvasWidth > 800 && <span>Preview</span>}
+                  <AnimatedLabel show={showLabels}>Preview</AnimatedLabel>
                   <PanelRight className="w-4 h-4 shrink-0" />
                 </button>
               </TooltipTrigger>

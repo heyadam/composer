@@ -116,7 +116,7 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 **NodeStatusBadge** (`components/Flow/nodes/NodeStatusBadge.tsx`): Visual indicator for node execution status (running/success/error).
 
 **Responses Sidebar** (`components/Flow/ResponsesSidebar/`): Resizable right sidebar that displays preview-output node results:
-- `ResponsesSidebar.tsx`: Main container with run/reset controls, tab switching (Preview/Debug), and drag-to-resize
+- `ResponsesSidebar.tsx`: Main container with spring-animated open/close using motion.dev
 - `ResponsesHeader.tsx`: Header with action buttons
 - `ResponsesContent.tsx`: Scrollable content area for responses
 - `DebugContent.tsx`: Debug view showing detailed request/response info per node with collapsible sections and copy-to-clipboard
@@ -124,6 +124,7 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 - `types.ts`: PreviewEntry and DebugEntry interfaces
 - Streams responses in real-time as they generate
 - Width persisted to localStorage (min: 240px, max: 800px)
+- Uses `useResizableSidebar` hook for drag-to-resize behavior
 
 **Composer Logo** (`components/Flow/AvyLogo.tsx`): Animated 3D fluid sphere logo using react-three-fiber. Features:
 - WebGL shader-based liquid deformation with simplex noise
@@ -193,8 +194,9 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 **Flow Context Menu** (`components/Flow/FlowContextMenu.tsx`): Right-click context menu on canvas with "Comment Around" option for selected nodes.
 
 **Autopilot Sidebar** (`components/Flow/AutopilotSidebar/`): AI-powered chat interface for natural language flow editing:
-- `AutopilotSidebar.tsx`: Main container with resizable width (320-600px)
+- `AutopilotSidebar.tsx`: Main container with spring-animated open/close using motion.dev, absolute positioned to overlay canvas
 - `AutopilotChat.tsx`: Chat UI with mode selector (Execute/Plan), model selector (Sonnet 4.5/Opus 4.5), and extended thinking toggle
+- Uses `useResizableSidebar` hook for drag-to-resize (320-600px)
 - `AutopilotHeader.tsx`: Header with clear history button
 - `CollapsibleJson.tsx`: Collapsible JSON preview with syntax highlighting, auto-scroll during streaming, auto-collapse when done
 - `ChangesPreview.tsx`: Visual diff of pending changes (added/removed nodes and edges)
@@ -234,6 +236,7 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 - `usePerfectCursor.ts`: Wrapper around `perfect-cursors` npm package for smooth cursor/position animations.
 - `useNuxState.ts`: Manages NUX step state (`"1"` | `"2"` | `"3"` | `"done"`) persisted to localStorage.
 - `useDemoExecution.ts`: Auto-executes welcome-preview flow for NUX Step 1 demo.
+- `useResizableSidebar.ts`: Reusable hook for sidebar resize behavior - SSR-safe localStorage, RAF-throttled updates, global mouse handling.
 
 **Comment System**:
 - `CommentEditContext.tsx`: React context for tracking user-edited comments to prevent AI overwrites
@@ -454,3 +457,34 @@ Uses shadcn/ui components in `components/ui/` with Tailwind CSS v4. Import alias
 **Content Design**: When adding or modifying UI text (labels, placeholders, descriptions, tooltips, button text), use the `/content-design` skill (`.claude/skills/content-design/`). This ensures consistent tone and formatting across the application.
 
 **AI Elements**: Use the AI Elements MCP (`mcp__ai-elements__get_ai_elements_components` and `mcp__ai-elements__get_ai_elements_component`) to discover and add UI components. AI Elements registry is configured at `@ai-elements` for components from `https://registry.ai-sdk.dev/`.
+
+### Motion Animation System
+
+Uses [motion.dev](https://motion.dev) (npm package `motion`) for spring-based animations. See `docs/motion.md` for detailed documentation.
+
+**Motion Presets** (`lib/motion/presets.ts`): Centralized spring animation configurations:
+- `springs.smooth`: Balanced default for sidebar open/close (stiffness: 300, damping: 30)
+- `springs.snappy`: Quick micro-interactions (stiffness: 400, damping: 25)
+- `springs.gentle`: Slow modals/overlays (stiffness: 200, damping: 25)
+- `springs.bouncy`: Playful elements (stiffness: 350, damping: 20)
+- `getTransition(skipAnimation)`: Returns instant transition during resize, spring otherwise
+- `getAccessibleTransition()`: Respects `prefers-reduced-motion` setting
+
+**useResizableSidebar Hook** (`lib/hooks/useResizableSidebar.ts`): Reusable hook for resizable sidebar behavior:
+- SSR-safe localStorage persistence (no flash on load)
+- RAF-throttled resize for smooth drag
+- Global mouse event handling during drag
+- Cursor and user-select management
+- Returns: `{ width, isResizing, sidebarRef, startResizing }`
+
+**Animation Patterns**:
+- Use `initial={false}` to prevent animation on mount
+- Use `style` with `willChange: "width"` only during resize
+- Use `animate` with spring transition for open/close toggle
+- `AnimatedLabel` component in AgentFlow.tsx for nav button labels with AnimatePresence
+
+**Animated Components**:
+- `AutopilotSidebar`: Left sidebar with spring open/close, absolute positioned to overlay canvas
+- `ResponsesSidebar`: Right sidebar with spring open/close
+- Header nav buttons: Labels animate in/out based on available width using `AnimatedLabel`
+- Logo container: Animates position when sidebar opens

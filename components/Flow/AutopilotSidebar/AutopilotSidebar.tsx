@@ -84,10 +84,10 @@ export function AutopilotSidebar({
 
   return (
     <motion.div
-      className="h-full overflow-hidden"
+      className="absolute left-0 top-0 h-full overflow-hidden flex justify-end z-20"
+      style={{ willChange: isResizing ? "width" : "auto" }}
       initial={false}
       animate={{ width: w, minWidth: w }}
-      style={{ willChange: isResizing ? "width" : "auto" }}
       transition={getTransition(isResizing)}
     >
       <div

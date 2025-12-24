@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useRef, useCallback, useMemo } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Suspense, useRef, useCallback, useMemo, useState } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { Group, Mesh, TubeGeometry, QuadraticBezierCurve3 } from "three";
 import { HeroPanel } from "./HeroPanel";
@@ -135,6 +135,44 @@ function getRandomCursorColors(): [string, string] {
   return [CURSOR_COLORS[colorKeys[firstIndex]], CURSOR_COLORS[colorKeys[secondIndex]]];
 }
 
+// Scene center point for camera to look at
+const sceneCenter = new THREE.Vector3(0, -0.1, 0);
+
+/**
+ * Camera controller that orbits around the scene based on mouse position.
+ * Creates a 3D parallax effect by moving the camera in an arc.
+ */
+function CameraRig({ mouseX, mouseY }: { mouseX: number; mouseY: number }) {
+  const { camera } = useThree();
+  const current = useRef({ x: 0, y: -0.1, z: 16, rotZ: 0 });
+  const baseZ = 16;
+
+  useFrame(() => {
+    // Target values based on mouse - VERY dramatic
+    const targetX = mouseX * 6;
+    const targetY = -0.1 + mouseY * 4;
+    const targetZ = baseZ - Math.abs(mouseX) * 2 - Math.abs(mouseY) * 1.5; // Move closer when offset
+    const targetRotZ = -mouseX * 0.15; // Tilt rotation
+
+    // Smooth lerp towards targets
+    current.current.x += (targetX - current.current.x) * 0.1;
+    current.current.y += (targetY - current.current.y) * 0.1;
+    current.current.z += (targetZ - current.current.z) * 0.1;
+    current.current.rotZ += (targetRotZ - current.current.rotZ) * 0.1;
+
+    // Apply camera position
+    camera.position.x = current.current.x;
+    camera.position.y = current.current.y;
+    camera.position.z = current.current.z;
+
+    // Look at scene center then apply roll
+    camera.lookAt(sceneCenter);
+    camera.rotation.z = current.current.rotZ;
+  });
+
+  return null;
+}
+
 /**
  * Scene content that needs to use refs inside the Canvas
  */
@@ -192,22 +230,22 @@ function SceneContent({ step }: SceneContentProps) {
       {/* Soft, diffused lighting */}
       <ambientLight intensity={0.8} />
       <hemisphereLight args={["#6366F1", "#1a1a1f", 0.6]} />
-      {/* Main shadow-casting light from above/front */}
+      {/* Main shadow-casting light */}
       <directionalLight
-        position={[1, 4, 8]}
-        target-position={[0, 0, 0]}
+        position={[2, 4, 8]}
         intensity={0.8}
         color="#ffffff"
         castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
         shadow-camera-far={20}
         shadow-camera-left={-10}
         shadow-camera-right={10}
         shadow-camera-top={10}
         shadow-camera-bottom={-10}
         shadow-bias={-0.001}
-        shadow-radius={12}
+        shadow-radius={8}
+        shadow-blurSamples={25}
       />
       {/* Fill lights for ambient look */}
       <directionalLight position={[5, 3, 5]} intensity={0.3} color="#8B5CF6" />
@@ -215,9 +253,9 @@ function SceneContent({ step }: SceneContentProps) {
       <pointLight position={[0, 0, 6]} intensity={0.2} distance={15} decay={2} />
 
       {/* Shadow-receiving plane behind cubes */}
-      <mesh position={[0, 0, -0.5]} receiveShadow>
-        <planeGeometry args={[20, 20]} />
-        <shadowMaterial transparent opacity={0.25} color="#000000" />
+      <mesh position={[0, 0, -0.8]} receiveShadow>
+        <planeGeometry args={[25, 25]} />
+        <shadowMaterial transparent opacity={0.4} color="#000000" />
       </mesh>
 
       {/* Lines (behind) */}
@@ -279,7 +317,7 @@ function SceneContent({ step }: SceneContentProps) {
           color={openaiColor}
         />
         <AnimatedCursor
-          position={[claudePos.x + 0.6, claudePos.y - 0.6, 1.5]}
+          position={[claudePos.x + 0.3, claudePos.y - 0.6, 1.5]}
           active={true}
           onDragUpdate={handleClaudeDragUpdate}
           cycleDuration={3.5}
@@ -297,17 +335,34 @@ function SceneContent({ step }: SceneContentProps) {
  * Used on the API keys step of the welcome dialog.
  */
 export function ProvidersHero({ step }: ProvidersHeroProps) {
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    const y = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+    setMousePos({ x, y });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setMousePos({ x: 0, y: 0 });
+  }, []);
+
   return (
     <HeroPanel>
-      <div className="pointer-events-none absolute inset-0 z-20">
+      <div
+        className="absolute inset-0 z-20"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
         <Canvas
-          orthographic
-          camera={{ position: [0, 0, 10], zoom: 48 }}
+          camera={{ position: [0, -0.1, 16], fov: 35 }}
           dpr={[1, 2]}
           frameloop="always"
           gl={{ antialias: true, alpha: true }}
-          shadows
+          shadows="variance"
         >
+          <CameraRig mouseX={mousePos.x} mouseY={mousePos.y} />
           <SceneContent step={step} />
         </Canvas>
       </div>

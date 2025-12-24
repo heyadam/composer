@@ -23,7 +23,7 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
 - **Multi-Provider Support**: Choose from OpenAI, Google Gemini, or Anthropic Claude models
 - **OpenAI-Specific Options**: Verbosity control (low/medium/high) and thinking mode for supported models
 - **Streaming Responses**: See AI responses and images appear in real-time
-- **Resizable Responses Sidebar**: Drag-to-resize sidebar shows output node results as they stream
+- **Resizable Sidebars**: Drag-to-resize sidebars with spring animations using motion.dev
 - **Parallel Execution**: Branches execute independently, responses appear as each completes
 - **Color-Coded Edges**: Visual data flow with colored connections (cyan=string, purple=image, amber=response)
 - **Smart Port Labels**: Color-coded input/output handles with labels that highlight during connections
@@ -157,6 +157,7 @@ Open [http://localhost:3000](http://localhost:3000) to use the workflow builder.
 - [Next.js 16](https://nextjs.org/) - React framework
 - [React Flow](https://reactflow.dev/) - Node-based flow editor
 - [React Three Fiber](https://docs.pmnd.rs/react-three-fiber) - 3D WebGL rendering for logo
+- [motion.dev](https://motion.dev/) - Spring-based animations for sidebars and UI transitions
 - [Vercel AI SDK](https://sdk.vercel.ai/) - Streaming LLM responses
 - [OpenAI SDK](https://platform.openai.com/docs/libraries) - Image generation with streaming
 - [Supabase](https://supabase.com/) - Authentication, cloud storage, and real-time collaboration

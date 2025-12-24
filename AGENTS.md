@@ -60,7 +60,9 @@ Required for owner-funded execution:
   - `useFlowOperations.ts`: Flow save/load/template operations
   - `useCollaboration.ts`: Real-time sync, Supabase Presence, cursor tracking
   - `useUndoRedo.ts`: Snapshot-based undo/redo with keyboard shortcuts
+  - `useResizableSidebar.ts`: Drag-to-resize with SSR-safe localStorage persistence
 - Collaboration: `CollaboratorCursors.tsx` + `usePerfectCursor.ts` for smooth cursor animations.
+- Motion animations: `lib/motion/presets.ts` (spring configs) + sidebars use motion.dev for open/close.
 - Encryption: `lib/encryption.ts` (AES-256-GCM for API key storage).
 - Service client: `lib/supabase/service.ts` (server-only, for owner key access).
 - Shared API helpers: `lib/api/providers.ts` (e.g., `getAnthropicClient`)
