@@ -1,28 +1,21 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { motion } from "motion/react";
 import { AutopilotHeader } from "./AutopilotHeader";
 import { AutopilotChat } from "./AutopilotChat";
 import { useAutopilotChat } from "@/lib/hooks/useAutopilotChat";
+import { useResizableSidebar } from "@/lib/hooks/useResizableSidebar";
+import { getTransition } from "@/lib/motion/presets";
 import type { AutopilotSidebarProps } from "./types";
 
-const MIN_WIDTH = 320;
-const MAX_WIDTH = 600;
-const DEFAULT_WIDTH = 380;
-const STORAGE_KEY = "autopilot-sidebar-width";
-
-// Get initial width from localStorage
-function getInitialWidth(): number {
-  if (typeof window === "undefined") return DEFAULT_WIDTH;
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    const parsed = parseInt(saved, 10);
-    if (!isNaN(parsed) && parsed >= MIN_WIDTH && parsed <= MAX_WIDTH) {
-      return parsed;
-    }
-  }
-  return DEFAULT_WIDTH;
-}
+const SIDEBAR_CONFIG = {
+  minWidth: 320,
+  maxWidth: 600,
+  defaultWidth: 380,
+  storageKey: "autopilot-sidebar-width",
+  side: "left" as const,
+};
 
 export function AutopilotSidebar({
   nodes,
@@ -39,10 +32,7 @@ export function AutopilotSidebar({
   onPendingMessageConsumed,
   clearHistoryTrigger,
 }: AutopilotSidebarProps) {
-  const [width, setWidth] = useState(getInitialWidth);
-  const [isResizing, setIsResizing] = useState(false);
-  const sidebarRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number | null>(null);
+  const { width, isResizing, sidebarRef, startResizing } = useResizableSidebar(SIDEBAR_CONFIG);
 
   const {
     messages,
@@ -90,73 +80,15 @@ export function AutopilotSidebar({
     }
   }, [clearHistoryTrigger, clearHistory]);
 
-  // Save width to localStorage when it changes (but not during active drag)
-  useEffect(() => {
-    if (!isResizing) {
-      localStorage.setItem(STORAGE_KEY, width.toString());
-    }
-  }, [width, isResizing]);
-
-  const startResizing = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-  }, []);
-
-  const stopResizing = useCallback(() => {
-    setIsResizing(false);
-    // Cancel any pending animation frame
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-  }, []);
-
-  const resize = useCallback(
-    (e: MouseEvent) => {
-      if (!isResizing || !sidebarRef.current) return;
-
-      // Throttle updates to animation frame rate for smooth resizing
-      if (rafRef.current) return;
-
-      const clientX = e.clientX;
-      rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = null;
-        const sidebarRect = sidebarRef.current?.getBoundingClientRect();
-        if (!sidebarRect) return;
-
-        const newWidth = clientX - sidebarRect.left;
-        if (newWidth >= MIN_WIDTH && newWidth <= MAX_WIDTH) {
-          setWidth(newWidth);
-        }
-      });
-    },
-    [isResizing]
-  );
-
-  useEffect(() => {
-    if (isResizing) {
-      document.addEventListener("mousemove", resize);
-      document.addEventListener("mouseup", stopResizing);
-      document.body.style.cursor = "col-resize";
-      document.body.style.userSelect = "none";
-    }
-
-    return () => {
-      document.removeEventListener("mousemove", resize);
-      document.removeEventListener("mouseup", stopResizing);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-  }, [isResizing, resize, stopResizing]);
+  const w = isOpen ? width : 0;
 
   return (
-    <div
-      className={`h-full overflow-hidden ${isResizing ? "" : "transition-[width,min-width] duration-300 ease-out"}`}
-      style={{
-        width: isOpen ? width : 0,
-        minWidth: isOpen ? width : 0,
-        willChange: isResizing ? "width" : "auto",
-      }}
+    <motion.div
+      className="h-full overflow-hidden"
+      initial={false}
+      animate={{ width: w, minWidth: w }}
+      style={{ willChange: isResizing ? "width" : "auto" }}
+      transition={getTransition(isResizing)}
     >
       <div
         ref={sidebarRef}
@@ -195,6 +127,6 @@ export function AutopilotSidebar({
           onMouseDown={startResizing}
         />
       </div>
-    </div>
+    </motion.div>
   );
 }

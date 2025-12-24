@@ -1,15 +1,20 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { motion } from "motion/react";
 import { ResponsesHeader } from "./ResponsesHeader";
 import { ResponsesContent } from "./ResponsesContent";
 import { DebugContent } from "./DebugContent";
+import { useResizableSidebar } from "@/lib/hooks/useResizableSidebar";
+import { getTransition } from "@/lib/motion/presets";
 import type { PreviewEntry, DebugEntry } from "./types";
 
-const MIN_WIDTH = 240;
-const MAX_WIDTH = 800;
-const DEFAULT_WIDTH = 340;
-const STORAGE_KEY = "responses-sidebar-width";
+const SIDEBAR_CONFIG = {
+  minWidth: 240,
+  maxWidth: 800,
+  defaultWidth: 340,
+  storageKey: "responses-sidebar-width",
+  side: "right" as const,
+};
 
 interface ResponsesSidebarProps {
   entries: PreviewEntry[];
@@ -28,89 +33,17 @@ export function ResponsesSidebar({
   keyError,
   isOpen,
 }: ResponsesSidebarProps) {
-  const [width, setWidth] = useState(DEFAULT_WIDTH);
-  const [isResizing, setIsResizing] = useState(false);
-  const sidebarRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number | null>(null);
+  const { width, isResizing, sidebarRef, startResizing } = useResizableSidebar(SIDEBAR_CONFIG);
 
-  // Load saved width from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = parseInt(saved, 10);
-      if (!isNaN(parsed) && parsed >= MIN_WIDTH && parsed <= MAX_WIDTH) {
-        setWidth(parsed);
-      }
-    }
-  }, []);
-
-  // Save width to localStorage when it changes (but not during active drag)
-  useEffect(() => {
-    if (!isResizing) {
-      localStorage.setItem(STORAGE_KEY, width.toString());
-    }
-  }, [width, isResizing]);
-
-  const startResizing = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-  }, []);
-
-  const stopResizing = useCallback(() => {
-    setIsResizing(false);
-    // Cancel any pending animation frame
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-  }, []);
-
-  const resize = useCallback(
-    (e: MouseEvent) => {
-      if (!isResizing || !sidebarRef.current) return;
-
-      // Throttle updates to animation frame rate for smooth resizing
-      if (rafRef.current) return;
-
-      const clientX = e.clientX;
-      rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = null;
-        const sidebarRect = sidebarRef.current?.getBoundingClientRect();
-        if (!sidebarRect) return;
-
-        const newWidth = sidebarRect.right - clientX;
-        if (newWidth >= MIN_WIDTH && newWidth <= MAX_WIDTH) {
-          setWidth(newWidth);
-        }
-      });
-    },
-    [isResizing]
-  );
-
-  useEffect(() => {
-    if (isResizing) {
-      document.addEventListener("mousemove", resize);
-      document.addEventListener("mouseup", stopResizing);
-      document.body.style.cursor = "col-resize";
-      document.body.style.userSelect = "none";
-    }
-
-    return () => {
-      document.removeEventListener("mousemove", resize);
-      document.removeEventListener("mouseup", stopResizing);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-  }, [isResizing, resize, stopResizing]);
+  const w = isOpen ? width : 0;
 
   return (
-    <div
-      className={`h-full overflow-hidden ${isResizing ? "" : "transition-[width,min-width] duration-300 ease-out"}`}
-      style={{
-        width: isOpen ? width : 0,
-        minWidth: isOpen ? width : 0,
-        willChange: isResizing ? "width" : "auto",
-      }}
+    <motion.div
+      className="h-full overflow-hidden"
+      initial={false}
+      animate={{ width: w, minWidth: w }}
+      style={{ willChange: isResizing ? "width" : "auto" }}
+      transition={getTransition(isResizing)}
     >
       <div
         ref={sidebarRef}
@@ -135,6 +68,6 @@ export function ResponsesSidebar({
           <DebugContent entries={debugEntries} />
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
