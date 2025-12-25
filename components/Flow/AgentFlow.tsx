@@ -40,7 +40,8 @@ import { useAutopilotIntegration } from "@/lib/hooks/useAutopilotIntegration";
 import { useNodeParenting } from "@/lib/hooks/useNodeParenting";
 import { useFlowOperations } from "@/lib/hooks/useFlowOperations";
 import { useUndoRedo } from "@/lib/hooks/useUndoRedo";
-import type { NodeType, CommentColor } from "@/types/flow";
+import { useCommentAround } from "@/lib/hooks/useCommentAround";
+import type { NodeType } from "@/types/flow";
 import { SettingsDialogControlled } from "./SettingsDialogControlled";
 import { WelcomeDialog, isNuxComplete } from "./WelcomeDialog";
 import { TemplatesModal } from "./TemplatesModal";
@@ -458,6 +459,15 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     setNodes,
   });
 
+  // Comment-around hook (wraps selected nodes in a comment)
+  const { hasSelection, handleCommentAround } = useCommentAround({
+    nodes,
+    setNodes,
+    triggerGeneration,
+    getId,
+    onBeforeChange: takeSnapshot,
+  });
+
   // Node parenting hook (handles auto-parenting into comments)
   const { handleNodesChange, getAbsolutePosition, isInsideComment } = useNodeParenting({
     nodes,
@@ -699,78 +709,6 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     },
     [getViewportCenter, setNodes, takeSnapshot]
   );
-
-  // Get currently selected nodes (excluding comments when wrapping)
-  const getSelectedNodes = useCallback(() => {
-    return nodes.filter((n) => n.selected && n.type !== "comment");
-  }, [nodes]);
-
-  // Check if any nodes are selected
-  const hasSelection = nodes.some((n) => n.selected && n.type !== "comment");
-
-  // Handler to create comment around selected nodes
-  const handleCommentAround = useCallback(() => {
-    const selectedNodes = getSelectedNodes();
-    if (selectedNodes.length === 0) return;
-
-    // Calculate bounding box of selected nodes
-    const padding = 40;
-    const headerHeight = 60; // Space for the comment header
-
-    const bounds = selectedNodes.reduce(
-      (acc, node) => ({
-        minX: Math.min(acc.minX, node.position.x),
-        minY: Math.min(acc.minY, node.position.y),
-        maxX: Math.max(acc.maxX, node.position.x + (node.measured?.width || 280)),
-        maxY: Math.max(acc.maxY, node.position.y + (node.measured?.height || 200)),
-      }),
-      { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity }
-    );
-
-    const commentId = getId();
-    const commentPosition = {
-      x: bounds.minX - padding,
-      y: bounds.minY - padding - headerHeight,
-    };
-
-    // Create comment node with default values
-    const commentNode: Node = {
-      id: commentId,
-      type: "comment",
-      position: commentPosition,
-      style: {
-        width: bounds.maxX - bounds.minX + padding * 2,
-        height: bounds.maxY - bounds.minY + padding * 2 + headerHeight,
-        zIndex: -1, // Render behind other nodes
-      },
-      data: {
-        label: "Comment",
-        description: "",
-        color: "gray" as CommentColor,
-      },
-    };
-
-    // Update selected nodes to be children of comment
-    setNodes((nds) => [
-      commentNode,
-      ...nds.map((node) =>
-        selectedNodes.some((sn) => sn.id === node.id)
-          ? {
-              ...node,
-              parentId: commentId,
-              // Convert absolute position to relative within parent
-              position: {
-                x: node.position.x - commentPosition.x,
-                y: node.position.y - commentPosition.y,
-              },
-            }
-          : node
-      ),
-    ]);
-
-    // Trigger AI generation for the new comment's title/description
-    triggerGeneration(commentId);
-  }, [getSelectedNodes, setNodes, triggerGeneration]);
 
   return (
     <div className="flex h-screen w-full">
