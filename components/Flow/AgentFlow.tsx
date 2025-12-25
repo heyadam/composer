@@ -170,6 +170,16 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
 
   // Sidebar and palette states
   const [autopilotOpen, setAutopilotOpen] = useState(false);
+  // Initialize from localStorage to match sidebar's stored width (avoids animation mismatch)
+  const [autopilotWidth, setAutopilotWidth] = useState(() => {
+    if (typeof window === "undefined") return 380;
+    const saved = localStorage.getItem("autopilot-sidebar-width");
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed >= 320 && parsed <= 600) return parsed;
+    }
+    return 380;
+  });
   const [nodesPaletteOpen, setNodesPaletteOpen] = useState(false);
   const [autopilotClearTrigger, setAutopilotClearTrigger] = useState(0);
 
@@ -327,7 +337,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
   // Canvas width for responsive label hiding
   const [canvasWidth, setCanvasWidth] = useState<number>(0);
   // Effective width accounts for sidebar overlay
-  const effectiveWidth = canvasWidth - (autopilotOpen ? 380 : 0);
+  const effectiveWidth = canvasWidth - (autopilotOpen ? autopilotWidth : 0);
   const showLabels = effectiveWidth > 800;
 
   const statuses = getKeyStatuses();
@@ -779,6 +789,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
         pendingMessage={pendingAutopilotMessage ?? undefined}
         onPendingMessageConsumed={() => setPendingAutopilotMessage(null)}
         clearHistoryTrigger={autopilotClearTrigger}
+        onWidthChange={setAutopilotWidth}
       />
       <div
         ref={reactFlowWrapper}
@@ -842,7 +853,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
         <motion.div
           className="absolute top-0 right-0 z-10 flex justify-center pt-4 pb-8 bg-gradient-to-b from-black/90 to-transparent"
           initial={false}
-          animate={{ left: autopilotOpen ? 380 : 0 }}
+          animate={{ left: autopilotOpen ? autopilotWidth : 0 }}
           transition={springs.smooth}
         >
           <AvyLogo isPanning={isPanning} canvasWidth={effectiveWidth} />
@@ -852,7 +863,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
           <motion.div
             className="absolute top-4 z-10 flex items-center gap-2"
             initial={false}
-            animate={{ left: autopilotOpen ? 396 : 16 }}
+            animate={{ left: autopilotOpen ? autopilotWidth + 16 : 16 }}
             transition={springs.smooth}
           >
             {/* Autopilot */}

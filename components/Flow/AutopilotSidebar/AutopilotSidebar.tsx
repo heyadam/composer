@@ -31,8 +31,14 @@ export function AutopilotSidebar({
   pendingMessage,
   onPendingMessageConsumed,
   clearHistoryTrigger,
+  onWidthChange,
 }: AutopilotSidebarProps) {
   const { width, isResizing, sidebarRef, startResizing } = useResizableSidebar(SIDEBAR_CONFIG);
+
+  // Report width changes to parent for layout adjustments
+  useEffect(() => {
+    onWidthChange?.(width);
+  }, [width, onWidthChange]);
 
   const {
     messages,

@@ -60,24 +60,36 @@ function DynamicLine({
   const particleRef = useRef<Mesh>(null);
   const curveRef = useRef<QuadraticBezierCurve3 | null>(null);
   const particleVisibilityRef = useRef(0);
+  const prevOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const geometryRef = useRef<TubeGeometry | null>(null);
 
   useFrame(({ clock }) => {
     if (!tubeRef.current) return;
 
     const offset = dragOffsetRef.current;
-    const fromX = baseFrom.x + (offset?.x ?? 0);
-    const fromY = baseFrom.y + (offset?.y ?? 0);
-    const from = new THREE.Vector3(fromX, fromY, 0);
+    const offsetX = offset?.x ?? 0;
+    const offsetY = offset?.y ?? 0;
 
-    // Rebuild curve and geometry
-    const mid = new THREE.Vector3((from.x + to.x) / 2, (from.y + to.y) / 2, 0);
-    mid.y += 0.9;
-    const curve = new QuadraticBezierCurve3(from, mid, to);
-    curveRef.current = curve;
+    // Rebuild geometry when offset changes OR when React replaced our geometry (e.g., on re-render)
+    const geometryWasReplaced = tubeRef.current.geometry !== geometryRef.current;
+    if (
+      offsetX !== prevOffsetRef.current.x ||
+      offsetY !== prevOffsetRef.current.y ||
+      geometryWasReplaced
+    ) {
+      prevOffsetRef.current = { x: offsetX, y: offsetY };
 
-    const newGeometry = new TubeGeometry(curve, 48, 0.035, 8, false);
-    tubeRef.current.geometry.dispose();
-    tubeRef.current.geometry = newGeometry;
+      const from = new THREE.Vector3(baseFrom.x + offsetX, baseFrom.y + offsetY, 0);
+      const mid = new THREE.Vector3((from.x + to.x) / 2, (from.y + to.y) / 2, 0);
+      mid.y += 0.9;
+      const curve = new QuadraticBezierCurve3(from, mid, to);
+      curveRef.current = curve;
+
+      const newGeometry = new TubeGeometry(curve, 48, 0.035, 8, false);
+      tubeRef.current.geometry.dispose();
+      tubeRef.current.geometry = newGeometry;
+      geometryRef.current = newGeometry;
+    }
 
     // Animate particle visibility based on step
     const targetVisibility = step === 3 ? 1 : 0;
@@ -160,13 +172,10 @@ function CameraRig({ mouseX, mouseY }: { mouseX: number; mouseY: number }) {
     current.current.z += (targetZ - current.current.z) * 0.1;
     current.current.rotZ += (targetRotZ - current.current.rotZ) * 0.1;
 
-    // Apply camera position
-    camera.position.x = current.current.x;
-    camera.position.y = current.current.y;
-    camera.position.z = current.current.z;
-
-    // Look at scene center then apply roll
+    // Apply camera position and rotation
+    camera.position.set(current.current.x, current.current.y, current.current.z);
     camera.lookAt(sceneCenter);
+    // eslint-disable-next-line react-hooks/immutability -- Standard r3f pattern for camera animation
     camera.rotation.z = current.current.rotZ;
   });
 
