@@ -3,6 +3,16 @@
 import { useEffect, useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import {
   KeyRound,
@@ -44,6 +54,8 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
   const [password, setPassword] = useState(() => loadVipCode() || "");
   const [passwordError, setPasswordError] = useState("");
   const [vipSuccess, setVipSuccess] = useState(false);
+  const [showSkipAlert, setShowSkipAlert] = useState(false);
+  const [showSkipKeysAlert, setShowSkipKeysAlert] = useState(false);
 
   const statuses = getKeyStatuses();
   const hasAnyKey = statuses.some((s) => s.hasKey);
@@ -72,7 +84,21 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
   }, [step]);
 
   const handleSkipSignIn = () => {
+    setShowSkipAlert(true);
+  };
+
+  const handleConfirmSkipSignIn = () => {
+    setShowSkipAlert(false);
     advanceToStep2();
+  };
+
+  const handleSkipKeys = () => {
+    setShowSkipKeysAlert(true);
+  };
+
+  const handleConfirmSkipKeys = () => {
+    setShowSkipKeysAlert(false);
+    completeNux();
   };
 
   const handleSetupApiKeys = () => {
@@ -149,10 +175,11 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
     const isStep3 = step === "3";
 
     return (
+    <>
       <Dialog open={true}>
         <DialogShell
           step={isStep3 ? 3 : 2}
-          title={isStep3 ? <span className="text-base sm:text-lg">Finish setup by adding your API keys</span> : <span className="text-base sm:text-lg">Unlock real-time collaboration & AI assistant</span>}
+          title={isStep3 ? <span className="text-base sm:text-lg">Finish setup by adding your API keys</span> : <span className="text-base sm:text-lg">Unlock creating flows & AI assistant</span>}
           description={null}
           onBack={isStep3 ? handleBackToStep2 : (!user ? handleBackToSignIn : undefined)}
           hero={<ProvidersHero step={isStep3 ? 3 : 2} />}
@@ -308,7 +335,7 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
               </Button>
               <Button
                 variant="ghost"
-                onClick={completeNux}
+                onClick={handleSkipKeys}
                 className="mt-2 h-10 w-full cursor-pointer text-muted-foreground hover:text-foreground"
               >
                 Skip for now
@@ -323,7 +350,7 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
                     <Users className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-medium">Live collaboration</div>
+                    <div className="text-sm font-medium">Live collaboration with your keys</div>
                     <div className="mt-1 text-sm text-muted-foreground">
                       Invite anyone with a link — see cursors, edits, and runs in real time
                     </div>
@@ -335,7 +362,7 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
                     <KeyRound className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-medium">Bring your own keys</div>
+                    <div className="text-sm font-medium">Multimodal creation across multiple providers</div>
                     <div className="mt-1 text-sm text-muted-foreground">
                       Connect OpenAI, Anthropic, or Google — your keys, your control
                     </div>
@@ -349,7 +376,7 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
                   <div className="min-w-0">
                     <div className="text-sm font-medium">Build with Composer AI</div>
                     <div className="mt-1 text-sm text-muted-foreground">
-                      An AI agent that edits your flow as you describe changes
+                      Collaborate with an AI agent that creates and edits your flow
                     </div>
                   </div>
                 </div>
@@ -361,7 +388,7 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
                 </Button>
                 <Button
                   variant="ghost"
-                  onClick={completeNux}
+                  onClick={handleSkipKeys}
                   className="mt-2 h-10 w-full cursor-pointer text-muted-foreground hover:text-foreground"
                 >
                   Skip for now
@@ -371,11 +398,30 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
           )}
         </DialogShell>
       </Dialog>
+
+      <AlertDialog open={showSkipKeysAlert} onOpenChange={setShowSkipKeysAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Skip API key setup?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Without API keys, your flows won&apos;t be able to run. You can add them later in settings.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go back</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSkipKeys}>
+              Continue anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
     );
   }
 
   // Step 1: Sign in (only shown if not signed in)
   return (
+    <>
     <Dialog open={true}>
       <DialogShell
         step={1}
@@ -427,5 +473,23 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
         </div>
       </DialogShell>
     </Dialog>
+
+    <AlertDialog open={showSkipAlert} onOpenChange={setShowSkipAlert}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Continue without an account?</AlertDialogTitle>
+          <AlertDialogDescription>
+            You need an account to save flows and collaborate in real time with others.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Go back</AlertDialogCancel>
+          <AlertDialogAction onClick={handleConfirmSkipSignIn}>
+            Continue anyway
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
