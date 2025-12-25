@@ -51,7 +51,7 @@ describe("your-node-type execution", () => {
 - [ ] Edges can connect from output handles
 - [ ] Connected inputs show "Connected" placeholder (if using InputWithHandle)
 - [ ] Disconnecting edge restores input field
-- [ ] Edge colors match data type (cyan/purple/amber)
+- [ ] Edge colors match data type (cyan/purple/amber/emerald)
 
 ## Execution Validation
 
@@ -122,7 +122,7 @@ describe("your-node-type execution", () => {
 - Use `className="w-[280px]"` on NodeFrame
 
 **Port colors wrong**
-- Verify `colorClass` matches data type: `"cyan"` for string, `"purple"` for image, `"amber"` for response
+- Verify `colorClass` matches data type: `"cyan"` for string, `"purple"` for image, `"amber"` for response, `"emerald"` for audio
 
 ## Final Checklist
 

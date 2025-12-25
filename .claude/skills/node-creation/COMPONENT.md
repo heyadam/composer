@@ -116,6 +116,7 @@ export function YourNode({ id, data }: NodeProps<YourNodeType>) {
 | String | `"cyan"` |
 | Image | `"purple"` |
 | Response | `"amber"` |
+| Audio | `"emerald"` |
 
 ### Port Properties
 
@@ -125,7 +126,7 @@ Each port object accepts these properties:
 |----------|------|-------------|
 | `id` | string | Handle ID (must match port schema) |
 | `label` | string | Display label |
-| `colorClass` | string | Color: `"cyan"`, `"purple"`, or `"amber"` |
+| `colorClass` | string | Color: `"cyan"`, `"purple"`, `"amber"`, or `"emerald"` |
 | `isConnected` | boolean | Whether an edge is connected |
 | `required` | boolean | Optional. Shows visual indicator for required inputs |
 

@@ -27,6 +27,7 @@ This skill guides you through creating new nodes for the Composer visual workflo
 | Input | text-input, image-input | No incoming edges, produces data |
 | Processing | text-generation, ai-logic | Transforms inputs to outputs |
 | Output | preview-output | Terminal node, displays results |
+| Interactive | realtime-conversation | User-driven lifecycle, has inputs/outputs |
 
 ### Files to Modify
 
@@ -48,6 +49,7 @@ This skill guides you through creating new nodes for the Composer visual workflo
 | string | cyan | Text data |
 | image | purple | Image data (base64 JSON) |
 | response | amber | Terminal output for preview |
+| audio | emerald | Audio stream (MediaStream or base64) |
 
 ### Templates
 

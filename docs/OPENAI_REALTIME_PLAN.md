@@ -1223,6 +1223,21 @@ const defaultNodeData = {
 
 ---
 
+## Node Creation Skill Updates
+
+The `.claude/skills/node-creation/` skill has been updated to document the new `audio` port data type:
+
+| File | Changes |
+|------|---------|
+| `SKILL.md` | Added `audio \| emerald` to Port Data Types table, added "Interactive" node category |
+| `TYPES.md` | Added `audio` to Port Data Types table and validation checklist |
+| `COMPONENT.md` | Added `emerald` to Color Classes table and Port Properties |
+| `VALIDATION.md` | Added `emerald` to edge colors and port colors troubleshooting |
+
+These updates ensure future node implementations can properly use the `audio` data type.
+
+---
+
 ## Dependencies
 
 ```bash

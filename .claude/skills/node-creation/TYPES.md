@@ -110,6 +110,7 @@ export const NODE_PORT_SCHEMAS: Record<NodeType, NodePortSchema> = {
 | `"string"` | cyan | Text data |
 | `"image"` | purple | Image data (base64 JSON) |
 | `"response"` | amber | Terminal output for preview |
+| `"audio"` | emerald | Audio stream (MediaStream or base64) |
 
 ## Node Definition
 
@@ -141,4 +142,4 @@ export const nodeDefinitions: NodeDefinition[] = [
 After completing this step, verify:
 - [ ] `npm run lint` passes
 - [ ] TypeScript compiles without errors
-- [ ] Port schema has valid dataTypes (`"string"`, `"image"`, or `"response"`)
+- [ ] Port schema has valid dataTypes (`"string"`, `"image"`, `"response"`, or `"audio"`)
