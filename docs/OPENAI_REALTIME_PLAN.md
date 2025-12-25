@@ -20,6 +20,38 @@ Available voices: `alloy`, `ash`, `ballad`, `coral`, `echo`, `sage`, `shimmer`, 
 
 ---
 
+## Audio Data Type
+
+This implementation introduces `audio` as a new port data type alongside the existing types:
+
+| Type | Color | Use for |
+|------|-------|---------|
+| `string` | cyan | Text data |
+| `image` | purple | Image data (base64 JSON) |
+| `response` | amber | Terminal output for preview |
+| **`audio`** | **emerald** | Audio stream (MediaStream or base64) |
+
+### Audio Port Schema
+
+```typescript
+// types/flow.ts - add to PortDataType
+export type PortDataType = "string" | "image" | "response" | "audio";
+```
+
+### Audio Edge Styling
+
+```typescript
+// components/Flow/edges/ColoredEdge.tsx - add emerald for audio
+const colorMap = {
+  string: "cyan",
+  image: "purple",
+  response: "amber",
+  audio: "emerald",
+};
+```
+
+---
+
 ## Node Architecture
 
 A single **realtime-conversation** node that handles the complete realtime session lifecycle:
@@ -42,11 +74,21 @@ A single **realtime-conversation** node that handles the complete realtime sessi
 │  │ AI: I'm doing great! How can I help?    │   │
 │  └─────────────────────────────────────────┘   │
 ├─────────────────────────────────────────────────┤
-│  instructions ●──────────  ──────● transcript   │
+│  instructions ●────────────────● transcript     │
+│  audio-in ●────────────────────● audio-out      │
 └─────────────────────────────────────────────────┘
 ```
 
 **Node Category:** Interactive/Processing (has both inputs and outputs, but manages its own lifecycle)
+
+### Port Summary
+
+| Port | Direction | Data Type | Description |
+|------|-----------|-----------|-------------|
+| `instructions` | Input | string | System prompt (optional) |
+| `audio-in` | Input | audio | External audio source (optional, overrides mic) |
+| `transcript` | Output | string | Full conversation transcript |
+| `audio-out` | Output | audio | AI audio response stream |
 
 ---
 
@@ -151,11 +193,30 @@ export type AgentNode =
 "realtime-conversation": {
   inputs: [
     { id: "instructions", label: "instructions", dataType: "string", required: false },
+    { id: "audio-in", label: "audio", dataType: "audio", required: false },
   ],
   outputs: [
     { id: "transcript", label: "transcript", dataType: "string" },
+    { id: "audio-out", label: "audio", dataType: "audio" },
   ],
 },
+```
+
+### Audio Data Format
+
+Audio flowing through edges uses this format:
+
+```typescript
+// Audio edge data structure
+interface AudioEdgeData {
+  type: "stream" | "buffer";
+  // For stream type: reference ID to MediaStream in global registry
+  streamId?: string;
+  // For buffer type: base64-encoded audio
+  buffer?: string;
+  mimeType?: string;  // e.g., "audio/pcm", "audio/webm"
+  sampleRate?: number; // e.g., 24000 for OpenAI Realtime
+}
 ```
 
 ### Node Definition
@@ -221,8 +282,14 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
   const isInstructionsConnected = edges.some(
     (edge) => edge.target === id && edge.targetHandle === "instructions"
   );
-  const isOutputConnected = edges.some(
+  const isAudioInConnected = edges.some(
+    (edge) => edge.target === id && edge.targetHandle === "audio-in"
+  );
+  const isTranscriptConnected = edges.some(
     (edge) => edge.source === id && edge.sourceHandle === "transcript"
+  );
+  const isAudioOutConnected = edges.some(
+    (edge) => edge.source === id && edge.sourceHandle === "audio-out"
   );
 
   // Realtime session hook (see Step 2.1 for implementation)
@@ -248,11 +315,18 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
       status={data.executionStatus}
       className="w-[320px]"
       ports={
-        <PortRow
-          nodeId={id}
-          input={{ id: "instructions", label: "Instructions", colorClass: "cyan", isConnected: isInstructionsConnected }}
-          output={{ id: "transcript", label: "Transcript", colorClass: "cyan", isConnected: isOutputConnected }}
-        />
+        <>
+          <PortRow
+            nodeId={id}
+            input={{ id: "instructions", label: "Instructions", colorClass: "cyan", isConnected: isInstructionsConnected }}
+            output={{ id: "transcript", label: "Transcript", colorClass: "cyan", isConnected: isTranscriptConnected }}
+          />
+          <PortRow
+            nodeId={id}
+            input={{ id: "audio-in", label: "Audio In", colorClass: "emerald", isConnected: isAudioInConnected }}
+            output={{ id: "audio-out", label: "Audio Out", colorClass: "emerald", isConnected: isAudioOutConnected }}
+          />
+        </>
       }
       footer={
         data.executionError ? (
@@ -830,6 +904,14 @@ const defaultNodeData = {
 - [ ] Autopilot can create the node via chat
 - [ ] Edges connect correctly to instructions handle
 
+### Audio Port Testing
+
+- [ ] Audio edges render with emerald color
+- [ ] Audio-in port accepts connections from audio sources
+- [ ] Audio-out port can connect to audio consumers
+- [ ] When audio-in is connected, uses external source instead of mic
+- [ ] Audio-out streams to connected nodes during session
+
 ### Edge Cases to Test
 
 - [ ] Session timeout (60 min limit)
@@ -838,6 +920,7 @@ const defaultNodeData = {
 - [ ] Missing OpenAI API key error
 - [ ] Multiple realtime nodes on same canvas
 - [ ] Node deletion during active session
+- [ ] Audio source disconnected mid-session
 
 ---
 
@@ -845,6 +928,9 @@ const defaultNodeData = {
 
 | Order | File | Action | Description |
 |-------|------|--------|-------------|
+| 0 | `types/flow.ts` | Modify | Add `"audio"` to `PortDataType` |
+| 0 | `components/Flow/edges/ColoredEdge.tsx` | Modify | Add emerald color for audio edges |
+| 0 | `components/Flow/nodes/PortLabel.tsx` | Modify | Add emerald color class for audio handles |
 | 1 | `types/flow.ts` | Modify | Add interface, union types, port schema, node definition |
 | 2 | `components/Flow/nodes/RealtimeNode.tsx` | Create | Main node component |
 | 2 | `components/Flow/nodes/index.ts` | Modify | Export new node |
@@ -897,6 +983,73 @@ The WebRTC implementation uses native browser APIs, so no additional WebRTC pack
 3. **Transcription-only mode** - Use realtime API for live transcription
 4. **Custom voices** - Support for OpenAI voice cloning when available
 5. **SIP integration** - Phone call integration via OpenAI's SIP support
+
+---
+
+## Future Audio Nodes
+
+The `audio` data type enables future nodes for audio pipelines:
+
+### audio-input (Microphone/File)
+Entry point for audio data. Captures from microphone or uploads audio file.
+
+```
+┌────────────────────────┐
+│     Audio Input        │
+├────────────────────────┤
+│  Source: [Mic | File]  │
+│  [🎤 Start Capture]    │
+├────────────────────────┤
+│          ──────● audio │
+└────────────────────────┘
+```
+
+### audio-output (Speakers)
+Terminal node that plays audio through speakers.
+
+```
+┌────────────────────────┐
+│     Audio Output       │
+├────────────────────────┤
+│  Volume: [━━━━━●━━━]   │
+│  [🔊 Playing...]       │
+├────────────────────────┤
+│  audio ●──────         │
+└────────────────────────┘
+```
+
+### transcription (Speech-to-Text)
+Converts audio to text using Whisper or similar.
+
+```
+┌────────────────────────┐
+│     Transcription      │
+├────────────────────────┤
+│  Model: [whisper-1]    │
+├────────────────────────┤
+│  audio ●───────● text  │
+└────────────────────────┘
+```
+
+### text-to-speech
+Converts text to audio using TTS models.
+
+```
+┌────────────────────────┐
+│    Text to Speech      │
+├────────────────────────┤
+│  Voice: [alloy]        │
+│  Speed: [1.0x]         │
+├────────────────────────┤
+│  text ●────────● audio │
+└────────────────────────┘
+```
+
+These nodes would enable audio processing pipelines like:
+
+```
+[Audio Input] → [Transcription] → [Text Generation] → [TTS] → [Audio Output]
+```
 
 ---
 
