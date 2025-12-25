@@ -48,7 +48,7 @@ export function ResponsesSidebar({
 
   return (
     <motion.div
-      className="h-full overflow-hidden"
+      className="h-full z-20 shadow-[-8px_0_24px_rgba(0,0,0,0.4)]"
       initial={false}
       animate={{ width: w, minWidth: w }}
       style={{ willChange: isResizing ? "width" : "auto" }}
@@ -56,7 +56,7 @@ export function ResponsesSidebar({
     >
       <div
         ref={sidebarRef}
-        className="flex flex-col h-full border-l bg-background relative"
+        className="flex flex-col h-full border-l bg-background relative overflow-hidden"
         style={{ width, minWidth: width }}
       >
         {/* Resize handle */}
