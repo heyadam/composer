@@ -87,7 +87,7 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 **Node Types** (`components/Flow/nodes/`): Custom node components with editable labels:
 - `InputNode` (type: `text-input`): Entry point, receives user input
 - `ImageInputNode` (type: `image-input`): Entry point for image upload
-- `PromptNode` (type: `text-generation`): LLM prompt execution with dual inputs (user prompt + system instructions), multi-provider support. Default: Google `gemini-3-flash-preview`
+- `PromptNode` (type: `text-generation`): LLM prompt execution with three inputs (user prompt, system instructions, optional image for vision/multimodal), multi-provider support. Auto-switches to vision-capable model when image is added. Default: Google `gemini-3-flash-preview`
 - `ImageNode` (type: `image-generation`): AI image generation (OpenAI with streaming partial images, Google Gemini). Default: Google `gemini-2.5-flash-image` with 1:1 aspect ratio
 - `MagicNode` (type: `ai-logic`): Custom code transformation using Claude Haiku-generated JavaScript. Auto-generates code when transform input is connected at execution time. Includes validation with test cases and collapsible code/eval views.
 - `ReactComponentNode` (type: `react-component`): AI-generated React components rendered in sandboxed iframe
@@ -102,6 +102,12 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 **Provider Configuration** (`lib/providers.ts`): Centralized config for AI providers and models. Supports OpenAI, Google, and Anthropic with provider-specific options:
 - OpenAI: `verbosity`, `thinking`
 - Google Gemini: `thinkingLevel` (Gemini 3), `thinkingBudget` (Gemini 2.5), `safetyPreset`
+- All models have `supportsVision` flag for multimodal capability detection
+
+**Vision Module** (`lib/vision/index.ts`): Utilities for vision/multimodal support:
+- `modelSupportsVision(provider, model)`: Check if model supports image input
+- `getVisionCapableModel(provider, model)`: Get vision-capable model (current if supported, or default fallback)
+- `resolveImageInput(connected, inline)`: Resolve image from connection or inline upload (connection wins)
 
 **IMPORTANT: Always consult `docs/AI_MODELS.md` for the authoritative list of model IDs.** Do not hardcode or assume model names - refer to docs/AI_MODELS.md for correct, up-to-date model identifiers when working with providers.
 
@@ -197,7 +203,7 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 - `AutopilotSidebar.tsx`: Main container with spring-animated open/close using motion.dev, absolute positioned to overlay canvas
 - `AutopilotChat.tsx`: Chat UI with mode selector (Execute/Plan), model selector (Sonnet 4.5/Opus 4.5), and extended thinking toggle
 - Uses `useResizableSidebar` hook for drag-to-resize (320-600px)
-- `AutopilotHeader.tsx`: Header with clear history button
+- `AutopilotHeader.tsx`: Header with copy transcript and clear history buttons
 - `CollapsibleJson.tsx`: Collapsible JSON preview with syntax highlighting, auto-scroll during streaming, auto-collapse when done
 - `ChangesPreview.tsx`: Visual diff of pending changes (added/removed nodes and edges)
 - **Modes**: Execute (immediately applies changes) or Plan (shows step-by-step plan for user approval)
@@ -214,7 +220,7 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 - `parser.ts`: Extracts and validates JSON actions from Claude's responses. Valid node types: `text-input`, `image-input`, `text-generation`, `image-generation`, `ai-logic`, `preview-output`, `react-component`, `comment`
 - `snapshot.ts`: Serializes current flow state for context
 - `system-prompt.ts`: Builds prompt with node types, edge rules, valid model IDs, and insertion examples
-- `evaluator.ts`: LLM-based validation of generated flow changes using Claude Haiku 4.5. Checks semantic match, structural validity, model ID correctness, and completeness. Returns issues and suggestions.
+- `evaluator.ts`: Programmatic validation of generated flow changes. Checks node types, model IDs, edge connections, target handles (including `image` handle for vision on text-generation), and completeness. Returns issues for auto-retry.
 
 **Autopilot API Routes**:
 - `app/api/autopilot/route.ts`: Streams responses from Claude with mode (execute/plan), model selection (sonnet-4-5/opus-4-5), and extended thinking support
@@ -438,6 +444,7 @@ Flow types in `types/flow.ts` define node data interfaces with execution state t
 **PromptNodeData fields**:
 - `userPrompt`: User message content (used when prompt input not connected)
 - `systemPrompt`: System instructions (used when system input not connected)
+- `imageInput`: Runtime-only image data for vision prompts (not persisted)
 - `provider`, `model`: AI provider and model selection
 - `verbosity`, `thinking`: OpenAI-specific options
 - `googleThinkingConfig`: Google-specific thinking options (`thinkingLevel`, `thinkingBudget`, `includeThoughts`)
