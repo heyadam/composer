@@ -81,6 +81,22 @@ export function AutopilotSidebar({
     }
   }, [clearHistoryTrigger, clearHistory]);
 
+  // Copy transcript to clipboard
+  const handleCopyTranscript = useCallback(() => {
+    const transcript = messages
+      .map((msg) => {
+        const role = msg.role === "user" ? "User" : "Assistant";
+        let text = `${role}:\n${msg.content}`;
+        if (msg.thinking) {
+          text += `\n\n[Thinking]\n${msg.thinking}`;
+        }
+        return text;
+      })
+      .join("\n\n---\n\n");
+
+    navigator.clipboard.writeText(transcript);
+  }, [messages]);
+
   const w = isOpen ? width : 0;
 
   // Report width and resize state changes to parent for layout adjustments
@@ -104,6 +120,7 @@ export function AutopilotSidebar({
         <AutopilotHeader
           onClear={clearHistory}
           onClose={onToggle}
+          onCopy={handleCopyTranscript}
           hasMessages={messages.length > 0}
           testModeEnabled={testModeEnabled}
           onTestModeChange={setTestModeEnabled}

@@ -1,11 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Sparkles, Trash2, X, AlertTriangle } from "lucide-react";
+import { Sparkles, Trash2, X, AlertTriangle, Copy, Check } from "lucide-react";
+import { useState } from "react";
 
 interface AutopilotHeaderProps {
   onClear: () => void;
   onClose: () => void;
+  onCopy: () => void;
   hasMessages: boolean;
   testModeEnabled?: boolean;
   onTestModeChange?: (enabled: boolean) => void;
@@ -14,10 +16,19 @@ interface AutopilotHeaderProps {
 export function AutopilotHeader({
   onClear,
   onClose,
+  onCopy,
   hasMessages,
   testModeEnabled,
   onTestModeChange,
 }: AutopilotHeaderProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    onCopy();
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b bg-background">
       <div className="flex items-center gap-2">
@@ -43,15 +54,30 @@ export function AutopilotHeader({
 
       <div className="flex items-center gap-1">
         {hasMessages && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={onClear}
-            title="Clear"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={handleCopy}
+              title="Copy transcript"
+            >
+              {copied ? (
+                <Check className="h-3.5 w-3.5 text-green-500" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={onClear}
+              title="Clear"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </>
         )}
         <Button
           variant="ghost"
