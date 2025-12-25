@@ -171,8 +171,9 @@ Open [http://localhost:3000](http://localhost:3000) to use the workflow builder.
 
 ### Claude Code Skills
 
-This project includes a Supabase skill for Claude Code at `.claude/skills/supabase/`:
+This project includes three Claude Code skills at `.claude/skills/`:
 
+**Supabase** (`/supabase`) - Database development guide:
 ```
 .claude/skills/supabase/
 ├── SKILL.md           # Router with quick reference
@@ -184,4 +185,21 @@ This project includes a Supabase skill for Claude Code at `.claude/skills/supaba
 └── REALTIME.md        # Broadcast, presence, triggers
 ```
 
-Invoke with `/supabase` in Claude Code to load context-appropriate guidance for database work.
+**Node Creation** (`/node-creation`) - Step-by-step guide for creating new nodes:
+```
+.claude/skills/node-creation/
+├── SKILL.md           # Router with workflow overview
+├── TYPES.md           # Define node data interface and port schema
+├── COMPONENT.md       # Create React component with NodeFrame
+├── EXECUTION.md       # Add execution logic to engine.ts
+├── AUTOPILOT.md       # Integrate with Autopilot system
+├── SIDEBAR.md         # Register in sidebar and set defaults
+├── VALIDATION.md      # Test and validate implementation
+└── TEMPLATES.md       # Copy-paste templates for each node category
+```
+
+**Content Design** (`/content-design`) - UI text and content standards:
+```
+.claude/skills/content-design/
+└── SKILL.md           # Capitalization, placeholders, tooltips, labels
+```

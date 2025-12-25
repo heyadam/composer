@@ -71,6 +71,16 @@ A step-by-step guide for creating new nodes is available at `.claude/skills/node
 
 Copy-paste templates for input, processing, output, and transform nodes are in `TEMPLATES.md`.
 
+### Content Design Skill
+
+UI text and content standards are available at `.claude/skills/content-design/`. Invoke with `/content-design` when writing or modifying user-facing text:
+
+- Capitalization rules (Title Case vs sentence case)
+- Placeholder text patterns
+- Connection status labels
+- Dialog text formatting
+- Tooltip and button conventions
+
 ## Architecture Overview
 
 This is an AI agent workflow builder using Next.js 16 App Router with React Flow for visual flow editing.
