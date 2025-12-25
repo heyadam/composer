@@ -13,6 +13,8 @@ export interface DebugInfo {
     systemPrompt?: string;
     verbosity?: string;
     thinking?: boolean;
+    // Multimodal
+    hasImage?: boolean;
     // Google-specific
     googleThinkingConfig?: Record<string, unknown>;
     googleSafetyPreset?: string;
