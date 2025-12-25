@@ -10,12 +10,19 @@ import {
 } from "react";
 import { BackgroundVariant } from "@xyflow/react";
 
+export type GradientType = "solid" | "linear" | "radial" | "conic";
+
 export interface BackgroundSettings {
   variant: BackgroundVariant;
   color: string; // dot/line color
-  bgColor: string; // canvas background color
+  bgColor: string; // canvas background color (used when gradient is "solid")
   gap: number;
   size: number;
+  // Gradient settings
+  gradientType: GradientType;
+  gradientColorStart: string;
+  gradientColorEnd: string;
+  gradientAngle: number; // degrees, for linear/conic
 }
 
 const STORAGE_KEY = "avy-background-settings";
@@ -26,7 +33,30 @@ const DEFAULT_SETTINGS: BackgroundSettings = {
   bgColor: "#000000",
   gap: 20,
   size: 2,
+  gradientType: "solid",
+  gradientColorStart: "#1a1a2e",
+  gradientColorEnd: "#0f0f23",
+  gradientAngle: 135,
 };
+
+/**
+ * Generates the CSS background value based on gradient settings
+ */
+export function getBackgroundStyle(settings: BackgroundSettings): string {
+  const { gradientType, bgColor, gradientColorStart, gradientColorEnd, gradientAngle } = settings;
+
+  switch (gradientType) {
+    case "linear":
+      return `linear-gradient(${gradientAngle}deg, ${gradientColorStart} 0%, ${gradientColorEnd} 100%)`;
+    case "radial":
+      return `radial-gradient(circle at 50% 50%, ${gradientColorStart} 0%, ${gradientColorEnd} 100%)`;
+    case "conic":
+      return `conic-gradient(from ${gradientAngle}deg at 50% 50%, ${gradientColorStart}, ${gradientColorEnd}, ${gradientColorStart})`;
+    case "solid":
+    default:
+      return bgColor;
+  }
+}
 
 interface BackgroundSettingsContextValue {
   settings: BackgroundSettings;

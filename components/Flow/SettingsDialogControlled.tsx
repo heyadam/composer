@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useApiKeys, type ProviderId } from "@/lib/api-keys";
-import { useBackgroundSettings } from "@/lib/hooks/useBackgroundSettings";
+import { useBackgroundSettings, type GradientType } from "@/lib/hooks/useBackgroundSettings";
 import { useAuth } from "@/lib/auth";
 
 const PROVIDERS: { id: ProviderId; label: string; placeholder: string }[] = [
@@ -39,6 +39,13 @@ const VARIANT_OPTIONS = [
   { value: BackgroundVariant.Dots, label: "Dots" },
   { value: BackgroundVariant.Lines, label: "Lines" },
   { value: BackgroundVariant.Cross, label: "Cross" },
+];
+
+const GRADIENT_TYPE_OPTIONS: { value: GradientType; label: string }[] = [
+  { value: "solid", label: "Solid" },
+  { value: "linear", label: "Linear" },
+  { value: "radial", label: "Radial" },
+  { value: "conic", label: "Conic" },
 ];
 
 interface SettingsDialogControlledProps {
@@ -332,23 +339,26 @@ export function SettingsDialogControlled({
             {/* Color Settings */}
             <div className="space-y-3">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Colors</label>
+
+              {/* Gradient Type + Pattern Color */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground">Canvas</label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="color"
-                      value={bgSettings.bgColor}
-                      onChange={(e) => updateBgSettings({ bgColor: e.target.value })}
-                      className="h-8 w-10 p-1 cursor-pointer shrink-0"
-                    />
-                    <Input
-                      type="text"
-                      value={bgSettings.bgColor}
-                      onChange={(e) => updateBgSettings({ bgColor: e.target.value })}
-                      className="h-8 text-xs font-mono"
-                    />
-                  </div>
+                  <label className="text-xs text-muted-foreground">Canvas type</label>
+                  <Select
+                    value={bgSettings.gradientType}
+                    onValueChange={(value) => updateBgSettings({ gradientType: value as GradientType })}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {GRADIENT_TYPE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">Pattern</label>
@@ -368,6 +378,82 @@ export function SettingsDialogControlled({
                   </div>
                 </div>
               </div>
+
+              {/* Solid color */}
+              {bgSettings.gradientType === "solid" && (
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Canvas color</label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={bgSettings.bgColor}
+                      onChange={(e) => updateBgSettings({ bgColor: e.target.value })}
+                      className="h-8 w-10 p-1 cursor-pointer shrink-0"
+                    />
+                    <Input
+                      type="text"
+                      value={bgSettings.bgColor}
+                      onChange={(e) => updateBgSettings({ bgColor: e.target.value })}
+                      className="h-8 text-xs font-mono"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Gradient colors */}
+              {bgSettings.gradientType !== "solid" && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-muted-foreground">Start color</label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={bgSettings.gradientColorStart}
+                          onChange={(e) => updateBgSettings({ gradientColorStart: e.target.value })}
+                          className="h-8 w-10 p-1 cursor-pointer shrink-0"
+                        />
+                        <Input
+                          type="text"
+                          value={bgSettings.gradientColorStart}
+                          onChange={(e) => updateBgSettings({ gradientColorStart: e.target.value })}
+                          className="h-8 text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-muted-foreground">End color</label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={bgSettings.gradientColorEnd}
+                          onChange={(e) => updateBgSettings({ gradientColorEnd: e.target.value })}
+                          className="h-8 w-10 p-1 cursor-pointer shrink-0"
+                        />
+                        <Input
+                          type="text"
+                          value={bgSettings.gradientColorEnd}
+                          onChange={(e) => updateBgSettings({ gradientColorEnd: e.target.value })}
+                          className="h-8 text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  {(bgSettings.gradientType === "linear" || bgSettings.gradientType === "conic") && (
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-muted-foreground">Angle ({bgSettings.gradientAngle}°)</label>
+                      <Input
+                        type="range"
+                        min={0}
+                        max={360}
+                        value={bgSettings.gradientAngle}
+                        onChange={(e) => updateBgSettings({ gradientAngle: parseInt(e.target.value) || 0 })}
+                        className="h-8"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             <p className="text-xs text-muted-foreground border-t pt-4">

@@ -50,7 +50,7 @@ import type { FlowChanges, AddNodeAction, AddEdgeAction, RemoveEdgeAction, Remov
 import { ResponsesSidebar, type PreviewEntry, type DebugEntry } from "./ResponsesSidebar";
 import { useApiKeys, type ProviderId } from "@/lib/api-keys";
 import type { FlowMetadata } from "@/lib/flow-storage";
-import { useBackgroundSettings } from "@/lib/hooks/useBackgroundSettings";
+import { useBackgroundSettings, getBackgroundStyle } from "@/lib/hooks/useBackgroundSettings";
 import { ShareDialog } from "./ShareDialog";
 import { useCollaboration, type CollaborationModeProps } from "@/lib/hooks/useCollaboration";
 import { loadFlow } from "@/lib/flows/api";
@@ -839,7 +839,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
                 color={bgSettings.color}
                 gap={bgSettings.gap}
                 size={bgSettings.size}
-                style={{ backgroundColor: bgSettings.bgColor }}
+                style={{ background: getBackgroundStyle(bgSettings) }}
               />
               <Controls />
               <CollaboratorCursors collaborators={collaborators} />
