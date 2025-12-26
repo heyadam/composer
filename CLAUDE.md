@@ -14,6 +14,12 @@ npm test         # Run Vitest unit tests (65 tests)
 npm run start    # Start production server
 ```
 
+## Git & GitHub
+
+**GitHub CLI installed**: Prefer using `gh` commands for GitHub operations (creating PRs, viewing issues, etc.) over web-based workflows.
+
+For Git operations, use standard `git` commands (commit, checkout, push, pull, branch, etc.).
+
 ## Environment Setup
 
 **Node.js 24+** required. Use `nvm use` to activate the version in `.nvmrc`.

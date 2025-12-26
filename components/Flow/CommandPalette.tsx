@@ -78,6 +78,7 @@ export function CommandPalette({
   const [mode, setMode] = useState<"search" | "ai">("search");
   const [search, setSearch] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [listKey, setListKey] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -111,6 +112,7 @@ export function CommandPalette({
       setSearch("");
       setMode("search");
       setSelectedIndex(0);
+      setListKey((k) => k + 1); // Force list remount to re-trigger animations
       // Focus input after animation
       setTimeout(() => inputRef.current?.focus(), 50);
     }
@@ -355,6 +357,7 @@ export function CommandPalette({
                     </div>
                   ) : (
                     <motion.div
+                      key={listKey}
                       initial="hidden"
                       animate="visible"
                       variants={{
