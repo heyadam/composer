@@ -7,6 +7,18 @@ This file is a quick-reference guide for coding agents working in this repo.
 - **Primary UI**: `components/Flow/AgentFlow.tsx` (main canvas + top bar)
 - **Auth**: Supabase + Google OAuth (see `lib/auth/`)
 
+## Additional Guidance
+- Architecture notes: @.claude/rules/architecture.md
+- Auth + storage: @.claude/rules/auth-storage.md
+- Collaboration: @.claude/rules/collaboration.md
+- Nodes: @.claude/rules/nodes.md
+- Types: @.claude/rules/types.md
+- Audio realtime: @.claude/rules/audio-realtime.md
+- Autopilot: @.claude/rules/autopilot.md
+- Execution engine: @.claude/rules/execution.md
+- Testing: @.claude/rules/testing.md
+- UI motion: @.claude/rules/ui-motion.md
+
 ## Key Commands
 ```bash
 nvm use          # Activate Node.js 24 from .nvmrc
