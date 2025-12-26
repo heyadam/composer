@@ -41,7 +41,7 @@ export function DialogShell({
     <Button
       variant="ghost"
       size="icon-sm"
-      className="absolute right-4 top-4 z-30 cursor-pointer rounded-full border bg-background/70 backdrop-blur-sm hover:bg-background/80"
+      className="glass-panel-subtle absolute right-4 top-4 z-30 cursor-pointer rounded-full border bg-zinc-900/40 backdrop-blur-md hover:bg-zinc-800/60"
       aria-label="Close"
       onClick={onClose}
     >
@@ -52,7 +52,8 @@ export function DialogShell({
   return (
     <DialogContent
       showCloseButton={false}
-      className="h-[100dvh] w-screen max-w-none gap-0 rounded-none border-0 p-0 sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:max-w-[980px] sm:rounded-lg sm:border"
+      overlayClassName="glass-backdrop"
+      className="glass-panel h-[100dvh] w-screen max-w-none gap-0 rounded-none border-0 p-0 sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:max-w-[980px] sm:rounded-xl sm:border"
       onInteractOutside={preventOutsideClose ? (e) => e.preventDefault() : undefined}
       onEscapeKeyDown={preventOutsideClose ? (e) => e.preventDefault() : undefined}
     >
@@ -69,7 +70,7 @@ export function DialogShell({
                   variant="ghost"
                   size="sm"
                   onClick={onBack}
-                  className="-ml-2 h-8 cursor-pointer px-2 text-muted-foreground hover:text-foreground"
+                  className="-ml-2 h-8 cursor-pointer px-2 text-muted-foreground hover:text-white"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Back
@@ -78,11 +79,11 @@ export function DialogShell({
                 <div className="flex h-8 items-center gap-2">
                   <div
                     aria-hidden
-                    className="grid h-7 w-7 place-items-center rounded-md border bg-[radial-gradient(120%_120%_at_20%_20%,hsl(var(--primary)/0.55),transparent_55%),radial-gradient(100%_100%_at_80%_80%,hsl(var(--foreground)/0.18),transparent_55%)] shadow-xs"
+                    className="grid h-7 w-7 place-items-center rounded-md border border-white/10 bg-[radial-gradient(120%_120%_at_20%_20%,hsl(var(--primary)/0.55),transparent_55%),radial-gradient(100%_100%_at_80%_80%,hsl(var(--foreground)/0.18),transparent_55%)] shadow-xs"
                   >
                     <div className="h-2.5 w-2.5 rounded-full bg-white" />
                   </div>
-                  <span className="text-sm font-medium tracking-tight">Composer</span>
+                  <span className="text-sm font-medium tracking-tight text-white/90">Composer</span>
                 </div>
               )}
             </div>
@@ -92,10 +93,10 @@ export function DialogShell({
 
           <div className={step === 3 ? "mt-2 sm:mt-3" : "mt-6 sm:mt-10"}>
             <DialogHeader className="text-left">
-              <DialogTitle className="text-2xl font-semibold tracking-tight sm:text-4xl">
+              <DialogTitle className="text-2xl font-semibold tracking-tight text-white sm:text-4xl">
                 {title}
               </DialogTitle>
-              <DialogDescription className={step === 3 ? "mt-0 text-sm sm:text-[15px]" : "mt-2 text-sm sm:mt-3 sm:text-[15px]"}>
+              <DialogDescription className={step === 3 ? "mt-0 text-sm text-zinc-400 sm:text-[15px]" : "mt-2 text-sm text-zinc-400 sm:mt-3 sm:text-[15px]"}>
                 {description}
               </DialogDescription>
             </DialogHeader>
@@ -107,7 +108,7 @@ export function DialogShell({
         </div>
 
         {/* Right: hero */}
-        <div className="min-h-[280px] flex-1 border-t sm:min-h-[220px] md:border-l md:border-t-0">
+        <div className="glass-divider min-h-[280px] flex-1 border-t sm:min-h-[220px] md:border-l md:border-t-0">
           {hero}
         </div>
       </div>

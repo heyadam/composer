@@ -204,7 +204,7 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
 
                 return (
                   <div key={provider.id} className="flex items-center gap-2">
-                    <label className="w-24 shrink-0 text-xs font-medium">
+                    <label className="w-24 shrink-0 text-xs font-medium text-zinc-300">
                       {provider.label}
                     </label>
 
@@ -242,8 +242,8 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
                             }
                           }}
                           className={[
-                            "h-8 w-56 font-mono text-[11px] placeholder:text-[11px] transition-colors",
-                            hasKey ? "border-green-500/50 bg-green-500/5" : "",
+                            "h-8 w-56 font-mono text-[11px] placeholder:text-[11px] transition-colors bg-white/5 border-white/10 text-white placeholder:text-zinc-500",
+                            hasKey ? "border-green-500/50 bg-green-500/10" : "",
                           ].join(" ")}
                         />
                         <div className="w-8 shrink-0">
@@ -252,19 +252,19 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
                               variant="ghost"
                               size="icon-sm"
                               onClick={() => handleRemoveKey(provider.id)}
-                              className="h-8 w-8 cursor-pointer text-muted-foreground hover:text-foreground"
+                              className="h-8 w-8 cursor-pointer text-zinc-400 hover:text-white"
                             >
                               <X className="h-3.5 w-3.5" />
                             </Button>
                           ) : (
                             <div className="flex h-8 w-8 items-center justify-center">
-                              <Key className="h-3.5 w-3.5 text-muted-foreground/30" />
+                              <Key className="h-3.5 w-3.5 text-zinc-600" />
                             </div>
                           )}
                         </div>
                       </div>
                     ) : (
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-[11px] text-zinc-500">
                         Using environment variable
                       </p>
                     )}
@@ -276,10 +276,10 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
               {!isDevMode && (
                 <div className="relative my-2">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t" />
+                    <div className="w-full border-t glass-divider" />
                   </div>
                   <div className="relative flex justify-center">
-                    <span className="bg-background px-2 text-[10px] text-muted-foreground uppercase tracking-wider">or use vip code</span>
+                    <span className="bg-zinc-950/80 px-2 text-[10px] text-zinc-500 uppercase tracking-wider">or use vip code</span>
                   </div>
                 </div>
               )}
@@ -287,7 +287,7 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
               {/* VIP Code unlock row */}
               {!isDevMode && (
                 <div className="flex items-center gap-2">
-                  <label className="w-24 shrink-0 text-xs font-medium">
+                  <label className="w-24 shrink-0 text-xs font-medium text-zinc-300">
                     VIP Code
                   </label>
                   <div className="flex items-center gap-1.5">
@@ -306,9 +306,9 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
                         }
                       }}
                       className={[
-                        "h-8 w-56 font-mono text-[11px] placeholder:text-[11px] transition-colors",
-                        passwordError ? "border-red-500/50 bg-red-500/5" : "",
-                        vipSuccess ? "border-green-500/50 bg-green-500/5" : "",
+                        "h-8 w-56 font-mono text-[11px] placeholder:text-[11px] transition-colors bg-white/5 border-white/10 text-white placeholder:text-zinc-500",
+                        passwordError ? "border-red-500/50 bg-red-500/10" : "",
+                        vipSuccess ? "border-green-500/50 bg-green-500/10" : "",
                       ].join(" ")}
                     />
                     <div className="w-8 shrink-0">
@@ -336,7 +336,7 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
               <Button
                 variant="ghost"
                 onClick={handleSkipKeys}
-                className="mt-2 h-10 w-full cursor-pointer text-muted-foreground hover:text-foreground"
+                className="mt-2 h-10 w-full cursor-pointer text-zinc-400 hover:text-white"
               >
                 Skip for now
               </Button>
@@ -346,36 +346,36 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
             <div className="grid gap-5">
               <div className="grid gap-3">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 grid h-9 w-9 place-items-center rounded-lg border bg-foreground/5">
-                    <Users className="h-4 w-4" />
+                  <div className="mt-0.5 grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/5">
+                    <Users className="h-4 w-4 text-white/70" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-medium">Live collaboration with your keys</div>
-                    <div className="mt-1 text-sm text-muted-foreground">
+                    <div className="text-sm font-medium text-white/90">Live collaboration with your keys</div>
+                    <div className="mt-1 text-sm text-zinc-400">
                       Invite anyone with a link — see cursors, edits, and runs in real time
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 grid h-9 w-9 place-items-center rounded-lg border bg-foreground/5">
-                    <KeyRound className="h-4 w-4" />
+                  <div className="mt-0.5 grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/5">
+                    <KeyRound className="h-4 w-4 text-white/70" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-medium">Multimodal creation across multiple providers</div>
-                    <div className="mt-1 text-sm text-muted-foreground">
+                    <div className="text-sm font-medium text-white/90">Multimodal creation across multiple providers</div>
+                    <div className="mt-1 text-sm text-zinc-400">
                       Connect OpenAI, Anthropic, or Google — your keys, your control
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 grid h-9 w-9 place-items-center rounded-lg border bg-foreground/5">
-                    <Wand2 className="h-4 w-4" />
+                  <div className="mt-0.5 grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/5">
+                    <Wand2 className="h-4 w-4 text-white/70" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-medium">Build with Composer AI</div>
-                    <div className="mt-1 text-sm text-muted-foreground">
+                    <div className="text-sm font-medium text-white/90">Build with Composer AI</div>
+                    <div className="mt-1 text-sm text-zinc-400">
                       Collaborate with an AI agent that creates and edits your flow
                     </div>
                   </div>
@@ -389,7 +389,7 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
                 <Button
                   variant="ghost"
                   onClick={handleSkipKeys}
-                  className="mt-2 h-10 w-full cursor-pointer text-muted-foreground hover:text-foreground"
+                  className="mt-2 h-10 w-full cursor-pointer text-zinc-400 hover:text-white"
                 >
                   Skip for now
                 </Button>
@@ -434,24 +434,24 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
         <div className="grid gap-6">
           <div className="grid gap-3">
             <div className="flex items-center gap-3">
-              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border bg-foreground/5">
-                <Link className="h-4 w-4" />
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/5">
+                <Link className="h-4 w-4 text-white/70" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-medium">Save flows and collaborate in real time</div>
-                <div className="mt-1 text-sm text-muted-foreground">
+                <div className="text-sm font-medium text-white/90">Save flows and collaborate in real time</div>
+                <div className="mt-1 text-sm text-zinc-400">
                   Sign in to unlock cloud saves and live collaboration
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border bg-foreground/5">
-                <Wand2 className="h-4 w-4" />
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/5">
+                <Wand2 className="h-4 w-4 text-white/70" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-medium">Chain models from any provider</div>
-                <div className="mt-1 text-sm text-muted-foreground">
+                <div className="text-sm font-medium text-white/90">Chain models from any provider</div>
+                <div className="mt-1 text-sm text-zinc-400">
                   Mix and match OpenAI, Anthropic, and Google in a single flow
                 </div>
               </div>
@@ -465,7 +465,7 @@ export function WelcomeDialog({ onDone }: WelcomeDialogProps) {
             <Button
               variant="ghost"
               onClick={handleSkipSignIn}
-              className="mt-2 h-10 w-full cursor-pointer text-muted-foreground hover:text-foreground"
+              className="mt-2 h-10 w-full cursor-pointer text-zinc-400 hover:text-white"
             >
               Continue without an account
             </Button>

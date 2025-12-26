@@ -46,40 +46,40 @@ export function DemoHero() {
 
       <div className="absolute bottom-5 left-1/2 z-30 w-[300px] -translate-x-1/2">
         {isRunning ? (
-          <div className="pointer-events-none rounded-xl border bg-background/90 p-4 shadow-sm backdrop-blur-sm">
-            <p className="text-xs leading-relaxed text-muted-foreground">
+          <div className="glass-panel-subtle pointer-events-none rounded-xl border border-white/10 bg-zinc-900/60 p-4 shadow-xl backdrop-blur-md">
+            <p className="text-xs leading-relaxed text-zinc-400">
               Takes a prompt, generates a short story, then illustrates a key scene.
             </p>
-            <hr className="my-3 border-border/50" />
-            <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase leading-none tracking-wider text-muted-foreground/70">
+            <hr className="glass-divider my-3 opacity-20" />
+            <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase leading-none tracking-wider text-zinc-500">
               <span>Composer Agent</span>
-              <Loader2 className="h-2.5 w-2.5 animate-spin text-primary" />
+              <Loader2 className="h-2.5 w-2.5 animate-spin text-white" />
             </div>
-            <Shimmer className="text-sm font-medium" duration={1.5}>
+            <Shimmer className="text-sm font-medium text-white" duration={1.5}>
               {progressLabel}
             </Shimmer>
           </div>
         ) : (
-          <div className="rounded-xl border bg-background/90 p-4 shadow-sm backdrop-blur-sm">
-            <p className="text-xs leading-relaxed text-muted-foreground">
+          <div className="glass-panel-subtle rounded-xl border border-white/10 bg-zinc-900/60 p-4 shadow-xl backdrop-blur-md">
+            <p className="text-xs leading-relaxed text-zinc-400">
               Takes a prompt, generates a short story, then illustrates a key scene.
             </p>
-            <hr className="my-3 border-border/50" />
-            <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase leading-none tracking-wider text-muted-foreground/70">
+            <hr className="glass-divider my-3 opacity-20" />
+            <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase leading-none tracking-wider text-zinc-500">
               <span>Composer Agent</span>
-              <Check className="h-2.5 w-2.5 text-green-500" />
+              <Check className="h-2.5 w-2.5 text-green-400" />
               <RotateCcw
-                className="h-2.5 w-2.5 cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
+                className="h-2.5 w-2.5 cursor-pointer text-zinc-400 transition-colors hover:text-white"
                 onClick={retry}
               />
             </div>
             <button
               type="button"
               onClick={() => setShowOutputs(true)}
-              className="group flex cursor-pointer items-center gap-1.5 text-sm font-medium text-foreground transition-colors hover:text-primary"
+              className="group flex cursor-pointer items-center gap-1.5 text-sm font-medium text-white transition-colors hover:text-white/80"
             >
               View outputs
-              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+              <ChevronRight className="h-3.5 w-3.5 text-zinc-400 transition-transform group-hover:translate-x-0.5" />
             </button>
           </div>
         )}
