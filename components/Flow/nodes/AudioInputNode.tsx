@@ -105,19 +105,28 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
         // Calculate final duration
         const finalDuration = Math.floor((Date.now() - startTimeRef.current) / 1000);
 
-        // Store pending audio data - will be persisted when execution completes
-        pendingAudioRef.current = {
+        const audioData = {
           audioBuffer: base64,
           audioMimeType: mimeType,
           recordingDuration: finalDuration,
+          isRecording: false,
         };
 
-        // Signal to execution engine that recording is complete
-        pendingInputRegistry.resolveInput(id, {
-          buffer: base64,
-          mimeType,
-          duration: finalDuration,
-        });
+        // Check if we're in execution mode (awaiting input from engine)
+        if (pendingInputRegistry.isWaiting(id)) {
+          // Defer persistence until execution completes
+          pendingAudioRef.current = audioData;
+
+          // Signal to execution engine that recording is complete
+          pendingInputRegistry.resolveInput(id, {
+            buffer: base64,
+            mimeType,
+            duration: finalDuration,
+          });
+        } else {
+          // Manual recording - persist immediately
+          updateNodeData(id, audioData);
+        }
 
         setDuration(finalDuration);
 

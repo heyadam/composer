@@ -214,6 +214,13 @@ export interface RealtimeNodeData extends Record<string, unknown>, ExecutionData
   audioOutStreamId?: string;      // Registry ID for output audio stream
 }
 
+// Audio transcription node data
+export interface AudioTranscriptionNodeData extends Record<string, unknown>, ExecutionData {
+  label: string;
+  model?: "gpt-4o-transcribe" | "gpt-4o-mini-transcribe";
+  language?: string;  // Optional ISO 639-1 code (e.g., "en", "es")
+}
+
 // Union type for all node data
 export type AgentNodeData =
   | InputNodeData
@@ -225,10 +232,11 @@ export type AgentNodeData =
   | MagicNodeData
   | CommentNodeData
   | ReactNodeData
-  | RealtimeNodeData;
+  | RealtimeNodeData
+  | AudioTranscriptionNodeData;
 
 // Custom node types
-export type NodeType = "text-input" | "preview-output" | "text-generation" | "image-generation" | "image-input" | "audio-input" | "ai-logic" | "comment" | "react-component" | "realtime-conversation";
+export type NodeType = "text-input" | "preview-output" | "text-generation" | "image-generation" | "image-input" | "audio-input" | "ai-logic" | "comment" | "react-component" | "realtime-conversation" | "audio-transcription";
 
 // Typed nodes
 export type InputNode = Node<InputNodeData, "text-input">;
@@ -241,6 +249,7 @@ export type MagicNode = Node<MagicNodeData, "ai-logic">;
 export type CommentNode = Node<CommentNodeData, "comment">;
 export type ReactNode = Node<ReactNodeData, "react-component">;
 export type RealtimeNode = Node<RealtimeNodeData, "realtime-conversation">;
+export type AudioTranscriptionNode = Node<AudioTranscriptionNodeData, "audio-transcription">;
 
 export type AgentNode =
   | InputNode
@@ -252,7 +261,8 @@ export type AgentNode =
   | MagicNode
   | CommentNode
   | ReactNode
-  | RealtimeNode;
+  | RealtimeNode
+  | AudioTranscriptionNode;
 
 // Edge type
 export type AgentEdge = Edge;
@@ -318,6 +328,12 @@ export const nodeDefinitions: NodeDefinition[] = [
     type: "realtime-conversation",
     label: "Realtime Audio",
     description: "Real-time voice conversation",
+    color: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+  },
+  {
+    type: "audio-transcription",
+    label: "Transcribe",
+    description: "Convert audio to text",
     color: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
   },
 ];
@@ -386,5 +402,12 @@ export const NODE_PORT_SCHEMAS: Record<NodeType, NodePortSchema> = {
       { id: "transcript", label: "transcript", dataType: "string" },
       { id: "audio-out", label: "audio", dataType: "audio" },
     ],
+  },
+  "audio-transcription": {
+    inputs: [
+      { id: "audio", label: "audio", dataType: "audio", required: true },
+      { id: "language", label: "language", dataType: "string", required: false },
+    ],
+    outputs: [{ id: "output", label: "string", dataType: "string" }],
   },
 };

@@ -6,7 +6,7 @@ export interface DebugInfo {
   startTime: number;
   endTime?: number;
   request: {
-    type: "text-generation" | "image-generation" | "react-component" | "realtime-conversation";
+    type: "text-generation" | "image-generation" | "react-component" | "realtime-conversation" | "audio-transcription";
     provider?: string;
     model?: string;
     userPrompt?: string;

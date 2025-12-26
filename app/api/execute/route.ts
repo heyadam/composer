@@ -790,6 +790,72 @@ CODE: return String(input1 || '') + ' ' + String(input2 || '');`;
       }
     }
 
+    if (type === "audio-transcription") {
+      const { audioBuffer, audioMimeType, model, language } = body;
+
+      if (!audioBuffer) {
+        return NextResponse.json({ error: "No audio data provided" }, { status: 400 });
+      }
+
+      // Convert base64 to bytes and check size
+      const audioBytes = Buffer.from(audioBuffer, "base64");
+      const MAX_SIZE_MB = 25;
+      if (audioBytes.length > MAX_SIZE_MB * 1024 * 1024) {
+        return NextResponse.json(
+          { error: `Audio file too large (max ${MAX_SIZE_MB}MB)` },
+          { status: 400 }
+        );
+      }
+
+      const openai = new OpenAI({
+        apiKey: apiKeys?.openai || process.env.OPENAI_API_KEY,
+      });
+
+      // Map MIME type to file extension
+      const extMap: Record<string, string> = {
+        "audio/webm": "webm",
+        "audio/webm;codecs=opus": "webm",
+        "audio/mp4": "mp4",
+        "audio/mpeg": "mp3",
+        "audio/wav": "wav",
+      };
+      const ext = extMap[audioMimeType] || "webm";
+      const file = new File([audioBytes], `audio.${ext}`, { type: audioMimeType });
+
+      try {
+        // Transcription (non-streaming for now due to SDK typing issues)
+        const result = await openai.audio.transcriptions.create({
+          file,
+          model: model || "gpt-4o-transcribe",
+          response_format: "text",
+          ...(language && { language }),
+        });
+
+        // Return the transcription text as a stream-like response
+        const encoder = new TextEncoder();
+        const transcriptText = typeof result === "string" ? result : String(result);
+        const readableStream = new ReadableStream({
+          start(controller) {
+            controller.enqueue(encoder.encode(transcriptText));
+            controller.close();
+          },
+        });
+
+        return new Response(readableStream, {
+          headers: {
+            "Content-Type": "text/plain",
+            "Transfer-Encoding": "chunked",
+          },
+        });
+      } catch (transcribeError) {
+        console.error("Transcription error:", transcribeError);
+        return NextResponse.json(
+          { error: transcribeError instanceof Error ? transcribeError.message : "Transcription failed" },
+          { status: 500 }
+        );
+      }
+    }
+
     return NextResponse.json({ error: "Unknown execution type" }, { status: 400 });
   } catch (error) {
     console.error("Execution error:", error);

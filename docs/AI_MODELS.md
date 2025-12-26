@@ -18,6 +18,12 @@ Quick reference for AI model IDs used in API calls. Only use these models, don't
 | `dall-e-3` | Higher quality, larger resolutions |
 | `dall-e-2` | Lower cost, supports edits/variations |
 
+### Transcription
+| Model ID | Description |
+|----------|-------------|
+| `gpt-4o-transcribe` | High quality transcription (default) |
+| `gpt-4o-mini-transcribe` | Cost-optimized transcription |
+
 
 ---
 
