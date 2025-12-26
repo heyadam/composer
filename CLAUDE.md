@@ -102,6 +102,7 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 - `MagicNode` (type: `ai-logic`): Custom code transformation using Claude Haiku-generated JavaScript. Auto-generates code when transform input is connected at execution time. Includes validation with test cases and collapsible code/eval views.
 - `ReactComponentNode` (type: `react-component`): AI-generated React components rendered in sandboxed iframe
 - `CommentNode` (type: `comment`): Resizable comment boxes for annotating flows. Features color themes (gray, blue, green, yellow, purple, pink, orange), editable title/description, and AI-generated suggestions.
+- `RealtimeNode` (type: `realtime-conversation`): Real-time voice conversation using OpenAI's Realtime API. Features voice selection (10 voices), VAD modes (semantic, server, manual PTT), live transcript display, and audio input/output ports. Auto-starts session when flow executes if output is connected.
 - `OutputNode` (type: `preview-output`): Exit point, displays final result and sends to preview
 
 **InputWithHandle** (`components/Flow/nodes/InputWithHandle.tsx`): Reusable component combining input fields with connection handles:
@@ -149,7 +150,7 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 - Pulsing glow animation
 
 **Port Labels** (`components/Flow/nodes/PortLabel.tsx`): Unified port design component for all nodes:
-- Color-coded input/output handles (cyan=string, purple=image, amber=response)
+- Color-coded input/output handles (cyan=string, purple=image, amber=response, emerald=audio)
 - Labels next to handles showing data type
 - Visual highlighting during edge creation (color activates when dragging)
 - Hover effects with scale animation
@@ -160,6 +161,7 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 - Cyan for string data
 - Purple for image data
 - Amber for response data
+- Emerald for audio data
 - Multi-layer glow effect and pulse animation on selection
 
 **Execution Engine** (`lib/execution/engine.ts`): Recursive graph traversal that:
@@ -227,7 +229,7 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 
 **Autopilot System** (`lib/autopilot/`):
 - `types.ts`: Action types, FlowChanges, AutopilotMessage, EvaluationResult, EvaluationState, AutopilotMode, AutopilotModel, FlowPlan, PendingAutopilotMessage
-- `parser.ts`: Extracts and validates JSON actions from Claude's responses. Valid node types: `text-input`, `image-input`, `text-generation`, `image-generation`, `ai-logic`, `preview-output`, `react-component`, `comment`
+- `parser.ts`: Extracts and validates JSON actions from Claude's responses. Valid node types: `text-input`, `image-input`, `text-generation`, `image-generation`, `ai-logic`, `preview-output`, `react-component`, `comment`, `realtime-conversation`
 - `snapshot.ts`: Serializes current flow state for context
 - `system-prompt.ts`: Builds prompt with node types, edge rules, valid model IDs, and insertion examples
 - `evaluator.ts`: Programmatic validation of generated flow changes. Checks node types, model IDs, edge connections, target handles (including `image` handle for vision on text-generation), and completeness. Returns issues for auto-retry.
@@ -253,6 +255,7 @@ Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__co
 - `useNuxState.ts`: Manages NUX step state (`"1"` | `"2"` | `"3"` | `"done"`) persisted to localStorage.
 - `useDemoExecution.ts`: Auto-executes welcome-preview flow for NUX Step 1 demo.
 - `useResizableSidebar.ts`: Reusable hook for sidebar resize behavior - SSR-safe localStorage, RAF-throttled updates, global mouse handling.
+- `useRealtimeSession.ts`: Manages WebRTC-based realtime voice sessions with OpenAI's Realtime API. Handles connection lifecycle, transcript updates, audio input/output streams, and session timers (60-minute max).
 
 **Comment System**:
 - `CommentEditContext.tsx`: React context for tracking user-edited comments to prevent AI overwrites
@@ -447,9 +450,31 @@ Run tests with `npm test` (65 tests) or `npm run test:watch` for watch mode.
 - Google Gemini thinking: When thinking is enabled, streams NDJSON with separate `reasoning` and `text` chunks. Auto-enables `includeThoughts` when `thinkingLevel` or `thinkingBudget` is set.
 - Image generation nodes: OpenAI (Responses API with streaming partial images) and Google Gemini. Configurable aspect ratio, quality, format, and partial image count.
 
+### Audio System
+
+**Audio Registry** (`lib/audio/registry.ts`): Global singleton for managing MediaStream references used in audio edges:
+- `register(stream)`: Register a MediaStream, returns unique ID
+- `get(id)`: Retrieve MediaStream by ID
+- `unregister(id)`: Stop tracks and remove stream
+- `clear()`: Stop all tracks and clear registry
+- Enables audio nodes to pass stream references without serializing audio data
+
+**Realtime Session API** (`app/api/realtime/session/route.ts`): Ephemeral token endpoint for WebRTC connections:
+- POST: Returns `clientSecret` for OpenAI Realtime API WebRTC handshake
+- Supports user-provided API keys or owner-funded execution via share token
+- Rate limited: 10 sessions per minute per IP/token
+- Integrates with Supabase for owner key decryption and execution logging
+
 ### Type System
 
 Flow types in `types/flow.ts` define node data interfaces with execution state tracking (`ExecutionStatus`, `executionOutput`, `executionError`).
+
+**PortDataType**: Union type for port/edge data types: `"string"` | `"image"` | `"response"` | `"audio"`. Used for edge coloring and connection validation.
+
+**AudioEdgeData**: Interface for audio streaming between nodes:
+- `type`: `"stream"` (MediaStream reference) or `"buffer"` (base64 encoded)
+- `streamId`: Reference ID to MediaStream in global audio registry
+- `buffer`, `mimeType`, `sampleRate`: For buffer-based audio transfer
 
 **PromptNodeData fields**:
 - `userPrompt`: User message content (used when prompt input not connected)
@@ -460,6 +485,14 @@ Flow types in `types/flow.ts` define node data interfaces with execution state t
 - `googleThinkingConfig`: Google-specific thinking options (`thinkingLevel`, `thinkingBudget`, `includeThoughts`)
 - `googleSafetyPreset`: Safety filtering level (`default`, `strict`, `relaxed`, `none`)
 - `executionReasoning`: Captured thinking/reasoning output from models that support it
+
+**RealtimeNodeData fields**:
+- `instructions`: System prompt for the realtime session
+- `voice`: Voice selection (`alloy`, `ash`, `ballad`, `coral`, `echo`, `sage`, `shimmer`, `verse`, `marin`, `cedar`)
+- `vadMode`: Voice activity detection mode (`semantic_vad`, `server_vad`, `disabled` for manual PTT)
+- `sessionStatus`: Connection state (`disconnected`, `connecting`, `connected`, `error`)
+- `transcript`: Array of conversation entries with role, text, and timestamp
+- `audioOutStreamId`: Registry ID for output audio stream
 
 ### UI Components
 
