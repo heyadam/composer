@@ -171,7 +171,7 @@ Open [http://localhost:3000](http://localhost:3000) to use the workflow builder.
 
 ### Claude Code Skills
 
-This project includes three Claude Code skills at `.claude/skills/`:
+This project includes four Claude Code skills at `.claude/skills/`:
 
 **Supabase** (`/supabase`) - Database development guide:
 ```
@@ -202,4 +202,15 @@ This project includes three Claude Code skills at `.claude/skills/`:
 ```
 .claude/skills/content-design/
 └── SKILL.md           # Capitalization, placeholders, tooltips, labels
+```
+
+**Gemini Agents** (`/gemini-agents`) - High-velocity parallel code changes:
+```
+.claude/skills/gemini-agents/
+├── SKILL.md           # Router with workflow overview
+├── AGENT_PROMPTS.md   # Template prompts for instructing agents
+├── WORK_DIVISION.md   # Strategies for dividing work across agents
+├── TASK_TYPES.md      # Task types suited for Gemini vs Claude
+├── GEMINI_USAGE.md    # Gemini CLI command patterns
+└── EXAMPLES.md        # Real-world usage examples
 ```

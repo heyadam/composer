@@ -50,10 +50,11 @@ import type { FlowChanges, AddNodeAction, AddEdgeAction, RemoveEdgeAction, Remov
 import { ResponsesSidebar, type PreviewEntry, type DebugEntry } from "./ResponsesSidebar";
 import { useApiKeys, type ProviderId } from "@/lib/api-keys";
 import type { FlowMetadata } from "@/lib/flow-storage";
-import { useBackgroundSettings, getBackgroundStyle } from "@/lib/hooks/useBackgroundSettings";
+import { useBackgroundSettings, getBackgroundStyle, getShimmerStyle } from "@/lib/hooks/useBackgroundSettings";
 import { ShareDialog } from "./ShareDialog";
 import { useCollaboration, type CollaborationModeProps } from "@/lib/hooks/useCollaboration";
 import { loadFlow } from "@/lib/flows/api";
+import { AnimatePresence, motion } from "motion/react";
 
 let id = 0;
 const getId = () => `node_${id++}`;
@@ -870,6 +871,30 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
                 size={bgSettings.size}
                 style={{ background: getBackgroundStyle(bgSettings) }}
               />
+              <AnimatePresence mode="wait">
+                {isRunning && (
+                  <motion.div
+                    key="execution-shimmer"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    exit={{ opacity: 0, transition: { duration: 0.3 } }}
+                    transition={{
+                      opacity: {
+                        duration: bgSettings.shimmerDuration,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                      },
+                    }}
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      pointerEvents: "none",
+                      zIndex: 4,
+                      background: getShimmerStyle(bgSettings),
+                    }}
+                  />
+                )}
+              </AnimatePresence>
               <Controls />
               <CollaboratorCursors collaborators={collaborators} />
             </ReactFlow>

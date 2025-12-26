@@ -61,6 +61,10 @@ Invoke `/node-creation` for step-by-step guides: types → component → executi
 
 Invoke `/content-design` when writing or modifying user-facing text for capitalization rules, placeholder patterns, and UI conventions.
 
+### Gemini Agents Skill
+
+Invoke `/gemini-agents` for high-velocity parallel code changes. Spawns 2-4 agents using Gemini CLI (`gemini --model gemini-3-flash`) for quick, low-complexity edits across multiple files simultaneously. Use for batch operations like import updates, renames, pattern fixes. NOT for complex edits—Claude handles those directly.
+
 ## Architecture Overview
 
 This is an AI agent workflow builder using Next.js 16 App Router with React Flow for visual flow editing.

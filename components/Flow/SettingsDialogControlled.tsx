@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useApiKeys, type ProviderId } from "@/lib/api-keys";
-import { useBackgroundSettings, type GradientType } from "@/lib/hooks/useBackgroundSettings";
+import { useBackgroundSettings, type GradientType, type ShimmerGradientType } from "@/lib/hooks/useBackgroundSettings";
 import { useAuth } from "@/lib/auth";
 
 const PROVIDERS: { id: ProviderId; label: string; placeholder: string }[] = [
@@ -46,6 +46,12 @@ const GRADIENT_TYPE_OPTIONS: { value: GradientType; label: string }[] = [
   { value: "linear", label: "Linear" },
   { value: "radial", label: "Radial" },
   { value: "conic", label: "Conic" },
+];
+
+const SHIMMER_GRADIENT_OPTIONS: { value: ShimmerGradientType; label: string }[] = [
+  { value: "radial", label: "Radial" },
+  { value: "linear", label: "Linear" },
+  { value: "pulse", label: "Pulse" },
 ];
 
 interface SettingsDialogControlledProps {
@@ -454,6 +460,60 @@ export function SettingsDialogControlled({
                   )}
                 </>
               )}
+            </div>
+
+            {/* Shimmer Settings */}
+            <div className="space-y-3">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Execution shimmer</label>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Style</label>
+                  <Select
+                    value={bgSettings.shimmerGradientType}
+                    onValueChange={(value) => updateBgSettings({ shimmerGradientType: value as ShimmerGradientType })}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SHIMMER_GRADIENT_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Duration</label>
+                  <Input
+                    type="number"
+                    min={0.5}
+                    max={10}
+                    step={0.5}
+                    value={bgSettings.shimmerDuration}
+                    onChange={(e) => updateBgSettings({ shimmerDuration: parseFloat(e.target.value) || 2 })}
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Color</label>
+                  <div className="flex gap-1">
+                    <Input
+                      type="color"
+                      value={bgSettings.shimmerColor}
+                      onChange={(e) => updateBgSettings({ shimmerColor: e.target.value })}
+                      className="h-8 w-10 p-1 cursor-pointer shrink-0"
+                    />
+                    <Input
+                      type="text"
+                      value={bgSettings.shimmerColor}
+                      onChange={(e) => updateBgSettings({ shimmerColor: e.target.value })}
+                      className="h-8 text-xs font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             <p className="text-xs text-muted-foreground border-t pt-4">

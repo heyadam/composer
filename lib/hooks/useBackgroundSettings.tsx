@@ -11,6 +11,7 @@ import {
 import { BackgroundVariant } from "@xyflow/react";
 
 export type GradientType = "solid" | "linear" | "radial" | "conic";
+export type ShimmerGradientType = "radial" | "linear" | "pulse";
 
 export interface BackgroundSettings {
   variant: BackgroundVariant;
@@ -23,6 +24,10 @@ export interface BackgroundSettings {
   gradientColorStart: string;
   gradientColorEnd: string;
   gradientAngle: number; // degrees, for linear/conic
+  // Shimmer settings (execution indicator)
+  shimmerColor: string;
+  shimmerDuration: number; // seconds
+  shimmerGradientType: ShimmerGradientType;
 }
 
 const STORAGE_KEY = "avy-background-settings";
@@ -37,7 +42,50 @@ const DEFAULT_SETTINGS: BackgroundSettings = {
   gradientColorStart: "#1a1a2e",
   gradientColorEnd: "#0f0f23",
   gradientAngle: 135,
+  // Shimmer defaults
+  shimmerColor: "#8b5cf6", // purple-500
+  shimmerDuration: 2,
+  shimmerGradientType: "radial",
 };
+
+/**
+ * Generates the CSS background value for the execution shimmer
+ */
+export function getShimmerStyle(settings: BackgroundSettings): string {
+  const { shimmerColor, shimmerGradientType } = settings;
+
+  // Parse hex color and create rgba versions with different opacities
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  switch (shimmerGradientType) {
+    case "linear":
+      return `linear-gradient(
+        -45deg,
+        transparent 0%,
+        transparent 40%,
+        ${hexToRgba(shimmerColor, 0.06)} 45%,
+        ${hexToRgba(shimmerColor, 0.1)} 50%,
+        ${hexToRgba(shimmerColor, 0.06)} 55%,
+        transparent 60%,
+        transparent 100%
+      )`;
+    case "pulse":
+      return hexToRgba(shimmerColor, 0.08);
+    case "radial":
+    default:
+      return `radial-gradient(
+        ellipse at 50% 50%,
+        ${hexToRgba(shimmerColor, 0.06)} 0%,
+        ${hexToRgba(shimmerColor, 0.03)} 50%,
+        transparent 70%
+      )`;
+  }
+}
 
 /**
  * Generates the CSS background value based on gradient settings
