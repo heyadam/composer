@@ -407,8 +407,8 @@ export function CommandPalette({
                                       : "hover:bg-white/[0.02]"
                                   )}
                                   variants={{
-                                    hidden: { opacity: 0, x: -10 },
-                                    visible: { opacity: 1, x: 0 },
+                                    hidden: { opacity: 0 },
+                                    visible: { opacity: 1 },
                                   }}
                                   transition={springs.snappy}
                                 >
