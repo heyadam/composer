@@ -221,6 +221,15 @@ function validateEdges(
 
     // Special check: audio data can only go to specific audio handles
     if (dataType === "audio") {
+      // Validate source is an audio-producing node
+      const sourceType = getNodeType(sourceId);
+      const audioSourceTypes = ["audio-input", "realtime-conversation"];
+      if (sourceType && !audioSourceTypes.includes(sourceType)) {
+        issues.push(
+          `Edge from "${getNodeLabel(sourceId)}": Node type "${sourceType}" does not produce audio output`
+        );
+      }
+
       if (targetType === "preview-output" && targetHandle !== "audio") {
         issues.push(
           `Edge to "${getNodeLabel(targetId)}": Audio data must connect to "audio" handle, not "${targetHandle || "default"}"`

@@ -2,7 +2,18 @@ import type { Node, Edge } from "@xyflow/react";
 import type { SavedFlow, FlowValidationResult, FlowMetadata } from "./types";
 import { FLOW_SCHEMA_VERSION } from "./types";
 
-const VALID_NODE_TYPES = ["text-input", "preview-output", "text-generation", "image-generation", "image-input", "ai-logic"];
+const VALID_NODE_TYPES = [
+  "text-input",
+  "image-input",
+  "audio-input",
+  "text-generation",
+  "image-generation",
+  "ai-logic",
+  "preview-output",
+  "react-component",
+  "comment",
+  "realtime-conversation",
+];
 
 /**
  * Validates that an object has the basic structure of a SavedFlow
@@ -196,6 +207,8 @@ export function sanitizeNodes(nodes: Node[]): Node[] {
       executionError: undefined,
       uploadedImage: undefined,  // ImageInputNode runtime state
       imageInput: undefined,     // PromptNode vision input runtime state
+      isRecording: undefined,    // AudioInputNode runtime state
+      awaitingInput: undefined,  // AudioInputNode runtime state
     },
     // Remove autopilot highlighting
     className: undefined,

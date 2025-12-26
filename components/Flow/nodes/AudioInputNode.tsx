@@ -35,6 +35,13 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
   const audioContextRef = useRef<AudioContext | null>(null);
   const animationRef = useRef<number | null>(null);
 
+  // Pending audio data waiting to be persisted after execution completes
+  const pendingAudioRef = useRef<{
+    audioBuffer: string;
+    audioMimeType: string;
+    recordingDuration: number;
+  } | null>(null);
+
   const isOutputConnected = edges.some(
     (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
   );
@@ -58,12 +65,22 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
       });
       streamRef.current = stream;
 
-      // Set up MediaRecorder
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm")
-        ? "audio/webm"
-        : "audio/mp4";
+      // Set up MediaRecorder with best available format
+      // Priority: webm+opus (Chrome/Firefox) > webm (fallback) > mp4 (Safari)
+      const getSupportedMimeType = (): string | null => {
+        const formats = [
+          "audio/webm;codecs=opus",
+          "audio/webm",
+          "audio/mp4",
+          "audio/aac",
+        ];
+        return formats.find((format) => MediaRecorder.isTypeSupported(format)) || null;
+      };
+
+      const mimeType = getSupportedMimeType();
+      if (!mimeType) {
+        throw new Error("No supported audio format found. Please use a modern browser.");
+      }
 
       const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
@@ -88,25 +105,18 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
         // Calculate final duration
         const finalDuration = Math.floor((Date.now() - startTimeRef.current) / 1000);
 
-        // Signal to execution engine that recording is complete FIRST
-        // This allows the engine to set executionStatus before we update other data
+        // Store pending audio data - will be persisted when execution completes
+        pendingAudioRef.current = {
+          audioBuffer: base64,
+          audioMimeType: mimeType,
+          recordingDuration: finalDuration,
+        };
+
+        // Signal to execution engine that recording is complete
         pendingInputRegistry.resolveInput(id, {
           buffer: base64,
           mimeType,
           duration: finalDuration,
-        });
-
-        // Small delay to let engine process the input and set success status
-        // before we update node data (avoids race condition with React state batching)
-        await new Promise(resolve => setTimeout(resolve, 50));
-
-        // Update node data with recorded audio for persistence
-        // Note: Don't set execution state here - the engine handles that
-        updateNodeData(id, {
-          audioBuffer: base64,
-          audioMimeType: mimeType,
-          recordingDuration: finalDuration,
-          isRecording: false,
         });
 
         setDuration(finalDuration);
@@ -141,7 +151,11 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
       timerIntervalRef.current = window.requestAnimationFrame(updateTimer);
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to access microphone");
+      // Handle both standard Error and DOMException (for media permission errors)
+      const message = err instanceof Error || err instanceof DOMException
+        ? err.message
+        : "Failed to access microphone";
+      setError(message);
     }
   }, [id, updateNodeData]);
 
@@ -283,6 +297,24 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
       startRecording();
     }
   }, [data.awaitingInput, data.audioBuffer, isRecording, startRecording]);
+
+  // Persist audio data after execution completes (success or error)
+  // This ensures we don't update node data before the engine sets executionStatus
+  useEffect(() => {
+    const pending = pendingAudioRef.current;
+    if (!pending) return;
+
+    // Wait for execution to complete (status changes from "running")
+    if (data.executionStatus === "success" || data.executionStatus === "error") {
+      updateNodeData(id, {
+        audioBuffer: pending.audioBuffer,
+        audioMimeType: pending.audioMimeType,
+        recordingDuration: pending.recordingDuration,
+        isRecording: false,
+      });
+      pendingAudioRef.current = null;
+    }
+  }, [data.executionStatus, id, updateNodeData]);
 
   return (
     <NodeFrame

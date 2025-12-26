@@ -67,11 +67,18 @@ export function parseAudioOutput(output: string): AudioData | null {
 }
 
 /**
- * Create a blob URL from audio buffer data for playback
+ * Create a blob URL from audio buffer data for playback.
+ * Returns null if the buffer is invalid or corrupted.
  */
 export function getAudioBlobUrl(audioData: AudioData): string | null {
   if (audioData.type === "buffer" && audioData.buffer) {
     try {
+      // Validate base64 format before decoding
+      if (!/^[A-Za-z0-9+/]*={0,2}$/.test(audioData.buffer)) {
+        console.warn("[audio-utils] Invalid base64 format in audio buffer");
+        return null;
+      }
+
       const binaryString = atob(audioData.buffer);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
@@ -81,7 +88,8 @@ export function getAudioBlobUrl(audioData: AudioData): string | null {
         type: audioData.mimeType || "audio/webm",
       });
       return URL.createObjectURL(blob);
-    } catch {
+    } catch (err) {
+      console.warn("[audio-utils] Failed to decode audio buffer:", err);
       return null;
     }
   }

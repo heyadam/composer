@@ -45,6 +45,11 @@ export function AudioPreview({ output, compact = false, className }: AudioPrevie
     if (url) {
       // Clean up previous blob URL if exists
       if (blobUrlRef.current) {
+        // Pause audio before revoking to prevent playback errors
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.src = "";
+        }
         URL.revokeObjectURL(blobUrlRef.current);
       }
       blobUrlRef.current = url;
@@ -52,6 +57,11 @@ export function AudioPreview({ output, compact = false, className }: AudioPrevie
     }
 
     return () => {
+      // Pause audio before revoking blob URL to prevent playback errors
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
       if (blobUrlRef.current) {
         URL.revokeObjectURL(blobUrlRef.current);
         blobUrlRef.current = null;

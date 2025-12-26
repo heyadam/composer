@@ -8,6 +8,13 @@ All node components are in `components/Flow/nodes/` with editable labels.
 
 **ImageInputNode** (type: `image-input`): Entry point for image upload.
 
+**AudioInputNode** (type: `audio-input`): Entry point for audio recording:
+- Real-time waveform visualization during recording
+- Automatic recording start when flow executes (if connected)
+- Uses pending-input-registry for async user input during execution
+- Supports webm, mp4, and aac formats (browser-dependent)
+- Outputs audio in `AudioEdgeData` format (base64 buffer with metadata)
+
 ## Processing Nodes
 
 **PromptNode** (type: `text-generation`): LLM prompt execution with three inputs:

@@ -19,6 +19,14 @@ Flow types in `types/flow.ts` define node data interfaces with execution state t
 - `googleSafetyPreset`: Safety filtering level (`default`, `strict`, `relaxed`, `none`)
 - `executionReasoning`: Captured thinking/reasoning output from models that support it
 
+### AudioInputNodeData
+
+- `audioBuffer`: Base64-encoded recorded audio buffer
+- `audioMimeType`: MIME type of recorded audio (e.g., `audio/webm`, `audio/mp4`)
+- `recordingDuration`: Duration in seconds
+- `isRecording`: True while recording is in progress
+- `awaitingInput`: True when execution engine is waiting for user to record
+
 ### RealtimeNodeData
 
 - `instructions`: System prompt for the realtime session
@@ -40,6 +48,7 @@ Interface for audio streaming between nodes:
 Valid node types for flow operations:
 - `text-input`
 - `image-input`
+- `audio-input`
 - `text-generation`
 - `image-generation`
 - `ai-logic`

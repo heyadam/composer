@@ -79,7 +79,7 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
         <PortList
           nodeId={id}
           inputs={[
-            { id: "input", label: "Response", colorClass: "amber", isConnected: isInputConnected },
+            { id: "input", label: "Text/Image", colorClass: "amber", isConnected: isInputConnected },
             { id: "audio", label: "Audio", colorClass: "emerald", isConnected: isAudioConnected },
           ]}
         />
