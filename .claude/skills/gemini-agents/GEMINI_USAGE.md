@@ -15,14 +15,19 @@ This skill exists because Gemini can make fast, parallel edits across many files
 
 ## Model Specification
 
-**ALWAYS use `--model gemini-3-flash`**
+**ALWAYS use `-y -m gemini-3-flash-preview`**
+
+- `-y` = auto-approve file edits (required)
+- `-m` = model flag (short form)
+- `gemini-3-flash-preview` = fast, capable model
 
 ```bash
-# Correct - always specify model
-gemini --model gemini-3-flash "Update import from @/old to @/new. Use replace tool."
+# Correct - always specify model and auto-approve
+gemini -y -m gemini-3-flash-preview "Update import from @/old to @/new"
 
-# Wrong - missing model
+# Wrong - missing -y flag or model
 gemini "Update import..."  # ❌
+gemini -m gemini-3-flash "..."  # ❌ wrong model name
 ```
 
 ## Ideal Tasks for Gemini Agents
@@ -57,31 +62,31 @@ gemini "Update import..."  # ❌
 ### Basic Edit
 
 ```bash
-gemini --model gemini-3-flash "Replace all imports from '@/lib/old' with '@/lib/new'. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Replace all imports from '@/lib/old' with '@/lib/new'. Use replace tool."
 ```
 
 ### Pattern Addition
 
 ```bash
-gemini --model gemini-3-flash "Add Button.displayName = 'Button'; after each component definition. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Add Button.displayName = 'Button'; after each component definition. Use replace tool."
 ```
 
 ### Simple Fix
 
 ```bash
-gemini --model gemini-3-flash "Add 'use client' directive at the top of this file. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Add 'use client' directive at the top of this file. Use replace tool."
 ```
 
 ### Rename
 
 ```bash
-gemini --model gemini-3-flash "Rename all occurrences of 'oldFunction' to 'newFunction'. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Rename all occurrences of 'oldFunction' to 'newFunction'. Use replace tool."
 ```
 
 ### Remove Pattern
 
 ```bash
-gemini --model gemini-3-flash "Remove all console.log statements. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Remove all console.log statements. Use replace tool."
 ```
 
 ## Prompt Best Practices
@@ -90,26 +95,26 @@ gemini --model gemini-3-flash "Remove all console.log statements. Use replace to
 
 ```bash
 # Clear, one-sentence task
-gemini --model gemini-3-flash "Change import path from '@/utils' to '@/lib/utils'. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Change import path from '@/utils' to '@/lib/utils'. Use replace tool."
 
 # Specific pattern
-gemini --model gemini-3-flash "Add 'export' before 'const' on line 15. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Add 'export' before 'const' on line 15. Use replace tool."
 
 # Simple transformation
-gemini --model gemini-3-flash "Replace var with const throughout this file. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Replace var with const throughout this file. Use replace tool."
 ```
 
 ### ❌ Bad Prompts (Too Complex - Claude should handle)
 
 ```bash
 # Requires understanding - DON'T use Gemini
-gemini --model gemini-3-flash "Refactor this code to be more efficient"  # ❌
+gemini -y -m gemini-3-flash-preview "Refactor this code to be more efficient"  # ❌
 
 # Requires judgment - DON'T use Gemini
-gemini --model gemini-3-flash "Fix the bug in this function"  # ❌
+gemini -y -m gemini-3-flash-preview "Fix the bug in this function"  # ❌
 
 # Requires context - DON'T use Gemini
-gemini --model gemini-3-flash "Add appropriate error handling"  # ❌
+gemini -y -m gemini-3-flash-preview "Add appropriate error handling"  # ❌
 ```
 
 ## Decision: Gemini or Claude?
@@ -140,7 +145,7 @@ You are Agent 1 of 3. Your task:
 
 **Command to run for each file**:
 ```bash
-gemini --model gemini-3-flash "Update all imports from '@/old' to '@/new' in this file. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Update all imports from '@/old' to '@/new' in this file. Use replace tool."
 ```
 
 **Report back**: | File | Status | Changes Made |
@@ -151,7 +156,7 @@ gemini --model gemini-3-flash "Update all imports from '@/old' to '@/new' in thi
 When file context helps:
 
 ```bash
-cat path/to/file.ts | gemini --model gemini-3-flash "Add semicolons to all lines missing them. Use replace tool."
+cat path/to/file.ts | gemini -y -m gemini-3-flash-preview "Add semicolons to all lines missing them. Use replace tool."
 ```
 
 ## Troubleshooting
@@ -163,10 +168,10 @@ cat path/to/file.ts | gemini --model gemini-3-flash "Add semicolons to all lines
 
 ```bash
 # Bad - vague
-gemini --model gemini-3-flash "Clean up this file"
+gemini -y -m gemini-3-flash-preview "Clean up this file"
 
 # Good - specific
-gemini --model gemini-3-flash "Remove all console.log statements. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Remove all console.log statements. Use replace tool."
 ```
 
 ### Gemini doesn't make any changes
@@ -176,10 +181,10 @@ gemini --model gemini-3-flash "Remove all console.log statements. Use replace to
 
 ```bash
 # Missing tool instruction
-gemini --model gemini-3-flash "Update imports"
+gemini -y -m gemini-3-flash-preview "Update imports"
 
 # With tool instruction
-gemini --model gemini-3-flash "Update imports from @/old to @/new. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Update imports from @/old to @/new. Use replace tool."
 ```
 
 ### Task seems too complex for Gemini

@@ -32,7 +32,7 @@ You are Agent [N] of [TOTAL]. Your task:
 
 **For each file, run**:
 ```bash
-gemini --model gemini-3-flash "[SIMPLE_PROMPT]. Use replace tool."
+gemini -y -m gemini-3-flash-preview "[SIMPLE_PROMPT]. Use replace tool."
 ```
 
 **Report back** in this format:
@@ -59,7 +59,7 @@ You are Agent 1 of 2. Your task:
 
 **For each file, run**:
 ```bash
-gemini --model gemini-3-flash "Replace all imports from '@/lib/old-utils' with '@/lib/utils'. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Replace all imports from '@/lib/old-utils' with '@/lib/utils'. Use replace tool."
 ```
 
 **Report back**:
@@ -81,7 +81,7 @@ You are Agent 1 of 3. Your task:
 
 **For each file, run**:
 ```bash
-gemini --model gemini-3-flash "Add ComponentName.displayName = 'ComponentName'; after each exported component. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Add ComponentName.displayName = 'ComponentName'; after each exported component. Use replace tool."
 ```
 
 **Report back**:
@@ -102,7 +102,7 @@ You are Agent 2 of 3. Your task:
 
 **For each file, run**:
 ```bash
-gemini --model gemini-3-flash "Rename all occurrences of 'oldFunction' to 'newFunction'. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Rename all occurrences of 'oldFunction' to 'newFunction'. Use replace tool."
 ```
 
 **Report back**:
@@ -123,7 +123,7 @@ You are Agent 1 of 2. Your task:
 
 **For each file, run**:
 ```bash
-gemini --model gemini-3-flash "Remove all console.log statements from this file. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Remove all console.log statements from this file. Use replace tool."
 ```
 
 **Report back**:
@@ -144,7 +144,7 @@ You are Agent 1 of 4. Your task:
 
 **For each file, run**:
 ```bash
-gemini --model gemini-3-flash "Add 'use client' directive at the very top of this file. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Add 'use client' directive at the very top of this file. Use replace tool."
 ```
 
 **Report back**:
@@ -165,7 +165,7 @@ You are Agent 1 of 2. Your task:
 
 **For each file, run**:
 ```bash
-gemini --model gemini-3-flash "Replace 'https://old-api.com' with 'https://new-api.com'. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Replace 'https://old-api.com' with 'https://new-api.com'. Use replace tool."
 ```
 
 **Report back**:
@@ -212,8 +212,7 @@ Include error messages verbatim for debugging.
 ## Best Practices
 
 1. **Keep prompts simple**: One sentence describing the change
-2. **Always specify model**: `--model gemini-3-flash`
-3. **Include "Use replace tool"**: Tells Gemini how to make changes
-4. **One task type per agent**: Don't mix different change types
-5. **Report clearly**: Be specific about what changed
-6. **Don't over-complicate**: If task seems complex, Claude handles it directly
+2. **Always use `-y -m gemini-3-flash-preview`**: Auto-approve + correct model
+3. **One task type per agent**: Don't mix different change types
+4. **Report clearly**: Be specific about what changed
+5. **Don't over-complicate**: If task seems complex, Claude handles it directly

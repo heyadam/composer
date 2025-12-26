@@ -17,51 +17,51 @@ These tasks are perfect for parallel Gemini agents. Low complexity, high velocit
 ### Import Updates
 
 ```bash
-gemini --model gemini-3-flash "Replace all imports from '@/lib/old' with '@/lib/new'. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Replace all imports from '@/lib/old' with '@/lib/new'. Use replace tool."
 ```
 
 ### Variable/Function Renames
 
 ```bash
-gemini --model gemini-3-flash "Rename all occurrences of 'oldFunction' to 'newFunction'. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Rename all occurrences of 'oldFunction' to 'newFunction'. Use replace tool."
 ```
 
 ### Pattern Additions (displayName, directives)
 
 ```bash
-gemini --model gemini-3-flash "Add ComponentName.displayName = 'ComponentName' after each exported component. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Add ComponentName.displayName = 'ComponentName' after each exported component. Use replace tool."
 ```
 
 ```bash
-gemini --model gemini-3-flash "Add 'use client' directive at the top of this file. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Add 'use client' directive at the top of this file. Use replace tool."
 ```
 
 ### Pattern Removals
 
 ```bash
-gemini --model gemini-3-flash "Remove all console.log statements. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Remove all console.log statements. Use replace tool."
 ```
 
 ```bash
-gemini --model gemini-3-flash "Remove all TODO comments. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Remove all TODO comments. Use replace tool."
 ```
 
 ### Simple Linting Fixes
 
 ```bash
-gemini --model gemini-3-flash "Add missing semicolons to all lines. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Add missing semicolons to all lines. Use replace tool."
 ```
 
 ### Config Value Updates
 
 ```bash
-gemini --model gemini-3-flash "Replace 'https://old-api.com' with 'https://new-api.com'. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Replace 'https://old-api.com' with 'https://new-api.com'. Use replace tool."
 ```
 
 ### String/Value Replacements
 
 ```bash
-gemini --model gemini-3-flash "Replace all 'v1' with 'v2' in this file. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Replace all 'v1' with 'v2' in this file. Use replace tool."
 ```
 
 ---

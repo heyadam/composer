@@ -72,7 +72,7 @@ Claude (Coordinator):
 ├─ Divides work (by directory, feature, or size)
 ├─ Spawns 2-4 general-purpose agents in parallel
 ├─ Each agent:
-│  ├─ Runs Gemini CLI: gemini --model gemini-3-flash "simple prompt"
+│  ├─ Runs Gemini CLI: gemini -y -m gemini-3-flash-preview "simple prompt"
 │  ├─ Gemini makes quick edits to assigned files
 │  └─ Reports: | File | Status | Changes Made |
 └─ Aggregates results into summary table
@@ -113,7 +113,7 @@ Present aggregated results as:
 1. **Claude = Complex, Gemini = Quick**: Never delegate complex work to Gemini
 2. **High velocity**: Use this skill when speed matters more than perfect reasoning
 3. **Simple prompts**: If you can't describe the change in one sentence, it's too complex for Gemini
-4. **Gemini CLI primary**: Agents run `gemini --model gemini-3-flash` for all edits
+4. **Gemini CLI primary**: Agents run `gemini -y -m gemini-3-flash-preview` for all edits
 5. **Parallel execution**: 2-4 agents working simultaneously = faster results
 6. **Clear task division**: Each agent gets specific, independent, simple work
 7. **Fail gracefully**: Partial success is still valuable

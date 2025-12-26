@@ -43,7 +43,7 @@ You are Agent 1 of 2. Your task:
 
 **For each file, run**:
 ```bash
-gemini --model gemini-3-flash "Replace all imports from '@/lib/old-utils' with '@/lib/utils'. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Replace all imports from '@/lib/old-utils' with '@/lib/utils'. Use replace tool."
 ```
 
 **Report back**:
@@ -64,7 +64,7 @@ You are Agent 2 of 2. Your task:
 
 **For each file, run**:
 ```bash
-gemini --model gemini-3-flash "Replace all imports from '@/lib/old-utils' with '@/lib/utils'. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Replace all imports from '@/lib/old-utils' with '@/lib/utils'. Use replace tool."
 ```
 
 **Report back**:
@@ -126,7 +126,7 @@ Each agent receives:
 ```markdown
 **For each file, run**:
 ```bash
-gemini --model gemini-3-flash "Add ComponentName.displayName = 'ComponentName'; after each exported component definition. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Add ComponentName.displayName = 'ComponentName'; after each exported component definition. Use replace tool."
 ```
 ```
 
@@ -182,7 +182,7 @@ I'll use gemini-agents with 3 agents, alphabetically grouped.
 
 Each agent runs:
 ```bash
-gemini --model gemini-3-flash "Rename all occurrences of 'Button' to 'PrimaryButton'. Include imports, exports, JSX tags, and type references. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Rename all occurrences of 'Button' to 'PrimaryButton'. Include imports, exports, JSX tags, and type references. Use replace tool."
 ```
 
 ### Aggregated Results
@@ -232,7 +232,7 @@ I'll use gemini-agents with 2 agents.
 
 Each agent runs:
 ```bash
-gemini --model gemini-3-flash "Remove all console.log statements from this file. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Remove all console.log statements from this file. Use replace tool."
 ```
 
 ### Aggregated Results
@@ -277,7 +277,7 @@ I'll use gemini-agents with 2 agents.
 
 Each agent runs:
 ```bash
-gemini --model gemini-3-flash "Add 'use client' directive at the very top of this file. Use replace tool."
+gemini -y -m gemini-3-flash-preview "Add 'use client' directive at the very top of this file. Use replace tool."
 ```
 
 ### Aggregated Results
