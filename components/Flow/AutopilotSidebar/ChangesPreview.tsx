@@ -55,7 +55,7 @@ const nodeTypeLabels: Record<NodeType, string> = {
   "ai-logic": "AI Logic",
   "comment": "Comment",
   "react-component": "React Component",
-  "realtime-conversation": "Realtime",
+  "realtime-conversation": "Realtime Audio",
 };
 
 const dataTypeColors: Record<

@@ -296,7 +296,7 @@ export const nodeDefinitions: NodeDefinition[] = [
   },
   {
     type: "realtime-conversation",
-    label: "Realtime",
+    label: "Realtime Audio",
     description: "Real-time voice conversation",
     color: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
   },

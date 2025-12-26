@@ -140,7 +140,7 @@ Image upload entry point. Allows users to upload an image to use in the flow.
 }
 \`\`\`
 
-### 8. realtime-conversation (Realtime Conversation)
+### 8. realtime-conversation (Realtime Audio)
 Real-time voice conversation with OpenAI's Realtime API. Users can have speech-to-speech conversations with the AI model. The node is interactive and manages its own session lifecycle (not triggered by flow execution).
 **Default: voice="marin", vadMode="semantic_vad"**
 \`\`\`typescript
@@ -193,10 +193,10 @@ Example - creating a realtime conversation node:
 ## Edge Connections
 
 Edges connect nodes and carry data. Each edge has a \`dataType\`:
-- \`"string"\` - Text data (from Text Input, Text Generation, AI Logic, or Realtime Conversation transcript)
+- \`"string"\` - Text data (from Text Input, Text Generation, AI Logic, or Realtime Audio transcript)
 - \`"image"\` - Image data (from Image Generation or Image Input nodes)
 - \`"response"\` - Final output going to a Preview Output node (from React Component or other terminal nodes)
-- \`"audio"\` - Audio stream data (from Realtime Conversation audio-out)
+- \`"audio"\` - Audio stream data (from Realtime Audio audio-out)
 
 Edge format:
 \`\`\`typescript
@@ -220,7 +220,7 @@ Edge format:
 - Image Generation nodes have both INPUT and OUTPUT connections
 - AI Logic nodes have both INPUT and OUTPUT connections (output is string)
 - React Component nodes have both INPUT and OUTPUT connections (output is response dataType)
-- Realtime Conversation nodes have both INPUT (instructions, audio-in) and OUTPUT (transcript, audio-out) connections
+- Realtime Audio nodes have both INPUT (instructions, audio-in) and OUTPUT (transcript, audio-out) connections
 - Data flows left to right: input → processing → output
 
 ## Current Flow State
