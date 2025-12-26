@@ -190,6 +190,31 @@ Example - creating a realtime conversation node:
 }
 \`\`\`
 
+### 9. audio-transcription (Transcribe)
+Audio-to-text transcription node using OpenAI's GPT-4o transcription models. Takes audio input and outputs text.
+**Default: model="gpt-4o-transcribe"**
+\`\`\`typescript
+{
+  type: "audio-transcription",
+  data: {
+    label: string,              // Display name
+    model?: "gpt-4o-transcribe" | "gpt-4o-mini-transcribe",
+    language?: string           // Optional ISO 639-1 code (e.g., "en", "es")
+  }
+}
+\`\`\`
+
+**Input Handles:**
+- \`audio\` - Audio data to transcribe (dataType: "audio", required)
+- \`language\` - Optional language hint (dataType: "string")
+
+**Output Handles:**
+- \`output\` - Transcribed text (dataType: "string")
+
+When connecting to this node, use \`targetHandle\` to specify the input:
+- To connect audio: \`targetHandle: "audio"\`
+- To connect language hint: \`targetHandle: "language"\`
+
 ## Edge Connections
 
 Edges connect nodes and carry data. Each edge has a \`dataType\`:
@@ -221,6 +246,7 @@ Edge format:
 - AI Logic nodes have both INPUT and OUTPUT connections (output is string)
 - React Component nodes have both INPUT and OUTPUT connections (output is response dataType)
 - Realtime Audio nodes have both INPUT (instructions, audio-in) and OUTPUT (transcript, audio-out) connections
+- Audio Transcription nodes have both INPUT (audio, language) and OUTPUT (string) connections
 - Data flows left to right: input → processing → output
 
 ## Current Flow State

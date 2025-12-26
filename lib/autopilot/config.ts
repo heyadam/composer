@@ -30,6 +30,7 @@ export const VALID_NODE_TYPES = [
   "react-component",
   "comment",
   "realtime-conversation",
+  "audio-transcription",
 ] as const;
 
 export type ValidNodeType = (typeof VALID_NODE_TYPES)[number];
@@ -66,6 +67,7 @@ export const NODE_REQUIRED_FIELDS: Record<ValidNodeType, string[]> = {
   "react-component": ["label"],
   comment: ["title"],
   "realtime-conversation": ["label", "voice", "vadMode"],
+  "audio-transcription": ["label"],
 };
 
 /**

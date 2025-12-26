@@ -77,6 +77,7 @@ const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
   "comment": { label: "Comment", description: "", color: "gray" },
   "react-component": { label: "React Component", userPrompt: "", provider: "anthropic", model: "claude-sonnet-4-5", stylePreset: "simple" },
   "realtime-conversation": { label: "Realtime Audio", voice: "marin", vadMode: "semantic_vad", instructions: "You are a helpful assistant. Always respond in English." },
+  "audio-transcription": { label: "Transcribe", model: "gpt-4o-transcribe" },
 };
 
 export function AgentFlow({ collaborationMode }: AgentFlowProps) {

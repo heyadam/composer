@@ -1,7 +1,7 @@
 "use client";
 
 import { nodeDefinitions, type NodeType } from "@/types/flow";
-import { Keyboard, Square, MessageSquare, ImageIcon, X, Upload, Sparkles, MessageSquarePlus, Code, Mic } from "lucide-react";
+import { Keyboard, Square, MessageSquare, ImageIcon, X, Upload, Sparkles, MessageSquarePlus, Code, Mic, FileAudio } from "lucide-react";
 import type { DragEvent } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -15,6 +15,7 @@ const iconMap: Record<NodeType, typeof Keyboard> = {
   "comment": MessageSquarePlus,
   "react-component": Code,
   "realtime-conversation": Mic,
+  "audio-transcription": FileAudio,
 };
 
 interface NodeSidebarProps {

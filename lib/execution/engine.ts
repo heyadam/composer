@@ -681,6 +681,106 @@ async function executeNode(
       };
     }
 
+    case "audio-transcription": {
+      const startTime = Date.now();
+      let streamChunksReceived = 0;
+
+      // Get audio from connected node
+      const audioInput = inputs["audio"];
+      if (!audioInput) {
+        throw new Error("No audio input connected");
+      }
+
+      // Parse audio data (AudioEdgeData format from AudioInputNode)
+      let audioData: { type: string; buffer: string; mimeType: string };
+      try {
+        audioData = JSON.parse(audioInput);
+        if (audioData.type !== "buffer" || !audioData.buffer) {
+          throw new Error("Only buffer-type audio is supported for transcription");
+        }
+      } catch (e) {
+        if (e instanceof Error && e.message.includes("buffer-type")) throw e;
+        throw new Error("Invalid audio input format");
+      }
+
+      const model = (node.data.model as string) || "gpt-4o-transcribe";
+      const language = inputs["language"] || (node.data.language as string) || undefined;
+
+      const requestBody = options?.shareToken
+        ? {
+            type: "audio-transcription",
+            audioBuffer: audioData.buffer,
+            audioMimeType: audioData.mimeType,
+            model,
+            language,
+            shareToken: options.shareToken,
+            runId: options.runId,
+          }
+        : {
+            type: "audio-transcription",
+            audioBuffer: audioData.buffer,
+            audioMimeType: audioData.mimeType,
+            model,
+            language,
+            apiKeys,
+          };
+
+      const debugInfo: DebugInfo = {
+        startTime,
+        request: { type: "audio-transcription", model },
+        streamChunksReceived: 0,
+        rawRequestBody: JSON.stringify({
+          ...requestBody,
+          audioBuffer: "[BASE64_AUDIO]",
+          apiKeys: "apiKeys" in requestBody ? "[REDACTED]" : undefined,
+          shareToken: "shareToken" in requestBody ? "[REDACTED]" : undefined,
+        }, null, 2),
+      };
+
+      const response = await fetchWithTimeout("/api/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+        signal,
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        let errorMsg = "Transcription failed";
+        try {
+          errorMsg = JSON.parse(text).error || errorMsg;
+        } catch {
+          // Use default error
+        }
+        debugInfo.endTime = Date.now();
+        throw new Error(errorMsg);
+      }
+
+      if (!response.body) {
+        debugInfo.endTime = Date.now();
+        throw new Error("No response body");
+      }
+
+      // Stream transcript chunks
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullOutput = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        fullOutput += chunk;
+        streamChunksReceived++;
+        debugInfo.streamChunksReceived = streamChunksReceived;
+        debugInfo.rawResponseBody = fullOutput;
+        onStreamUpdate?.(fullOutput, debugInfo);
+      }
+
+      debugInfo.endTime = Date.now();
+      return { output: fullOutput, debugInfo };
+    }
+
     default:
       return { output: inputs["prompt"] || inputs["input"] || Object.values(inputs)[0] || "" };
   }

@@ -14,6 +14,7 @@ import {
   MessageSquarePlus,
   Code,
   Mic,
+  FileAudio,
   ArrowRight,
   X,
 } from "lucide-react";
@@ -32,6 +33,7 @@ const iconMap: Record<NodeType, typeof Keyboard> = {
   "comment": MessageSquarePlus,
   "react-component": Code,
   "realtime-conversation": Mic,
+  "audio-transcription": FileAudio,
 };
 
 // Extended node definitions with categories
@@ -45,7 +47,7 @@ const categorizedNodes = [
   {
     category: "AI Generation",
     nodes: nodeDefinitions.filter((n) =>
-      ["text-generation", "image-generation", "react-component", "realtime-conversation"].includes(n.type)
+      ["text-generation", "image-generation", "react-component", "realtime-conversation", "audio-transcription"].includes(n.type)
     ),
   },
   {

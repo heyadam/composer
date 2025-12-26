@@ -18,6 +18,7 @@ import {
   MessageSquarePlus,
   Code,
   Mic,
+  FileAudio,
   ChevronDown,
   CheckCircle2,
   AlertTriangle,
@@ -44,6 +45,7 @@ const iconMap: Record<NodeType, typeof Keyboard> = {
   "comment": MessageSquarePlus,
   "react-component": Code,
   "realtime-conversation": Mic,
+  "audio-transcription": FileAudio,
 };
 
 const nodeTypeLabels: Record<NodeType, string> = {
@@ -56,6 +58,7 @@ const nodeTypeLabels: Record<NodeType, string> = {
   "comment": "Comment",
   "react-component": "React Component",
   "realtime-conversation": "Realtime Audio",
+  "audio-transcription": "Transcribe",
 };
 
 const dataTypeColors: Record<
