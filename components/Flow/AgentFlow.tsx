@@ -958,6 +958,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
         onTabChange={setActiveResponseTab}
         keyError={keyError}
         isOpen={responsesOpen}
+        onClose={() => setResponsesOpen(false)}
         onWidthChange={handleResponsesWidthChange}
       />
       <SaveFlowDialog

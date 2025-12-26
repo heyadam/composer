@@ -24,6 +24,7 @@ interface ResponsesSidebarProps {
   onTabChange: (tab: "responses" | "debug") => void;
   keyError?: string | null;
   isOpen: boolean;
+  onClose: () => void;
   /** Called when sidebar width or resize state changes (for parent layout adjustments) */
   onWidthChange?: (width: number, isResizing: boolean) => void;
 }
@@ -35,6 +36,7 @@ export function ResponsesSidebar({
   onTabChange,
   keyError,
   isOpen,
+  onClose,
   onWidthChange,
 }: ResponsesSidebarProps) {
   const { width, isResizing, sidebarRef, startResizing } = useResizableSidebar(SIDEBAR_CONFIG);
@@ -70,6 +72,7 @@ export function ResponsesSidebar({
           onTabChange={onTabChange}
           responsesCount={entries.length}
           debugCount={debugEntries.length}
+          onClose={onClose}
         />
         {activeTab === "responses" ? (
           <ResponsesContent entries={entries} />
