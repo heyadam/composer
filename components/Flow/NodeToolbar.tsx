@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { nodeDefinitions, type NodeType } from "@/types/flow";
 import {
   Command,
@@ -104,46 +104,11 @@ export function NodeToolbar({ isOpen, onClose, onAddNode }: NodeToolbarProps) {
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onClose();
-        return;
-      }
-
-      if (event.key === "ArrowDown") {
-        event.preventDefault();
-        setActiveIndex((prev) => Math.min(prev + 1, filteredNodes.length - 1));
-        return;
-      }
-
-      if (event.key === "ArrowUp") {
-        event.preventDefault();
-        setActiveIndex((prev) => Math.max(prev - 1, 0));
-        return;
-      }
-
-      if (event.key === "Enter") {
-        event.preventDefault();
-        if (activeNode) {
-          handleSelect(activeNode.type);
-        }
-      }
-
-      if (
-        (event.metaKey || event.ctrlKey) &&
-        event.shiftKey &&
-        event.key.toLowerCase() === "a"
-      ) {
-        event.preventDefault();
-        setAiMode((prev) => !prev);
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [activeNode, filteredNodes.length, handleSelect, isOpen, onClose]);
+    if (isOpen) return;
+    setQuery("");
+    setAiMode(false);
+    setActiveIndex(0);
+  }, [isOpen]);
 
   useEffect(() => {
     if (activeIndex > filteredNodes.length - 1) {
@@ -167,18 +132,56 @@ export function NodeToolbar({ isOpen, onClose, onAddNode }: NodeToolbarProps) {
     visible: { opacity: 1, y: 0 },
   };
 
+  const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onClose();
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveIndex((prev) => Math.min(prev + 1, filteredNodes.length - 1));
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveIndex((prev) => Math.max(prev - 1, 0));
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      if (activeNode) {
+        handleSelect(activeNode.type);
+      }
+    }
+
+    if (
+      (event.metaKey || event.ctrlKey) &&
+      event.shiftKey &&
+      event.key.toLowerCase() === "a"
+    ) {
+      event.preventDefault();
+      setAiMode((prev) => !prev);
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen ? (
         <motion.div
-          ref={toolbarRef}
-          className="absolute bottom-24 left-1/2 z-20 w-[520px] -translate-x-1/2"
+          className="fixed inset-0 z-40 flex items-center justify-center"
           initial={{ opacity: 0, y: 12, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 12, scale: 0.98 }}
           transition={{ duration: 0.18, ease: "easeOut" }}
         >
-          <div className="rounded-2xl border border-white/10 bg-zinc-950/80 shadow-[0_30px_80px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+          <div
+            ref={toolbarRef}
+            className="w-[520px] rounded-2xl border border-white/10 bg-zinc-950/80 shadow-[0_30px_80px_rgba(0,0,0,0.6)] backdrop-blur-xl"
+          >
             <div className="p-4 pb-3">
               <div
                 className={`rounded-xl ${
@@ -202,6 +205,7 @@ export function NodeToolbar({ isOpen, onClose, onAddNode }: NodeToolbarProps) {
                         ? "Ask AI to generate nodes..."
                         : "Search nodes..."
                     }
+                    onKeyDown={handleInputKeyDown}
                     className="flex-1 bg-transparent text-lg font-medium text-white placeholder:text-zinc-500 focus-visible:outline-none"
                   />
                   <Button
