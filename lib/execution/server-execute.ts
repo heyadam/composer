@@ -5,56 +5,18 @@
  * Used by the live execute endpoint for headless execution.
  */
 
-import { generateText, type LanguageModel, type CoreMessage } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createAnthropic } from "@ai-sdk/anthropic";
+import { generateText, type CoreMessage } from "ai";
 import OpenAI from "openai";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import type { Node, Edge } from "@xyflow/react";
 import { resolveImageInput, modelSupportsVision, getVisionCapableModel } from "@/lib/vision";
 import type { ProviderId } from "@/lib/providers";
 import { getIncomingEdges, getOutgoingEdges, collectNodeInputs } from "./graph-utils";
-
-interface ApiKeys {
-  openai?: string;
-  google?: string;
-  anthropic?: string;
-}
+import { getModel, SUPPORTED_IMAGE_TYPES, type ApiKeys } from "@/lib/ai-utils";
 
 interface ExecutionResult {
   outputs: Record<string, string>;
   errors: Record<string, string>;
-}
-
-/**
- * Get AI model instance for a provider
- */
-function getModel(
-  provider: string,
-  model: string,
-  apiKeys: ApiKeys
-): LanguageModel {
-  switch (provider) {
-    case "google": {
-      const google = createGoogleGenerativeAI({
-        apiKey: apiKeys.google,
-      });
-      return google(model);
-    }
-    case "anthropic": {
-      const anthropic = createAnthropic({
-        apiKey: apiKeys.anthropic,
-      });
-      return anthropic(model);
-    }
-    default: {
-      const openai = createOpenAI({
-        apiKey: apiKeys.openai,
-      });
-      return openai(model);
-    }
-  }
 }
 
 /**
@@ -85,13 +47,7 @@ async function executeTextGeneration(
   const provider = (node.data.provider as string) || "openai";
   let model = (node.data.model as string) || "gpt-5.2";
 
-  const SUPPORTED_IMAGE_TYPES = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-  ];
-  if (imageData && !SUPPORTED_IMAGE_TYPES.includes(imageData.mimeType)) {
+  if (imageData && !SUPPORTED_IMAGE_TYPES.includes(imageData.mimeType as typeof SUPPORTED_IMAGE_TYPES[number])) {
     throw new Error(
       `Unsupported image type: ${imageData.mimeType}. Supported formats: JPEG, PNG, GIF, WebP`
     );

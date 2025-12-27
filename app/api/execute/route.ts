@@ -1,48 +1,17 @@
 import "server-only"; // Prevent client bundling
 
 import { NextRequest, NextResponse } from "next/server";
-import { streamText, generateText, type LanguageModel, type CoreMessage } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createAnthropic } from "@ai-sdk/anthropic";
+import { streamText, generateText, type CoreMessage } from "ai";
 import OpenAI from "openai";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import type { MagicEvalTestCase, MagicEvalResults } from "@/types/flow";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { decryptKeys } from "@/lib/encryption";
 import { parseImageOutput } from "@/lib/image-utils";
+import { getModel, SUPPORTED_IMAGE_TYPES } from "@/lib/ai-utils";
 
 // Required for service role client and decryption
 export const runtime = "nodejs";
-
-interface ApiKeys {
-  openai?: string;
-  google?: string;
-  anthropic?: string;
-}
-
-function getModel(provider: string, model: string, apiKeys?: ApiKeys): LanguageModel {
-  switch (provider) {
-    case "google": {
-      const google = createGoogleGenerativeAI({
-        apiKey: apiKeys?.google || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-      });
-      return google(model);
-    }
-    case "anthropic": {
-      const anthropic = createAnthropic({
-        apiKey: apiKeys?.anthropic || process.env.ANTHROPIC_API_KEY,
-      });
-      return anthropic(model);
-    }
-    default: {
-      const openai = createOpenAI({
-        apiKey: apiKeys?.openai || process.env.OPENAI_API_KEY,
-      });
-      return openai(model);
-    }
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -142,8 +111,7 @@ export async function POST(request: NextRequest) {
       const imageData = imageInput ? parseImageOutput(imageInput) : null;
 
       // Validate image MIME type if present
-      const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-      if (imageData && !SUPPORTED_IMAGE_TYPES.includes(imageData.mimeType)) {
+      if (imageData && !SUPPORTED_IMAGE_TYPES.includes(imageData.mimeType as typeof SUPPORTED_IMAGE_TYPES[number])) {
         return NextResponse.json(
           { error: `Unsupported image type: ${imageData.mimeType}. Supported formats: JPEG, PNG, GIF, WebP` },
           { status: 400 }

@@ -8,23 +8,12 @@ import {
   type FlowMetadata,
 } from "@/lib/flow-storage";
 import type { SavedFlow } from "@/lib/flow-storage/types";
+import { updateIdCounter } from "@/lib/flow-utils";
 
 type SetNodes = React.Dispatch<React.SetStateAction<Node[]>>;
 type SetEdges = React.Dispatch<React.SetStateAction<Edge[]>>;
 
 export type SaveMode = "download" | "cloud";
-
-// Update ID counter based on existing nodes to avoid collisions
-const updateIdCounter = (nodes: Node[], setIdCounter: (id: number) => void) => {
-  const maxId = nodes.reduce((max, node) => {
-    const match = node.id.match(/node_(\d+)/);
-    if (match) {
-      return Math.max(max, parseInt(match[1], 10));
-    }
-    return max;
-  }, -1);
-  setIdCounter(maxId + 1);
-};
 
 export interface UseFlowOperationsOptions {
   nodes: Node[];

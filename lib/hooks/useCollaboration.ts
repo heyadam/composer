@@ -9,6 +9,7 @@ import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { useCurrentUserImage } from "@/hooks/use-current-user-image";
 import { useAuth } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
+import { updateIdCounter } from "@/lib/flow-utils";
 
 type SetNodes = React.Dispatch<React.SetStateAction<Node[]>>;
 type SetEdges = React.Dispatch<React.SetStateAction<Edge[]>>;
@@ -108,18 +109,6 @@ export interface UseCollaborationReturn {
   // True if current user is the flow owner
   isOwner: boolean;
 }
-
-// Update ID counter based on existing nodes
-const updateIdCounter = (nodes: Node[], setIdCounter: (id: number) => void) => {
-  const maxId = nodes.reduce((max, node) => {
-    const match = node.id.match(/node_(\d+)/);
-    if (match) {
-      return Math.max(max, parseInt(match[1], 10));
-    }
-    return max;
-  }, -1);
-  setIdCounter(maxId + 1);
-};
 
 const BROADCAST_THROTTLE_MS = 50;
 
