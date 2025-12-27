@@ -15,7 +15,7 @@ import {
   findDownstreamOutputNodes,
   collectNodeInputs,
 } from "./graph-utils";
-import { getExecutor, hasPulseOutput } from "./executor-registry";
+import { getExecutor, hasPulseOutput, shouldTrackDownstream } from "./executor-registry";
 import type { ExecuteNodeResult, ExecutionContext } from "./executors/types";
 
 // Import executors to register them
@@ -138,12 +138,9 @@ export async function executeFlow(
     executingNodes.add(node.id);
     onNodeStateChange(node.id, { status: "running" });
 
-    // For certain nodes, also mark downstream output nodes as running
-    const shouldTrackDownstream =
-      node.type === "text-generation" ||
-      node.type === "image-generation" ||
-      node.type === "react-component";
-    const downstreamOutputs = shouldTrackDownstream
+    // For streaming nodes, also mark downstream output nodes as running
+    const trackDownstream = shouldTrackDownstream(node.type || "");
+    const downstreamOutputs = trackDownstream
       ? findDownstreamOutputNodes(node.id, nodes, edges)
       : [];
     for (const outputNode of downstreamOutputs) {

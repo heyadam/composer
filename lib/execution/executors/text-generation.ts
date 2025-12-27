@@ -20,6 +20,7 @@ import type { ProviderId } from "@/lib/providers";
 export const textGenerationExecutor: NodeExecutor = {
   type: "text-generation",
   hasPulseOutput: true,
+  shouldTrackDownstream: true,
 
   async execute(ctx: ExecutionContext): Promise<ExecuteNodeResult> {
     const { node, inputs, apiKeys, signal, options, onStreamUpdate } = ctx;

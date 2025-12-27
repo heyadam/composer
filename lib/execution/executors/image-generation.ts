@@ -18,6 +18,7 @@ import {
 export const imageGenerationExecutor: NodeExecutor = {
   type: "image-generation",
   hasPulseOutput: true,
+  shouldTrackDownstream: true,
 
   async execute(ctx: ExecutionContext): Promise<ExecuteNodeResult> {
     const { node, inputs, apiKeys, signal, options, onStreamUpdate } = ctx;

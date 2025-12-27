@@ -57,6 +57,16 @@ export function hasPulseOutput(type: string): boolean {
 }
 
 /**
+ * Check if downstream output nodes should be tracked for a node type.
+ * @param type - The node type
+ * @returns True if downstream outputs should be marked as running
+ */
+export function shouldTrackDownstream(type: string): boolean {
+  const executor = executors.get(type);
+  return executor?.shouldTrackDownstream ?? false;
+}
+
+/**
  * Clear all registered executors (useful for testing).
  */
 export function clearExecutors(): void {

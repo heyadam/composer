@@ -2,16 +2,6 @@
  * Stream parsing utilities for different response formats
  */
 
-import type { DebugInfo } from "../types";
-
-export interface StreamCallbackData {
-  output: string;
-  reasoning?: string;
-  debugInfo?: DebugInfo;
-}
-
-export type StreamCallback = (data: StreamCallbackData) => void;
-
 /**
  * Parsed result from an NDJSON stream (used by Google with thinking enabled)
  */

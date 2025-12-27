@@ -17,6 +17,7 @@ import {
 export const reactComponentExecutor: NodeExecutor = {
   type: "react-component",
   hasPulseOutput: true,
+  shouldTrackDownstream: true,
 
   async execute(ctx: ExecutionContext): Promise<ExecuteNodeResult> {
     const { node, inputs, apiKeys, signal, options, onStreamUpdate } = ctx;

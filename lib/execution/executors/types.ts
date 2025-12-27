@@ -87,6 +87,12 @@ export interface NodeExecutor {
   hasPulseOutput?: boolean;
 
   /**
+   * Whether downstream output nodes should be marked as running when this node executes.
+   * Used for streaming nodes that produce output visible in downstream preview nodes.
+   */
+  shouldTrackDownstream?: boolean;
+
+  /**
    * Execute the node with the given context.
    * @param ctx - The execution context
    * @returns The execution result
