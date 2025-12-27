@@ -6,6 +6,8 @@
  */
 
 import { generateText, type CoreMessage } from "ai";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createAnthropic } from "@ai-sdk/anthropic";
 import OpenAI from "openai";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import type { Node, Edge } from "@xyflow/react";
