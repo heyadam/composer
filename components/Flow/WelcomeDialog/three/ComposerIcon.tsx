@@ -1,50 +1,85 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 /**
- * Animated Composer logo: pulsing white sphere with purple-blue glow.
+ * Animated Composer logo: extruded 3D "C" letter with purple-blue glow.
  */
 export function ComposerIcon() {
   const meshRef = useRef<THREE.Mesh>(null);
-  const glowRef = useRef<THREE.Mesh>(null);
+  const phase = useRef(0);
 
-  useFrame(({ clock }) => {
+  const geometry = useMemo(() => {
+    // Create C shape using arcs (same as AvyLogo)
+    const outerRadius = 0.7;
+    const innerRadius = 0.4;
+    const startAngle = Math.PI * 0.35; // Opening angle top
+    const endAngle = Math.PI * 1.65; // Opening angle bottom
+    const segments = 32;
+
+    const shape = new THREE.Shape();
+
+    // Start at outer arc top
+    shape.moveTo(
+      Math.cos(startAngle) * outerRadius,
+      Math.sin(startAngle) * outerRadius
+    );
+
+    // Draw outer arc (counterclockwise)
+    shape.absarc(0, 0, outerRadius, startAngle, endAngle, false);
+
+    // Line to inner arc bottom
+    shape.lineTo(
+      Math.cos(endAngle) * innerRadius,
+      Math.sin(endAngle) * innerRadius
+    );
+
+    // Draw inner arc back (clockwise)
+    shape.absarc(0, 0, innerRadius, endAngle, startAngle, true);
+
+    // Close the shape
+    shape.lineTo(
+      Math.cos(startAngle) * outerRadius,
+      Math.sin(startAngle) * outerRadius
+    );
+
+    // Extrude settings
+    const extrudeSettings = {
+      depth: 0.4,
+      bevelEnabled: true,
+      bevelThickness: 0.06,
+      bevelSize: 0.06,
+      bevelOffset: 0,
+      bevelSegments: 3,
+      curveSegments: segments,
+    };
+
+    const geom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    geom.center();
+
+    return geom;
+  }, []);
+
+  useFrame((_, delta) => {
     if (!meshRef.current) return;
-    // Smooth pulsing: scale between 0.95 and 1.05
-    const pulse = 1 + Math.sin(clock.getElapsedTime() * 2) * 0.05;
-    meshRef.current.scale.setScalar(pulse);
 
-    // Sync glow with main sphere
-    if (glowRef.current) {
-      glowRef.current.scale.setScalar(pulse);
-    }
+    // Gentle oscillation
+    phase.current += delta * 0.8;
+    const maxAngle = 25 * (Math.PI / 180);
+    meshRef.current.rotation.y = Math.sin(phase.current) * maxAngle;
   });
 
   return (
-    <group>
-      {/* Purple-blue glow layers */}
-      <mesh ref={glowRef}>
-        <sphereGeometry args={[0.68, 32, 32]} />
-        <meshBasicMaterial color="#8B5CF6" transparent opacity={0.15} />
-      </mesh>
-      <mesh>
-        <sphereGeometry args={[0.58, 32, 32]} />
-        <meshBasicMaterial color="#6366F1" transparent opacity={0.25} />
-      </mesh>
-      {/* Main white sphere */}
-      <mesh ref={meshRef} castShadow>
-        <sphereGeometry args={[0.48, 32, 32]} />
-        <meshStandardMaterial
-          color="#FFFFFF"
-          roughness={0.3}
-          metalness={0.1}
-          emissive="#ffffff"
-          emissiveIntensity={0.2}
-        />
-      </mesh>
-    </group>
+    <mesh ref={meshRef} geometry={geometry} castShadow scale={0.65}>
+      <meshStandardMaterial
+        color="#ffffff"
+        emissive="#4080ff"
+        emissiveIntensity={0.3}
+        metalness={0.5}
+        roughness={0.3}
+      />
+    </mesh>
   );
 }
