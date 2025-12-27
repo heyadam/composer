@@ -1,13 +1,86 @@
 # Execution Engine
 
-## Core Engine
+## Architecture Overview
 
-**Execution Engine** (`lib/execution/engine.ts`): Recursive graph traversal that:
-1. Finds text-input node as start
-2. Executes parallel branches independently (responses appear as each completes)
-3. Tracks execution state (running/success/error) per node
+The execution engine uses a **modular executor pattern**:
 
-**Execution Types** (`lib/execution/types.ts`): Type definitions for the execution engine.
+- **Engine** (`lib/execution/engine.ts`): Orchestrates graph traversal, delegates to executors
+- **Executor Registry** (`lib/execution/executor-registry.ts`): Central registry for node executors
+- **Executors** (`lib/execution/executors/`): Individual executor files per node type
+- **Utilities** (`lib/execution/utils/`): Shared helpers (fetch, streaming, request, debug)
+- **Types** (`lib/execution/types.ts`): Type definitions for the execution engine
+
+## Executor Registry
+
+Node executors are registered at startup and looked up by type:
+
+```typescript
+import { registerExecutor, getExecutor, hasPulseOutput, shouldTrackDownstream } from "./executor-registry";
+
+// Register an executor
+registerExecutor(myExecutor);
+
+// Look up executor by type
+const executor = getExecutor("text-generation");
+
+// Check metadata
+hasPulseOutput("text-generation");        // true - has "done" output
+shouldTrackDownstream("text-generation"); // true - streams to preview outputs
+```
+
+## NodeExecutor Interface
+
+Each executor implements this interface (`lib/execution/executors/types.ts`):
+
+```typescript
+interface NodeExecutor {
+  type: string;                           // Node type identifier
+  hasPulseOutput?: boolean;               // Emits "done" pulse when complete
+  shouldTrackDownstream?: boolean;        // Updates downstream preview outputs during streaming
+  execute(ctx: ExecutionContext): Promise<ExecuteNodeResult>;
+}
+
+interface ExecutionContext {
+  node: Node;
+  inputs: Record<string, string>;
+  context: Record<string, unknown>;
+  apiKeys?: ApiKeys;
+  signal?: AbortSignal;
+  options?: ExecuteOptions;
+  edges?: Edge[];
+  onStreamUpdate?: StreamUpdateCallback;
+  onNodeStateChange?: NodeStateChangeCallback;
+}
+```
+
+## Executor Files
+
+Each node type has its own executor file in `lib/execution/executors/`:
+
+| File | Node Type | Metadata |
+|------|-----------|----------|
+| `text-input.ts` | text-input | - |
+| `image-input.ts` | image-input | - |
+| `audio-input.ts` | audio-input | hasPulseOutput |
+| `preview-output.ts` | preview-output | - |
+| `text-generation.ts` | text-generation | hasPulseOutput, shouldTrackDownstream |
+| `image-generation.ts` | image-generation | hasPulseOutput, shouldTrackDownstream |
+| `ai-logic.ts` | ai-logic | hasPulseOutput |
+| `react-component.ts` | react-component | hasPulseOutput, shouldTrackDownstream |
+| `audio-transcription.ts` | audio-transcription | hasPulseOutput |
+| `realtime-conversation.ts` | realtime-conversation | hasPulseOutput |
+| `comment.ts` | comment | - |
+
+All executors are registered via `lib/execution/executors/index.ts`.
+
+## Utility Modules
+
+Shared utilities in `lib/execution/utils/`:
+
+- **fetch.ts**: `fetchWithTimeout()` for API calls with abort support
+- **streaming.ts**: `parseNdjsonStream()`, `parseTextStream()`, `parseImageStream()`, `parseErrorResponse()`
+- **request.ts**: `buildApiRequestBody()`, `redactRequestBody()` for API request construction
+- **debug.ts**: Debug info factories for different node types
 
 ## API Routes
 
