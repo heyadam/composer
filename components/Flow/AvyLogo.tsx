@@ -3,11 +3,11 @@
 import { useRef, useMemo } from "react";
 import { Canvas, useFrame, extend } from "@react-three/fiber";
 import * as THREE from "three";
-import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
+import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
-import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
+import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 
-extend({ LineSegments2, LineMaterial, LineSegmentsGeometry });
+extend({ Line2, LineMaterial, LineGeometry });
 
 interface AvyLogoProps {
   isPanning?: boolean;
@@ -64,75 +64,92 @@ function generateCNodes(): { nodes: THREE.Vector3[]; edges: [number, number][] }
 function NodeGraph({ isPanning }: { isPanning?: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
   const nodesRef = useRef<THREE.InstancedMesh>(null);
-  const linesRef = useRef<LineSegments2>(null);
   const glowRef = useRef<THREE.InstancedMesh>(null);
   const outerGlowRef = useRef<THREE.InstancedMesh>(null);
   const phase = useRef(0);
   const intensity = useRef(0);
 
-  const { nodes, nodeCount, lines, lineMaterial, dummy } = useMemo(() => {
-    const { nodes, edges } = generateCNodes();
+  const { nodes, nodeCount, lineObjects, lineMaterials, dummy } = useMemo(() => {
+    const { nodes } = generateCNodes();
+    const curveSegments = 24;
 
-    // Identify arc edges for curved rendering
-    const outerArcEdges = new Set<string>();
-    const innerArcEdges = new Set<string>();
+    // Helper to create curved arc points
+    const createArcPoints = (startNode: THREE.Vector3, midNode: THREE.Vector3, endNode: THREE.Vector3) => {
+      const points: number[] = [];
 
-    // Outer arc: nodes 0-2
-    outerArcEdges.add("0-1");
-    outerArcEdges.add("1-2");
-    // Inner arc: nodes 3-5
-    innerArcEdges.add("3-4");
-    innerArcEdges.add("4-5");
+      // First curve: startNode to midNode
+      const mid1 = new THREE.Vector3().addVectors(startNode, midNode).multiplyScalar(0.5);
+      const avgRadius1 = (startNode.length() + midNode.length()) / 2;
+      mid1.normalize().multiplyScalar(avgRadius1 * 1.25);
+      const curve1 = new THREE.QuadraticBezierCurve3(startNode, mid1, midNode);
+      const pts1 = curve1.getPoints(curveSegments);
 
-    const positions: number[] = [];
-    const curveSegments = 12;
+      // Second curve: midNode to endNode
+      const mid2 = new THREE.Vector3().addVectors(midNode, endNode).multiplyScalar(0.5);
+      const avgRadius2 = (midNode.length() + endNode.length()) / 2;
+      mid2.normalize().multiplyScalar(avgRadius2 * 1.25);
+      const curve2 = new THREE.QuadraticBezierCurve3(midNode, mid2, endNode);
+      const pts2 = curve2.getPoints(curveSegments);
 
-    edges.forEach(([i, j]) => {
-      const key = `${Math.min(i, j)}-${Math.max(i, j)}`;
-      const isArc = outerArcEdges.has(key) || innerArcEdges.has(key);
-
-      if (isArc) {
-        // Curved edge following the arc - bow outward from center
-        const start = nodes[i];
-        const end = nodes[j];
-        const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-        // Push control point outward significantly for visible curve
-        const avgRadius = (start.length() + end.length()) / 2;
-        mid.normalize().multiplyScalar(avgRadius * 1.25);
-
-        const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
-        const points = curve.getPoints(curveSegments);
-
-        for (let k = 0; k < points.length - 1; k++) {
-          positions.push(points[k].x, points[k].y, points[k].z);
-          positions.push(points[k + 1].x, points[k + 1].y, points[k + 1].z);
-        }
-      } else {
-        // Straight edge
-        positions.push(nodes[i].x, nodes[i].y, nodes[i].z);
-        positions.push(nodes[j].x, nodes[j].y, nodes[j].z);
+      // Combine into one continuous polyline (skip first point of second curve to avoid duplicate)
+      for (const pt of pts1) {
+        points.push(pt.x, pt.y, pt.z);
       }
-    });
+      for (let i = 1; i < pts2.length; i++) {
+        points.push(pts2[i].x, pts2[i].y, pts2[i].z);
+      }
 
-    const geometry = new LineSegmentsGeometry();
-    geometry.setPositions(positions);
+      return points;
+    };
 
-    // Clean, subtle line material
-    const lineMaterial = new LineMaterial({
+    // Create line material helper
+    const createLineMaterial = () => new LineMaterial({
       color: 0xd0d8e0,
       linewidth: 1.5,
       transparent: true,
       opacity: 0.35,
+      depthWrite: false,
       resolution: new THREE.Vector2(512, 512),
     });
 
-    const lines = new LineSegments2(geometry, lineMaterial);
+    const lineObjects: Line2[] = [];
+    const lineMaterials: LineMaterial[] = [];
+
+    // Outer arc: nodes 0 → 1 → 2 (continuous polyline)
+    const outerArcPositions = createArcPoints(nodes[0], nodes[1], nodes[2]);
+    const outerArcGeom = new LineGeometry();
+    outerArcGeom.setPositions(outerArcPositions);
+    const outerMat = createLineMaterial();
+    lineMaterials.push(outerMat);
+    lineObjects.push(new Line2(outerArcGeom, outerMat));
+
+    // Inner arc: nodes 3 → 4 → 5 (continuous polyline)
+    const innerArcPositions = createArcPoints(nodes[3], nodes[4], nodes[5]);
+    const innerArcGeom = new LineGeometry();
+    innerArcGeom.setPositions(innerArcPositions);
+    const innerMat = createLineMaterial();
+    lineMaterials.push(innerMat);
+    lineObjects.push(new Line2(innerArcGeom, innerMat));
+
+    // Top cap: straight line 0 → 3
+    const topCapGeom = new LineGeometry();
+    topCapGeom.setPositions([nodes[0].x, nodes[0].y, nodes[0].z, nodes[3].x, nodes[3].y, nodes[3].z]);
+    const topMat = createLineMaterial();
+    lineMaterials.push(topMat);
+    lineObjects.push(new Line2(topCapGeom, topMat));
+
+    // Bottom cap: straight line 2 → 5
+    const bottomCapGeom = new LineGeometry();
+    bottomCapGeom.setPositions([nodes[2].x, nodes[2].y, nodes[2].z, nodes[5].x, nodes[5].y, nodes[5].z]);
+    const bottomMat = createLineMaterial();
+    lineMaterials.push(bottomMat);
+    lineObjects.push(new Line2(bottomCapGeom, bottomMat));
 
     return {
       nodes,
       nodeCount: nodes.length,
-      lines,
-      lineMaterial,
+      lineObjects,
+      lineMaterials,
       dummy: new THREE.Object3D(),
     };
   }, []);
@@ -212,13 +229,15 @@ function NodeGraph({ isPanning }: { isPanning?: boolean }) {
 
     // Subtle line opacity animation
     const lineOpacity = 0.35 + intensity.current * 0.15 + Math.sin(phase.current * 1.2) * 0.05;
-    lineMaterial.opacity = lineOpacity;
+    lineMaterials.forEach(mat => { mat.opacity = lineOpacity; });
   });
 
   return (
     <group ref={groupRef}>
       {/* All edge connections */}
-      <primitive object={lines} ref={linesRef} />
+      {lineObjects.map((line, i) => (
+        <primitive key={i} object={line} />
+      ))}
 
       {/* Outer soft glow (bloom layer) */}
       <instancedMesh ref={outerGlowRef} args={[undefined, undefined, nodeCount]}>
