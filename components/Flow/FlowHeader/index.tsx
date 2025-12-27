@@ -68,7 +68,7 @@ export function FlowHeader({
         }}
         transition={transition}
       >
-        <AvyLogo isPanning={isPanning} canvasWidth={canvasWidth} />
+        <AvyLogo isPanning={isPanning} />
       </motion.div>
 
       {/* Left controls (AI, Flow, Share) - anchors to left edge of available space */}
