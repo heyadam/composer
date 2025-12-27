@@ -95,5 +95,21 @@ describe("executor integration", () => {
     it("preview-output does not have pulse output", () => {
       expect(getExecutor("preview-output")?.hasPulseOutput).toBeFalsy();
     });
+
+    it("streaming executors have shouldTrackDownstream", () => {
+      expect(getExecutor("text-generation")?.shouldTrackDownstream).toBe(true);
+      expect(getExecutor("image-generation")?.shouldTrackDownstream).toBe(true);
+      expect(getExecutor("react-component")?.shouldTrackDownstream).toBe(true);
+    });
+
+    it("non-streaming executors do not have shouldTrackDownstream", () => {
+      expect(getExecutor("text-input")?.shouldTrackDownstream).toBeFalsy();
+      expect(getExecutor("image-input")?.shouldTrackDownstream).toBeFalsy();
+      expect(getExecutor("audio-input")?.shouldTrackDownstream).toBeFalsy();
+      expect(getExecutor("preview-output")?.shouldTrackDownstream).toBeFalsy();
+      expect(getExecutor("comment")?.shouldTrackDownstream).toBeFalsy();
+      expect(getExecutor("ai-logic")?.shouldTrackDownstream).toBeFalsy();
+      expect(getExecutor("audio-transcription")?.shouldTrackDownstream).toBeFalsy();
+    });
   });
 });

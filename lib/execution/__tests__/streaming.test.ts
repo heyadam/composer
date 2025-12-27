@@ -126,6 +126,20 @@ describe("parseNdjsonStream", () => {
     expect(consoleError).toHaveBeenCalled();
     consoleError.mockRestore();
   });
+
+  it("ignores unknown type fields", async () => {
+    const chunks = [
+      '{"type":"unknown","text":"ignored"}\n',
+      '{"type":"text","text":"visible"}\n',
+    ];
+    const reader = createMockReader(chunks);
+    const onChunk = vi.fn();
+
+    const result = await parseNdjsonStream(reader, onChunk);
+
+    expect(result.output).toBe("visible");
+    expect(result.reasoning).toBe("");
+  });
 });
 
 describe("parseTextStream", () => {
@@ -241,6 +255,24 @@ describe("parseImageStream", () => {
     // Should only call for partial and image types
     expect(onChunk).toHaveBeenCalledTimes(1);
     expect(result.finalImage?.value).toBe("final");
+  });
+
+  it("handles malformed JSON gracefully", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const chunks = [
+      '{"type":"partial","value":"good","mimeType":"image/png"}\n',
+      'not valid json\n',
+      '{"type":"image","value":"final","mimeType":"image/png"}\n',
+    ];
+    const reader = createMockReader(chunks);
+    const onChunk = vi.fn();
+
+    const result = await parseImageStream(reader, onChunk);
+
+    expect(result.finalImage?.value).toBe("final");
+    expect(onChunk).toHaveBeenCalledTimes(2);
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 });
 

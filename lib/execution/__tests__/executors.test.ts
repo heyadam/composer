@@ -124,6 +124,23 @@ describe("image-input executor", () => {
 
     expect(result.output).toBe("");
   });
+
+  it("coerces non-string uploadedImage to output (no type validation)", async () => {
+    // Note: The executor uses type assertion, not runtime validation
+    const ctx = createMockContext({
+      node: {
+        id: "img-1",
+        type: "image-input",
+        position: { x: 0, y: 0 },
+        data: { uploadedImage: 12345 },
+      } as Node,
+    });
+
+    const result = await imageInputExecutor.execute(ctx);
+
+    // Returns the value as-is since it's truthy (no string type check)
+    expect(result.output).toBe(12345);
+  });
 });
 
 describe("audio-input executor", () => {
