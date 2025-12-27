@@ -38,13 +38,11 @@ async function executeNode(
   edges?: Edge[],
   onNodeStateChange?: (nodeId: string, state: NodeExecutionState) => void
 ): Promise<ExecuteNodeResult> {
-  const executor = getExecutor(node.type || "");
+  const nodeType = node.type || "";
+  const executor = getExecutor(nodeType);
 
   if (!executor) {
-    // Fallback for unknown node types - pass through first available input
-    return {
-      output: inputs["prompt"] || inputs["input"] || Object.values(inputs)[0] || "",
-    };
+    throw new Error(`No executor registered for node type: "${nodeType}"`);
   }
 
   const executionContext: ExecutionContext = {

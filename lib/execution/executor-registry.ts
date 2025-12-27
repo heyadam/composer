@@ -12,10 +12,11 @@ const executors = new Map<string, NodeExecutor>();
 /**
  * Register a node executor.
  * @param executor - The executor to register
+ * @throws Error if an executor for this type is already registered
  */
 export function registerExecutor(executor: NodeExecutor): void {
   if (executors.has(executor.type)) {
-    console.warn(`Executor for type "${executor.type}" is being overwritten`);
+    throw new Error(`Executor for type "${executor.type}" is already registered`);
   }
   executors.set(executor.type, executor);
 }

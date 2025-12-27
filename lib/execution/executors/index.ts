@@ -18,6 +18,7 @@ import { aiLogicExecutor } from "./ai-logic";
 import { reactComponentExecutor } from "./react-component";
 import { audioTranscriptionExecutor } from "./audio-transcription";
 import { realtimeConversationExecutor } from "./realtime-conversation";
+import { commentExecutor } from "./comment";
 
 // Register all executors
 registerExecutor(textInputExecutor);
@@ -30,6 +31,7 @@ registerExecutor(aiLogicExecutor);
 registerExecutor(reactComponentExecutor);
 registerExecutor(audioTranscriptionExecutor);
 registerExecutor(realtimeConversationExecutor);
+registerExecutor(commentExecutor);
 
 // Re-export types for convenience
 export type { NodeExecutor, ExecutionContext, ExecuteNodeResult } from "./types";
@@ -46,3 +48,4 @@ export { aiLogicExecutor } from "./ai-logic";
 export { reactComponentExecutor } from "./react-component";
 export { audioTranscriptionExecutor } from "./audio-transcription";
 export { realtimeConversationExecutor } from "./realtime-conversation";
+export { commentExecutor } from "./comment";
