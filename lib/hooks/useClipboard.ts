@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Node, Edge, ReactFlowInstance } from "@xyflow/react";
 
 interface ClipboardData {
@@ -30,6 +30,7 @@ export function useClipboard({
 }: UseClipboardOptions) {
   const clipboardRef = useRef<ClipboardData | null>(null);
   const pasteOffsetRef = useRef(0);
+  const [hasClipboard, setHasClipboard] = useState(false);
 
   // Get the center of the current viewport in flow coordinates
   const getViewportCenter = useCallback(() => {
@@ -79,6 +80,7 @@ export function useClipboard({
       nodes: copiedNodes,
       edges: copiedEdges,
     };
+    setHasClipboard(true);
 
     // Reset paste offset when copying new content
     pasteOffsetRef.current = 0;
@@ -223,6 +225,6 @@ export function useClipboard({
   return {
     copySelectedNodes,
     pasteNodes,
-    hasClipboard: clipboardRef.current !== null,
+    hasClipboard,
   };
 }

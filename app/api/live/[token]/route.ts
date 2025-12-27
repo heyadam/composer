@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import type { LiveFlowData, FlowNodeRecord, FlowEdgeRecord } from "@/lib/flows/types";
+import type { FlowNodeRecord, FlowEdgeRecord } from "@/lib/flows/types";
 
 interface RouteParams {
   params: Promise<{ token: string }>;

@@ -5,14 +5,20 @@ export type PerfectCursorPoint = [number, number];
 
 export const usePerfectCursor = (onPointMove: (point: PerfectCursorPoint) => void) => {
   const callbackRef = useRef(onPointMove);
-  callbackRef.current = onPointMove;
 
-  const [cursor] = useState(
-    () =>
-      new PerfectCursor((point) => {
-        callbackRef.current(point as PerfectCursorPoint);
-      })
-  );
+  // Update ref in useLayoutEffect to avoid updating during render
+  useLayoutEffect(() => {
+    callbackRef.current = onPointMove;
+  });
+
+  // eslint-disable-next-line react-hooks/refs -- Intentional: callback ref pattern to access latest callback without causing re-renders
+  const [cursor] = useState(() => {
+    // Capture the ref container (not its current value) so callback always uses latest
+    const ref = callbackRef;
+    return new PerfectCursor((point) => {
+      ref.current(point as PerfectCursorPoint);
+    });
+  });
 
   useLayoutEffect(() => {
     return () => cursor.dispose();

@@ -216,7 +216,6 @@ interface ParsedContent {
 export function parseMessageContent(content: string): ParsedContent {
   // Check for open code block (started but not closed)
   const openBlockMatch = content.match(/```(?:json)?\s*\n?([\s\S]*)$/);
-  const hasClosedBlocks = /```(?:json)?\s*\n?[\s\S]*?```/.test(content);
 
   // If there's an open block at the end (no closing ```)
   const hasOpenCodeBlock = openBlockMatch !== null &&

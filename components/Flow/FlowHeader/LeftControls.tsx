@@ -36,7 +36,7 @@ export function LeftControls({
   isOwner,
   livePopoverOpen,
   onLivePopoverChange,
-  shareDialogOpen,
+  shareDialogOpen: _shareDialogOpen,
   onShareDialogChange,
   onUnpublish,
   onOwnerKeysChange,

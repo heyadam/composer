@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { Loader2, AlertCircle } from "lucide-react";
 import { MobileBlocker } from "@/components/Flow/MobileBlocker";
 import { useMobileDetection } from "@/lib/hooks/useMobileDetection";
@@ -105,12 +106,12 @@ export default function CollaborationPage({ params }: CollaborationPageProps) {
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
           <h1 className="text-xl font-semibold mb-2">Unable to load flow</h1>
           <p className="text-muted-foreground mb-4">{error}</p>
-          <a
+          <Link
             href="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             Go to Composer
-          </a>
+          </Link>
         </div>
       </div>
     );

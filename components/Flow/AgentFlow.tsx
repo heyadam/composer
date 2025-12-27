@@ -26,7 +26,7 @@ import { CommandPalette } from "./CommandPalette";
 import { AutopilotSidebar } from "./AutopilotSidebar";
 import { ActionBar } from "./ActionBar";
 import { FlowHeader } from "./FlowHeader";
-import { SaveFlowDialog, type SaveMode } from "./SaveFlowDialog";
+import { SaveFlowDialog } from "./SaveFlowDialog";
 import { MyFlowsDialog } from "./MyFlowsDialog";
 import { FlowContextMenu } from "./FlowContextMenu";
 import { CommentEditContext } from "./CommentEditContext";
@@ -47,10 +47,9 @@ import { WelcomeDialog, isNuxComplete } from "./WelcomeDialog";
 import { TemplatesModal } from "./TemplatesModal";
 import { useTemplatesModal } from "./TemplatesModal/hooks";
 // executeFlow and NodeExecutionState now used in useFlowExecution hook
-import type { FlowChanges, AddNodeAction, AddEdgeAction, RemoveEdgeAction, RemoveNodeAction, AppliedChangesInfo, RemovedNodeInfo, RemovedEdgeInfo, PendingAutopilotMessage, AutopilotMode, AutopilotModel } from "@/lib/autopilot/types";
-import { ResponsesSidebar, type PreviewEntry, type DebugEntry } from "./ResponsesSidebar";
-import { useApiKeys, type ProviderId } from "@/lib/api-keys";
-import type { FlowMetadata } from "@/lib/flow-storage";
+import type { PendingAutopilotMessage, AutopilotMode, AutopilotModel } from "@/lib/autopilot/types";
+import { ResponsesSidebar } from "./ResponsesSidebar";
+import { useApiKeys } from "@/lib/api-keys";
 import { useBackgroundSettings, getBackgroundStyle, getShimmerStyle } from "@/lib/hooks/useBackgroundSettings";
 import { ShareDialog } from "./ShareDialog";
 import { useCollaboration, type CollaborationModeProps } from "@/lib/hooks/useCollaboration";
@@ -181,7 +180,6 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
 
   // Autopilot integration hook
   const {
-    highlightedIds: autopilotHighlightedIds,
     applyChanges: applyAutopilotChanges,
     undoChanges: undoAutopilotChanges,
     clearHighlights: clearAutopilotHighlights,
@@ -464,7 +462,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
   });
 
   // Node parenting hook (handles auto-parenting into comments)
-  const { handleNodesChange, getAbsolutePosition, isInsideComment } = useNodeParenting({
+  const { handleNodesChange } = useNodeParenting({
     nodes,
     setNodes,
     onNodesChange,

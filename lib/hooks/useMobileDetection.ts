@@ -14,6 +14,8 @@ export function useMobileDetection(): boolean | null {
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
 
   useEffect(() => {
+    // Safe: intentional SSR hydration pattern - sync with browser state on mount
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMobile(MOBILE_USER_AGENT_REGEX.test(navigator.userAgent));
   }, []);
 

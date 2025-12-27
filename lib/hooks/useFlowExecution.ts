@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { track } from "@vercel/analytics";
 import type { Node, Edge } from "@xyflow/react";
 import { executeFlow } from "@/lib/execution/engine";
-import type { NodeExecutionState, ExecutionStatus } from "@/lib/execution/types";
+import type { NodeExecutionState } from "@/lib/execution/types";
 import type { PreviewEntry, DebugEntry } from "@/components/Flow/ResponsesSidebar/types";
 import type { ApiKeys, ProviderId } from "@/lib/api-keys/types";
 import type { NodeType } from "@/types/flow";
