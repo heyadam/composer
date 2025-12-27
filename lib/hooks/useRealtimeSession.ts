@@ -70,11 +70,8 @@ export function useRealtimeSession(options: UseRealtimeSessionOptions) {
   const handleServerEvent = useCallback((event: { type: string; [key: string]: unknown }) => {
     switch (event.type) {
       case "session.created":
-        console.log("Realtime session created:", event.session);
-        break;
-
       case "session.updated":
-        console.log("Realtime session updated:", event.session);
+        // Session lifecycle events - no action needed
         break;
 
       case "input_audio_buffer.speech_started":
@@ -112,8 +109,7 @@ export function useRealtimeSession(options: UseRealtimeSessionOptions) {
         break;
 
       case "rate_limits.updated":
-        // Rate limit info - could display to user
-        console.log("Rate limits:", event.rate_limits);
+        // Rate limit info available in event.rate_limits if needed
         break;
 
       case "error":
@@ -186,18 +182,14 @@ export function useRealtimeSession(options: UseRealtimeSessionOptions) {
 
       // Monitor WebRTC connection state for errors
       pc.onconnectionstatechange = () => {
-        console.log("WebRTC connection state:", pc.connectionState);
         if (pc.connectionState === "failed") {
           setErrorMessage("WebRTC connection failed");
           setStatus("error");
-        } else if (pc.connectionState === "disconnected") {
-          // May recover, but log for debugging
-          console.warn("WebRTC connection disconnected, may reconnect...");
         }
+        // "disconnected" state may recover automatically
       };
 
       pc.oniceconnectionstatechange = () => {
-        console.log("ICE connection state:", pc.iceConnectionState);
         if (pc.iceConnectionState === "failed") {
           setErrorMessage("ICE connection failed - check network connectivity");
           setStatus("error");
@@ -291,7 +283,6 @@ export function useRealtimeSession(options: UseRealtimeSessionOptions) {
 
       // Enforce 60-minute max session limit
       maxSessionTimerRef.current = setTimeout(() => {
-        console.log("Realtime session reached 60-minute limit, disconnecting");
         disconnect();
       }, MAX_SESSION_SECONDS * 1000);
 

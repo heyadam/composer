@@ -76,44 +76,6 @@ export function isValidFlowPlan(obj: unknown): obj is FlowPlan {
 }
 
 /**
- * Parse flow changes from Claude's response.
- * Extracts JSON code blocks and validates the structure.
- * @deprecated Use parseResponse() instead for plan mode support
- */
-export function parseFlowChanges(response: string): FlowChanges | null {
-  // Extract JSON from code blocks (```json ... ``` or ``` ... ```)
-  const jsonBlockRegex = /```(?:json)?\s*\n?([\s\S]*?)\n?```/g;
-  const matches = [...response.matchAll(jsonBlockRegex)];
-
-  for (const match of matches) {
-    const jsonStr = match[1].trim();
-    try {
-      const parsed = JSON.parse(jsonStr);
-
-      // Validate structure
-      if (isValidFlowChanges(parsed)) {
-        return parsed;
-      }
-    } catch {
-      // Continue to next match if JSON parsing fails
-      continue;
-    }
-  }
-
-  // Try parsing the entire response as JSON (in case no code blocks)
-  try {
-    const parsed = JSON.parse(response.trim());
-    if (isValidFlowChanges(parsed)) {
-      return parsed;
-    }
-  } catch {
-    // Not valid JSON
-  }
-
-  return null;
-}
-
-/**
  * Type guard to validate FlowChanges structure
  */
 function isValidFlowChanges(obj: unknown): obj is FlowChanges {

@@ -296,9 +296,8 @@ export function useFlowExecution({
         }
       );
     } catch (error) {
-      if (error instanceof Error && error.message === "Execution cancelled") {
-        console.log("Flow execution cancelled by user");
-      } else {
+      // Ignore user-initiated cancellation, log other errors
+      if (!(error instanceof Error && error.message === "Execution cancelled")) {
         console.error("Flow execution error:", error);
       }
     } finally {
