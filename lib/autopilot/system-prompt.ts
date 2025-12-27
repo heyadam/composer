@@ -101,6 +101,16 @@ Exit point that displays results. Can be named to describe what it shows (e.g., 
 }
 \`\`\`
 
+**Input Handles:**
+- \`string\` - Text/JSON content (dataType: "string")
+- \`image\` - Image data (dataType: "image")
+- \`audio\` - Audio data (dataType: "audio")
+
+When connecting to this node, use \`targetHandle\` to specify which input:
+- To connect text/string output: \`targetHandle: "string"\`
+- To connect image output: \`targetHandle: "image"\`
+- To connect audio output: \`targetHandle: "audio"\`
+
 ### 5. ai-logic (AI Logic)
 Custom code transformation node. Uses Claude to generate JavaScript code based on a natural language description. The generated code processes inputs and returns a string output. Useful for data manipulation, formatting, parsing, or custom logic.
 \`\`\`typescript
@@ -236,16 +246,22 @@ Edges connect nodes and carry data. Each edge has a \`dataType\`:
 - \`"image"\` - Image data (from Image Generation or Image Input nodes)
 - \`"response"\` - Final output going to a Preview Output node (from React Component or other terminal nodes)
 - \`"audio"\` - Audio stream data (from Realtime Audio audio-out)
+- \`"boolean"\` - True/false value (for logic gates and conditionals)
+- \`"pulse"\` - Momentary signal that fires once when a node completes execution
+
+### Pulse Outputs ("done" handle)
+Processing nodes (text-generation, image-generation, ai-logic, react-component, audio-transcription) have a special "done" output that fires a pulse when execution completes. This can be used to trigger downstream actions.
+- To connect from a done pulse: \`sourceHandle: "done"\`, \`data: { dataType: "pulse" }\`
 
 Edge format:
 \`\`\`typescript
 {
   id: string,
   source: string,        // Source node ID
-  sourceHandle?: string, // Optional: specific output handle (e.g., "output", "transcript", "audio-out")
+  sourceHandle?: string, // Optional: specific output handle (e.g., "output", "transcript", "audio-out", "done")
   target: string,        // Target node ID
   targetHandle?: string, // Optional: specific input handle (e.g., "prompt", "system", "image", "instructions", "audio-in")
-  data: { dataType: "string" | "image" | "response" | "audio" }
+  data: { dataType: "string" | "image" | "response" | "audio" | "boolean" | "pulse" }
 }
 \`\`\`
 
@@ -255,7 +271,7 @@ Edge format:
 - Text Input nodes have only OUTPUT connections (they start the flow with text)
 - Image Input nodes have only OUTPUT connections (they start the flow with an image)
 - Audio Input nodes have only OUTPUT connections (they start the flow with audio from microphone)
-- Preview Output nodes have only INPUT connections (they end the flow, accepts response or audio)
+- Preview Output nodes have only INPUT connections (they end the flow, accepts string, image, or audio via separate handles)
 - Text Generation nodes have both INPUT and OUTPUT connections
 - Image Generation nodes have both INPUT and OUTPUT connections
 - AI Logic nodes have both INPUT and OUTPUT connections (output is string)

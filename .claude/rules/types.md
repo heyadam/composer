@@ -4,7 +4,17 @@ Flow types in `types/flow.ts` define node data interfaces with execution state t
 
 ## Port Data Types
 
-**PortDataType**: Union type for port/edge data types: `"string"` | `"image"` | `"response"` | `"audio"`. Used for edge coloring and connection validation.
+**PortDataType**: Union type for port/edge data types: `"string"` | `"image"` | `"response"` | `"audio"` | `"boolean"` | `"pulse"`. Used for edge coloring and connection validation.
+
+**Color Mapping**:
+- `cyan` = string
+- `purple` = image
+- `amber` = response
+- `emerald` = audio
+- `rose` = boolean
+- `orange` = pulse
+
+**Pulse Ports**: Processing nodes (`text-generation`, `image-generation`, `ai-logic`, `react-component`, `audio-transcription`) have a `done` output port that fires a pulse when execution completes. Pulses are momentary signals that are "on" for a single execution cycle, then return to "off".
 
 ## Node Data Interfaces
 

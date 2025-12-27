@@ -49,6 +49,9 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
   const isOutputConnected = edges.some(
     (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
   );
+  const isDoneConnected = edges.some(
+    (edge) => edge.source === id && edge.sourceHandle === "done"
+  );
 
   const currentProvider = (data.provider || DEFAULT_PROVIDER) as ProviderId;
   const currentModel = data.model || DEFAULT_MODEL;
@@ -110,10 +113,16 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
       status={data.executionStatus}
       className="w-[280px]"
       ports={
-        <PortRow
-          nodeId={id}
-          output={{ id: "output", label: "String", colorClass: "cyan", isConnected: isOutputConnected }}
-        />
+        <>
+          <PortRow
+            nodeId={id}
+            output={{ id: "output", label: "String", colorClass: "cyan", isConnected: isOutputConnected }}
+          />
+          <PortRow
+            nodeId={id}
+            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isDoneConnected }}
+          />
+        </>
       }
       footer={
         data.executionError ? (

@@ -113,6 +113,10 @@ export function useFlowExecution({
                   ...(state.codeExplanation && { codeExplanation: state.codeExplanation }),
                   // Signal audio-input to start recording
                   ...(state.awaitingInput !== undefined && { awaitingInput: state.awaitingInput }),
+                  // Output node separate inputs
+                  ...(state.stringOutput !== undefined && { stringOutput: state.stringOutput }),
+                  ...(state.imageOutput !== undefined && { imageOutput: state.imageOutput }),
+                  ...(state.audioOutput !== undefined && { audioOutput: state.audioOutput }),
                 },
               }
             : node
@@ -184,10 +188,13 @@ export function useFlowExecution({
             });
           }
           // Update preview with streaming output while running
-          if (state.output) {
+          if (state.output || state.stringOutput || state.imageOutput || state.audioOutput) {
             updatePreviewEntry(nodeId, {
               status: "running",
               output: state.output,
+              stringOutput: state.stringOutput,
+              imageOutput: state.imageOutput,
+              audioOutput: state.audioOutput,
             });
           } else if (state.sourceType) {
             // Update source type if provided (for loading state)
@@ -202,6 +209,9 @@ export function useFlowExecution({
             status: state.status,
             output: state.output,
             error: state.error,
+            stringOutput: state.stringOutput,
+            imageOutput: state.imageOutput,
+            audioOutput: state.audioOutput,
           });
         }
       }

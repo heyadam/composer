@@ -37,7 +37,7 @@ export const VALID_NODE_TYPES = [
 export type ValidNodeType = (typeof VALID_NODE_TYPES)[number];
 
 // Valid data types for edge connections
-export const VALID_DATA_TYPES = ["string", "image", "response", "audio"] as const;
+export const VALID_DATA_TYPES = ["string", "image", "response", "audio", "boolean", "pulse"] as const;
 
 export type ValidDataType = (typeof VALID_DATA_TYPES)[number];
 

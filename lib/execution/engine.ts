@@ -20,6 +20,12 @@ interface ExecuteNodeResult {
   generatedCode?: string;
   /** Explanation for auto-generated code */
   codeExplanation?: string;
+  /** Output node: string/text input */
+  stringOutput?: string;
+  /** Output node: image input */
+  imageOutput?: string;
+  /** Output node: audio input */
+  audioOutput?: string;
 }
 
 /** Options for owner-funded execution */
@@ -137,9 +143,21 @@ async function executeNode(
       };
     }
 
-    case "preview-output":
-      // Output node passes through its input (supports text and audio inputs)
-      return { output: inputs["input"] || inputs["audio"] || inputs["prompt"] || Object.values(inputs)[0] || "" };
+    case "preview-output": {
+      // Output node collects string, image, and audio inputs separately
+      const stringOutput = inputs["string"] || "";
+      const imageOutput = inputs["image"] || "";
+      const audioOutput = inputs["audio"] || "";
+      // Return primary output for backward compatibility (image/audio take priority for proper rendering)
+      // Individual outputs are also passed for node component display
+      const primaryOutput = imageOutput || audioOutput || stringOutput;
+      return {
+        output: primaryOutput,
+        stringOutput,
+        imageOutput,
+        audioOutput,
+      };
+    }
 
     case "text-generation": {
       const startTime = Date.now();
@@ -980,6 +998,14 @@ export async function executeFlow(
       executedNodes.add(node.id);
       executingNodes.delete(node.id);
 
+      // Nodes with a "done" pulse output
+      const processingNodeTypes = ["text-generation", "image-generation", "ai-logic", "react-component", "audio-transcription", "audio-input", "realtime-conversation"];
+      const hasDoneOutput = processingNodeTypes.includes(node.type || "");
+      if (hasDoneOutput) {
+        // Store pulse output for downstream nodes connected to "done" handle
+        executedOutputs[`${node.id}:done`] = JSON.stringify({ fired: true, timestamp: Date.now() });
+      }
+
       onNodeStateChange(node.id, {
         status: "success",
         output: result.output,
@@ -988,6 +1014,11 @@ export async function executeFlow(
         generatedCode: result.generatedCode,
         codeExplanation: result.codeExplanation,
         awaitingInput: false, // Ensure awaiting state is cleared on success
+        pulseFired: hasDoneOutput, // Mark pulse as fired for processing nodes
+        // Output node specific fields
+        stringOutput: result.stringOutput,
+        imageOutput: result.imageOutput,
+        audioOutput: result.audioOutput,
       });
 
       // If this is an output node, capture the output

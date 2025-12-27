@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { Handle, Position } from "@xyflow/react";
 import { cn } from "@/lib/utils";
 import { useConnectionState } from "../ConnectionContext";
+import type { PortColorClass } from "./PortLabel";
 
 // Handle positioning constants
 // Accounts for NodeFrame's px-3 (12px) padding + 1px for visual centering
@@ -17,7 +18,7 @@ interface InputWithHandleProps {
   children?: ReactNode;
   className?: string;
   required?: boolean;
-  colorClass?: "cyan" | "purple" | "amber" | "emerald";
+  colorClass?: PortColorClass;
   handleOffset?: number; // Optional vertical offset for handle
   isConnected?: boolean; // Whether the handle is connected
 }
@@ -34,11 +35,13 @@ export function InputWithHandle({
 }: InputWithHandleProps) {
   const { isConnecting } = useConnectionState();
 
-  const colorMap = {
+  const colorMap: Record<PortColorClass, { dot: string; hoverDot: string }> = {
     cyan: { dot: "!bg-cyan-400", hoverDot: "hover:!bg-cyan-400" },
     purple: { dot: "!bg-purple-400", hoverDot: "hover:!bg-purple-400" },
     amber: { dot: "!bg-amber-400", hoverDot: "hover:!bg-amber-400" },
     emerald: { dot: "!bg-emerald-400", hoverDot: "hover:!bg-emerald-400" },
+    rose: { dot: "!bg-rose-400", hoverDot: "hover:!bg-rose-400" },       // boolean
+    orange: { dot: "!bg-orange-400", hoverDot: "hover:!bg-orange-400" }, // pulse
   };
 
   const highlight = isConnecting;

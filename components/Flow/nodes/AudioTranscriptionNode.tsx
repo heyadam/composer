@@ -30,6 +30,9 @@ export function AudioTranscriptionNode({ id, data }: NodeProps<AudioTranscriptio
   const isOutputConnected = edges.some(
     (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
   );
+  const isDoneConnected = edges.some(
+    (edge) => edge.source === id && edge.sourceHandle === "done"
+  );
 
   const model = data.model || "gpt-4o-transcribe";
 
@@ -51,6 +54,7 @@ export function AudioTranscriptionNode({ id, data }: NodeProps<AudioTranscriptio
           ]}
           outputs={[
             { id: "output", label: "string", colorClass: "cyan", isConnected: isOutputConnected },
+            { id: "done", label: "Done", colorClass: "orange", isConnected: isDoneConnected },
           ]}
         />
       }

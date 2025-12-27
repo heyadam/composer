@@ -40,6 +40,9 @@ export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
   const isOutputConnected = edges.some(
     (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
   );
+  const isDoneConnected = edges.some(
+    (edge) => edge.source === id && edge.sourceHandle === "done"
+  );
 
   const currentProvider = (data.provider || DEFAULT_REACT_PROVIDER) as ProviderId;
   const currentModel = data.model || DEFAULT_REACT_MODEL;
@@ -55,10 +58,16 @@ export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
       status={data.executionStatus}
       className="w-[280px]"
       ports={
-        <PortRow
-          nodeId={id}
-          output={{ id: "output", label: "React", colorClass: "amber", isConnected: isOutputConnected }}
-        />
+        <>
+          <PortRow
+            nodeId={id}
+            output={{ id: "output", label: "React", colorClass: "amber", isConnected: isOutputConnected }}
+          />
+          <PortRow
+            nodeId={id}
+            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isDoneConnected }}
+          />
+        </>
       }
       footer={
         data.executionError ? (

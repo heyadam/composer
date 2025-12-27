@@ -33,6 +33,9 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
   const isOutputConnected = edges.some(
     (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
   );
+  const isDoneConnected = edges.some(
+    (edge) => edge.source === id && edge.sourceHandle === "done"
+  );
 
   const hasCode = Boolean(data.generatedCode);
   const hasError = Boolean(data.generationError);
@@ -116,6 +119,10 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
             nodeId={id}
             input={{ id: "input2", label: "Input 2", colorClass: "cyan", required: false, isConnected: isInput2Connected }}
             output={{ id: "output", label: "String", colorClass: "cyan", isConnected: isOutputConnected }}
+          />
+          <PortRow
+            nodeId={id}
+            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isDoneConnected }}
           />
         </>
       }

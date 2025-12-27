@@ -24,6 +24,69 @@ function ResponseCard({ entry }: { entry: PreviewEntry }) {
       );
     }
 
+    // For preview-output nodes, render all connected outputs
+    if (entry.nodeType === "preview-output") {
+      const outputs: React.ReactNode[] = [];
+
+      // Render image output
+      if (entry.imageOutput && isImageOutput(entry.imageOutput)) {
+        const imageData = parseImageOutput(entry.imageOutput);
+        if (imageData) {
+          outputs.push(
+            <img
+              key="image"
+              src={getImageDataUrl(imageData)}
+              alt="Generated"
+              className="w-full h-auto rounded"
+            />
+          );
+        }
+      }
+
+      // Render audio output
+      if (entry.audioOutput && isAudioOutput(entry.audioOutput)) {
+        outputs.push(
+          <AudioPreview key="audio" output={entry.audioOutput} />
+        );
+      }
+
+      // Render string output (text)
+      if (entry.stringOutput) {
+        // Check if it's actually a React component
+        if (isReactOutput(entry.stringOutput)) {
+          const reactData = parseReactOutput(entry.stringOutput);
+          if (reactData) {
+            outputs.push(<ReactPreview key="react" data={reactData} />);
+          }
+        } else {
+          outputs.push(
+            <p key="string" className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+              {entry.stringOutput}
+            </p>
+          );
+        }
+      }
+
+      if (outputs.length > 0) {
+        return <div className="space-y-3">{outputs}</div>;
+      }
+
+      // Show loading state if no outputs yet
+      if (entry.status === "running") {
+        return (
+          <div className="flex items-center gap-2 py-1">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              {entry.sourceType === "image-generation" ? "Generating image..." : "Generating..."}
+            </span>
+          </div>
+        );
+      }
+
+      return null;
+    }
+
+    // For other node types, use the combined output field
     if (entry.output) {
       if (isReactOutput(entry.output)) {
         const reactData = parseReactOutput(entry.output);

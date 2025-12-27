@@ -40,6 +40,9 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
   const isOutputConnected = edges.some(
     (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
   );
+  const isDoneConnected = edges.some(
+    (edge) => edge.source === id && edge.sourceHandle === "done"
+  );
 
   // File upload handling for inline image input
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,10 +124,16 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
       status={data.executionStatus}
       className="w-[280px]"
       ports={
-        <PortRow
-          nodeId={id}
-          output={{ id: "output", label: "Image", colorClass: "purple", isConnected: isOutputConnected }}
-        />
+        <>
+          <PortRow
+            nodeId={id}
+            output={{ id: "output", label: "Image", colorClass: "purple", isConnected: isOutputConnected }}
+          />
+          <PortRow
+            nodeId={id}
+            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isDoneConnected }}
+          />
+        </>
       }
       footer={renderFooter()}
     >

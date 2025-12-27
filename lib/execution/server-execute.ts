@@ -604,13 +604,14 @@ async function executeNode(
     case "image-input":
       return (node.data.uploadedImage as string) || "";
 
-    case "preview-output":
-      return (
-        inputs["input"] ||
-        inputs["prompt"] ||
-        Object.values(inputs)[0] ||
-        ""
-      );
+    case "preview-output": {
+      // Collect string, image, and audio inputs separately
+      const stringOutput = inputs["string"] || "";
+      const imageOutput = inputs["image"] || "";
+      const audioOutput = inputs["audio"] || "";
+      // Return primary output (image/audio take priority for proper rendering)
+      return imageOutput || audioOutput || stringOutput;
+    }
 
     case "text-generation":
       return executeTextGeneration(node, inputs, apiKeys);

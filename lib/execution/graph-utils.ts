@@ -199,6 +199,7 @@ export function getParentNodes(
  * Collect all inputs for a node, grouped by target handle ID.
  * Returns a map of handleId -> value from executed upstream nodes.
  * For backward compatibility, edges without targetHandle default to "prompt".
+ * Handles sourceHandle for pulse edges (e.g., "done" handle).
  */
 export function collectNodeInputs(
   nodeId: string,
@@ -211,7 +212,13 @@ export function collectNodeInputs(
   for (const edge of incoming) {
     // Default to "prompt" for backward compatibility with existing edges
     const handleId = edge.targetHandle || "prompt";
-    const sourceOutput = executedOutputs[edge.source];
+
+    // Handle sourceHandle for pulse edges (e.g., "done" handle)
+    const outputKey = edge.sourceHandle === "done"
+      ? `${edge.source}:done`
+      : edge.source;
+
+    const sourceOutput = executedOutputs[outputKey];
     if (sourceOutput !== undefined) {
       inputs[handleId] = sourceOutput;
     }

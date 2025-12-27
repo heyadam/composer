@@ -102,7 +102,9 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 
 ### Port Data Types
 
-Color-coded connections: cyan=string, purple=image, amber=response, emerald=audio
+Color-coded connections: cyan=string, purple=image, amber=response, emerald=audio, rose=boolean, orange=pulse
+
+Processing nodes have a `done` output that fires a pulse when execution completes.
 
 ### Key Patterns
 

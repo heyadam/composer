@@ -12,6 +12,12 @@ export interface PreviewEntry {
   timestamp: number;
   /** The type of node producing the content (e.g., "image" for image generation) */
   sourceType?: NodeType;
+  /** Output node: string/text input */
+  stringOutput?: string;
+  /** Output node: image input */
+  imageOutput?: string;
+  /** Output node: audio input */
+  audioOutput?: string;
 }
 
 export interface DebugEntry {

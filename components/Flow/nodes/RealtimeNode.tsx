@@ -58,6 +58,9 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
   const isAudioOutConnected = edges.some(
     (edge) => edge.source === id && edge.sourceHandle === "audio-out"
   );
+  const isDoneConnected = edges.some(
+    (edge) => edge.source === id && edge.sourceHandle === "done"
+  );
 
   // Check if any output is connected (for auto-start behavior)
   const hasOutputConnection = isTranscriptConnected || isAudioOutConnected;
@@ -150,6 +153,10 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
           <PortRow
             nodeId={id}
             output={{ id: "transcript", label: "Transcript", colorClass: "cyan", isConnected: isTranscriptConnected }}
+          />
+          <PortRow
+            nodeId={id}
+            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isDoneConnected }}
           />
         </>
       }

@@ -45,6 +45,9 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
   const isOutputConnected = edges.some(
     (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
   );
+  const isDoneConnected = edges.some(
+    (edge) => edge.source === id && edge.sourceHandle === "done"
+  );
 
   const hasRecording = !!data.audioBuffer && !isRecording;
 
@@ -335,10 +338,16 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
       status={data.executionStatus}
       className="w-[280px]"
       ports={
-        <PortRow
-          nodeId={id}
-          output={{ id: "output", label: "Audio", colorClass: "emerald", isConnected: isOutputConnected }}
-        />
+        <>
+          <PortRow
+            nodeId={id}
+            output={{ id: "output", label: "Audio", colorClass: "emerald", isConnected: isOutputConnected }}
+          />
+          <PortRow
+            nodeId={id}
+            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isDoneConnected }}
+          />
+        </>
       }
     >
       <div className="space-y-3">
