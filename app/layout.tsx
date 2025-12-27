@@ -19,6 +19,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Composer",
   description: "Visual editor for designing AI agent workflows",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Composer",
+  },
 };
 
 export const viewport: Viewport = {
@@ -27,6 +33,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
+  themeColor: "#09090b",
 };
 
 export default function RootLayout({
