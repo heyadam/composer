@@ -14,6 +14,7 @@ import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import type { Node, Edge } from "@xyflow/react";
 import { resolveImageInput, modelSupportsVision, getVisionCapableModel } from "@/lib/vision";
 import type { ProviderId } from "@/lib/providers";
+import { getIncomingEdges, getOutgoingEdges, collectNodeInputs } from "./graph-utils";
 
 interface ApiKeys {
   openai?: string;
@@ -54,42 +55,6 @@ function getModel(
       return openai(model);
     }
   }
-}
-
-/**
- * Get all incoming edges to a node
- */
-function getIncomingEdges(nodeId: string, edges: Edge[]): Edge[] {
-  return edges.filter((e) => e.target === nodeId);
-}
-
-/**
- * Get all outgoing edges from a node
- */
-function getOutgoingEdges(nodeId: string, edges: Edge[]): Edge[] {
-  return edges.filter((e) => e.source === nodeId);
-}
-
-/**
- * Collect all inputs for a node from executed outputs
- */
-function collectNodeInputs(
-  nodeId: string,
-  edges: Edge[],
-  executedOutputs: Record<string, string>
-): Record<string, string> {
-  const incoming = getIncomingEdges(nodeId, edges);
-  const inputs: Record<string, string> = {};
-
-  for (const edge of incoming) {
-    const handleId = edge.targetHandle || "prompt";
-    const sourceOutput = executedOutputs[edge.source];
-    if (sourceOutput !== undefined) {
-      inputs[handleId] = sourceOutput;
-    }
-  }
-
-  return inputs;
 }
 
 /**
