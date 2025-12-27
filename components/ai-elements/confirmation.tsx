@@ -19,16 +19,6 @@ type ToolUIPartApproval =
     }
   | {
       id: string;
-      approved: boolean;
-      reason?: string;
-    }
-  | {
-      id: string;
-      approved: true;
-      reason?: string;
-    }
-  | {
-      id: string;
       approved: true;
       reason?: string;
     }
