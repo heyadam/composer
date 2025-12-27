@@ -2,6 +2,8 @@ import "server-only"; // Prevent client bundling
 
 import { NextRequest, NextResponse } from "next/server";
 import { streamText, generateText, type CoreMessage } from "ai";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createAnthropic } from "@ai-sdk/anthropic";
 import OpenAI from "openai";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import type { MagicEvalTestCase, MagicEvalResults } from "@/types/flow";
