@@ -150,14 +150,7 @@ export async function executeFlow(
     try {
       await new Promise((r) => setTimeout(r, 300));
 
-      let inputs = collectNodeInputs(node.id, edges, executedOutputs);
-
-      // For input node, use its stored inputValue
-      if (node.type === "text-input") {
-        const nodeInput = typeof node.data?.inputValue === "string" ? node.data.inputValue : "";
-        inputs = { prompt: nodeInput };
-        context[`userInput_${node.id}`] = nodeInput;
-      }
+      const inputs = collectNodeInputs(node.id, edges, executedOutputs);
 
       const result = await executeNode(
         node,
