@@ -44,6 +44,7 @@ export function AudioTranscriptionNode({ id, data }: NodeProps<AudioTranscriptio
       iconClassName="bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"
       accentBorderClassName="border-emerald-500"
       status={data.executionStatus}
+      fromCache={data.fromCache}
       className="w-[260px]"
       ports={
         <PortList
@@ -95,6 +96,17 @@ export function AudioTranscriptionNode({ id, data }: NodeProps<AudioTranscriptio
             />
           </div>
         )}
+
+        {/* Cache toggle */}
+        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none nodrag pt-2 border-t">
+          <input
+            type="checkbox"
+            checked={data.cacheable ?? false}
+            onChange={(e) => updateNodeData(id, { cacheable: e.target.checked })}
+            className="rounded border-input h-3.5 w-3.5 accent-primary"
+          />
+          <span>Cache output</span>
+        </label>
       </div>
     </NodeFrame>
   );

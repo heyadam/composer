@@ -122,6 +122,7 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
       iconClassName="bg-gray-500/10 text-gray-600 dark:text-gray-300"
       accentBorderClassName=""
       status={data.executionStatus}
+      fromCache={data.fromCache}
       className="w-[280px]"
       ports={
         <>
@@ -267,6 +268,17 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
             onChange={(aspectRatio) => updateNodeData(id, { aspectRatio })}
           />
         )}
+
+        {/* Cache toggle */}
+        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none nodrag pt-2 border-t">
+          <input
+            type="checkbox"
+            checked={data.cacheable ?? false}
+            onChange={(e) => updateNodeData(id, { cacheable: e.target.checked })}
+            className="rounded border-input h-3.5 w-3.5 accent-primary"
+          />
+          <span>Cache output</span>
+        </label>
       </div>
     </NodeFrame>
   );

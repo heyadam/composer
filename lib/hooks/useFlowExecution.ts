@@ -10,6 +10,7 @@ import type { PreviewEntry, DebugEntry } from "@/components/Flow/ResponsesSideba
 import type { ApiKeys, ProviderId } from "@/lib/api-keys/types";
 import type { NodeType } from "@/types/flow";
 import { pendingInputRegistry } from "@/lib/execution/pending-input-registry";
+import { CacheManager, computeConfigHash } from "@/lib/execution/cache";
 
 export interface UseFlowExecutionProps {
   nodes: Node[];
@@ -30,7 +31,7 @@ export interface UseFlowExecutionReturn {
   activeResponseTab: "responses" | "debug";
   setActiveResponseTab: (tab: "responses" | "debug") => void;
   keyError: string | null;
-  runFlow: () => Promise<void>;
+  runFlow: (options?: { forceExecute?: boolean }) => Promise<void>;
   cancelFlow: () => void;
   resetExecution: () => void;
 }
@@ -54,6 +55,11 @@ export function useFlowExecution({
   const nodesRef = useRef(nodes);
   nodesRef.current = nodes;
   const abortControllerRef = useRef<AbortController | null>(null);
+  const cacheManagerRef = useRef<CacheManager>(new CacheManager());
+  // Track previous node config hashes for cache invalidation
+  const prevNodeHashesRef = useRef<Map<string, string>>(new Map());
+  // Track previous edge set for edge change detection
+  const prevEdgeSetRef = useRef<Set<string>>(new Set());
 
   // Cleanup abort controller on unmount
   useEffect(() => {
@@ -63,6 +69,84 @@ export function useFlowExecution({
       }
     };
   }, []);
+
+  // Proactive cache invalidation when node configs or edges change
+  // This clears stale "Cached" badges immediately when users edit nodes/edges
+  useEffect(() => {
+    const prevHashes = prevNodeHashesRef.current;
+    const prevEdgeSet = prevEdgeSetRef.current;
+    const nodesToInvalidate = new Set<string>();
+
+    // Detect node config changes
+    for (const node of nodes) {
+      const currentHash = computeConfigHash(node);
+      const prevHash = prevHashes.get(node.id);
+
+      // If node existed before and hash changed, mark for invalidation
+      if (prevHash !== undefined && prevHash !== currentHash) {
+        nodesToInvalidate.add(node.id);
+      }
+
+      // Update hash for next comparison
+      prevHashes.set(node.id, currentHash);
+    }
+
+    // Remove hashes for deleted nodes
+    for (const nodeId of prevHashes.keys()) {
+      if (!nodes.find((n) => n.id === nodeId)) {
+        prevHashes.delete(nodeId);
+        // Also invalidate deleted nodes from cache
+        cacheManagerRef.current.invalidateNode(nodeId);
+      }
+    }
+
+    // Detect edge changes - create edge key for comparison
+    const currentEdgeSet = new Set(
+      edges.map((e) => `${e.source}:${e.sourceHandle || "output"}->${e.target}:${e.targetHandle || "input"}`)
+    );
+
+    // Find added edges (in current but not in previous)
+    for (const edgeKey of currentEdgeSet) {
+      if (!prevEdgeSet.has(edgeKey)) {
+        // Edge was added - invalidate target node
+        const targetId = edgeKey.split("->")[1]?.split(":")[0];
+        if (targetId) {
+          nodesToInvalidate.add(targetId);
+        }
+      }
+    }
+
+    // Find removed edges (in previous but not in current)
+    for (const edgeKey of prevEdgeSet) {
+      if (!currentEdgeSet.has(edgeKey)) {
+        // Edge was removed - invalidate target node
+        const targetId = edgeKey.split("->")[1]?.split(":")[0];
+        if (targetId) {
+          nodesToInvalidate.add(targetId);
+        }
+      }
+    }
+
+    // Update edge set for next comparison
+    prevEdgeSetRef.current = currentEdgeSet;
+
+    // Invalidate changed nodes and clear their fromCache badge
+    if (nodesToInvalidate.size > 0) {
+      const nodeIds = Array.from(nodesToInvalidate);
+      for (const nodeId of nodeIds) {
+        cacheManagerRef.current.invalidateDownstream(nodeId, edges);
+      }
+
+      // Clear fromCache flag for invalidated nodes so badge disappears
+      setNodes((nds) =>
+        nds.map((node) =>
+          nodesToInvalidate.has(node.id) && node.data?.fromCache
+            ? { ...node, data: { ...node.data, fromCache: undefined } }
+            : node
+        )
+      );
+    }
+  }, [nodes, edges, setNodes]);
 
   const addPreviewEntry = useCallback(
     (entry: Omit<PreviewEntry, "id" | "timestamp">) => {
@@ -118,6 +202,8 @@ export function useFlowExecution({
                   ...(state.stringOutput !== undefined && { stringOutput: state.stringOutput }),
                   ...(state.imageOutput !== undefined && { imageOutput: state.imageOutput }),
                   ...(state.audioOutput !== undefined && { audioOutput: state.audioOutput }),
+                  // Cache indicator
+                  ...(state.fromCache !== undefined && { fromCache: state.fromCache }),
                 },
               }
             : node
@@ -220,7 +306,8 @@ export function useFlowExecution({
     [setNodes, addPreviewEntry, updatePreviewEntry]
   );
 
-  const resetExecution = useCallback(() => {
+  // Clear visual state for starting a new run (preserves cache)
+  const clearExecutionState = useCallback(() => {
     // Clear any pending inputs (e.g., audio recording waiting)
     pendingInputRegistry.clear();
     setNodes((nds) =>
@@ -232,6 +319,7 @@ export function useFlowExecution({
           executionOutput: undefined,
           executionError: undefined,
           awaitingInput: undefined, // Clear awaiting state
+          fromCache: undefined, // Clear cache indicator
         },
       }))
     );
@@ -240,8 +328,17 @@ export function useFlowExecution({
     addedPreviewIds.current.clear();
   }, [setNodes]);
 
-  const runFlow = useCallback(async () => {
+  // Full reset including cache (for Reset button)
+  const resetExecution = useCallback(() => {
+    // Clear node execution cache
+    cacheManagerRef.current.clear();
+    // Clear visual state
+    clearExecutionState();
+  }, [clearExecutionState]);
+
+  const runFlow = useCallback(async (options?: { forceExecute?: boolean }) => {
     if (isRunning) return;
+    const forceExecute = options?.forceExecute ?? false;
 
     // Owner-funded mode: skip local key validation when BOTH useOwnerKeys and shareToken are present
     const isOwnerFunded = useOwnerKeys && shareToken;
@@ -271,7 +368,7 @@ export function useFlowExecution({
     }
 
     setKeyError(null);
-    resetExecution();
+    clearExecutionState(); // Clear visual state but preserve cache
     setIsRunning(true);
 
     // Track flow run event
@@ -293,6 +390,8 @@ export function useFlowExecution({
         {
           shareToken: isOwnerFunded ? shareToken : undefined,
           runId,
+          cacheManager: cacheManagerRef.current,
+          forceExecute,
         }
       );
     } catch (error) {
@@ -304,7 +403,7 @@ export function useFlowExecution({
       setIsRunning(false);
       abortControllerRef.current = null;
     }
-  }, [nodes, edges, isRunning, updateNodeExecutionState, resetExecution, hasRequiredKey, apiKeys, setKeyError, setIsRunning, useOwnerKeys, shareToken]);
+  }, [nodes, edges, isRunning, updateNodeExecutionState, clearExecutionState, hasRequiredKey, apiKeys, setKeyError, setIsRunning, useOwnerKeys, shareToken]);
 
   const cancelFlow = useCallback(() => {
     // Clear any pending inputs (e.g., audio recording waiting)

@@ -34,6 +34,8 @@ interface ExecutionData {
   executionStatus?: ExecutionStatus;
   executionOutput?: string;
   executionError?: string;
+  /** True if this result came from cache */
+  fromCache?: boolean;
 }
 
 // Node data types for each custom node
@@ -92,6 +94,8 @@ export interface PromptNodeData extends Record<string, unknown>, ExecutionData {
   googleStructuredOutputs?: boolean;
   // Reasoning/thinking output (for models that support it)
   executionReasoning?: string;
+  // Cache: when true, reuse output if inputs unchanged (opt-in)
+  cacheable?: boolean;
 }
 
 export interface ImageNodeData extends Record<string, unknown>, ExecutionData {
@@ -107,6 +111,8 @@ export interface ImageNodeData extends Record<string, unknown>, ExecutionData {
   partialImages?: 0 | 1 | 2 | 3;
   // Google-specific options
   aspectRatio?: string;
+  // Cache: when true, reuse output if inputs unchanged (opt-in)
+  cacheable?: boolean;
 }
 
 export interface ImageInputNodeData extends Record<string, unknown>, ExecutionData {
@@ -153,6 +159,8 @@ export interface MagicNodeData extends Record<string, unknown>, ExecutionData {
   isGenerating?: boolean;      // Loading state for generation
   generationError?: string;    // Error from code generation
   evalResults?: MagicEvalResults; // Evaluation results from test execution
+  // Cache: when true, reuse output if inputs unchanged (opt-in)
+  cacheable?: boolean;
 }
 
 // React component style presets
@@ -165,6 +173,8 @@ export interface ReactNodeData extends Record<string, unknown>, ExecutionData {
   provider?: string;
   model?: string;
   stylePreset?: ReactStylePreset;  // UI style preset
+  // Cache: when true, reuse output if inputs unchanged (opt-in)
+  cacheable?: boolean;
 }
 
 // Comment node colors
@@ -222,6 +232,8 @@ export interface AudioTranscriptionNodeData extends Record<string, unknown>, Exe
   label: string;
   model?: "gpt-4o-transcribe" | "gpt-4o-mini-transcribe";
   language?: string;  // Optional ISO 639-1 code (e.g., "en", "es")
+  // Cache: when true, reuse output if inputs unchanged (opt-in)
+  cacheable?: boolean;
 }
 
 // Union type for all node data

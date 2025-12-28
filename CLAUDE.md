@@ -55,7 +55,7 @@ Invoke `/supabase` to load the router. Provides guides for SQL style, functions,
 
 ### Node Creation Skill
 
-Invoke `/node-creation` for step-by-step guides: types → component → execution → autopilot → sidebar → validation. Templates in `TEMPLATES.md`.
+Invoke `/node-creation` for step-by-step guides: types → component → execution (incl. caching) → autopilot → sidebar → validation. Templates in `TEMPLATES.md`.
 
 ### Content Design Skill
 
@@ -77,7 +77,7 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 |-------|-----------|----------------|
 | Core architecture | `architecture.md` | Flow editor, providers, edges, sidebars |
 | Node types | `nodes.md` | All 11 node types and their features |
-| Execution | `execution.md` | Engine, API routes, execution hooks |
+| Execution | `execution.md` | Engine, API routes, execution hooks, caching |
 | Autopilot | `autopilot.md` | AI chat interface, flow generation |
 | Collaboration | `collaboration.md` | Live sharing, cursors, owner-funded execution |
 | Auth & Storage | `auth-storage.md` | Supabase auth, API keys, flow persistence |
@@ -109,6 +109,8 @@ Processing nodes have a `done` output that fires a pulse when execution complete
 ### Key Patterns
 
 **IMPORTANT: Always consult @docs/AI_MODELS.md for the authoritative list of model IDs.** Do not hardcode or assume model names.
+
+**Incremental Caching**: Nodes support ComfyUI-style caching. Input nodes (`text-input`, `image-input`) auto-cache. Processing nodes opt-in via `cacheable` toggle. See `execution.md` for details.
 
 **Documentation Lookup**: Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__context7__get-library-docs`) to fetch the latest documentation for any libraries or SDKs. Note: `docs/AI_MODELS.md` supersedes Context7 for model information.
 

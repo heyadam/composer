@@ -56,6 +56,7 @@ export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
       iconClassName="bg-cyan-500/10 text-cyan-600 dark:text-cyan-300"
       accentBorderClassName=""
       status={data.executionStatus}
+      fromCache={data.fromCache}
       className="w-[280px]"
       ports={
         <>
@@ -159,6 +160,17 @@ export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Cache toggle */}
+          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none nodrag">
+            <input
+              type="checkbox"
+              checked={data.cacheable ?? false}
+              onChange={(e) => updateNodeData(id, { cacheable: e.target.checked })}
+              className="rounded border-input h-3.5 w-3.5 accent-primary"
+            />
+            <span>Cache output</span>
+          </label>
         </div>
       </div>
     </NodeFrame>
