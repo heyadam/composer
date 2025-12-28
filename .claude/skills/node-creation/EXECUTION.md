@@ -1,37 +1,67 @@
 # Step 3: Execution Engine
 
-Add execution logic for your node in `lib/execution/engine.ts`.
+Add execution logic for your node by creating an executor file.
 
 ## Checklist
 
-- [ ] Add case to `executeNode` switch statement
+- [ ] Create executor file in `lib/execution/executors/`
+- [ ] Implement `NodeExecutor` interface
+- [ ] Register executor in `lib/execution/executors/index.ts`
 - [ ] Handle inputs from connected edges
-- [ ] Implement node-specific logic
 - [ ] Return `ExecuteNodeResult`
 - [ ] Handle errors appropriately
 - [ ] Support owner-funded execution (if API calls)
 
-## ExecuteNode Function
+## NodeExecutor Interface
 
-Add your node type to the switch statement in `executeNode()` (~line 78):
+Create a new file `lib/execution/executors/your-node-type.ts`:
 
 ```typescript
-async function executeNode(
-  node: Node,
-  inputs: Record<string, string>,
-  context: Record<string, unknown>,
-  apiKeys?: ApiKeys,
-  onStreamUpdate?: (output: string, debugInfo?: DebugInfo, reasoning?: string) => void,
-  signal?: AbortSignal,
-  options?: ExecuteOptions
-): Promise<ExecuteNodeResult> {
-  switch (node.type) {
-    // ... existing cases ...
+import type { NodeExecutor, ExecutionContext, ExecuteNodeResult } from "./types";
 
-    case "your-node-type": {
-      // Your execution logic here
-    }
-  }
+export const yourNodeExecutor: NodeExecutor = {
+  type: "your-node-type",
+
+  // Optional metadata
+  hasPulseOutput: true,        // Set if node emits "done" pulse
+  shouldTrackDownstream: true, // Set if node streams to preview outputs
+
+  async execute(ctx: ExecutionContext): Promise<ExecuteNodeResult> {
+    const { node, inputs, context, apiKeys, signal, options, onStreamUpdate } = ctx;
+
+    // Your execution logic here
+
+    return { output: "result" };
+  },
+};
+```
+
+## Register the Executor
+
+Add to `lib/execution/executors/index.ts`:
+
+```typescript
+import { yourNodeExecutor } from "./your-node-type";
+
+// In the registration block:
+registerExecutor(yourNodeExecutor);
+```
+
+## ExecutionContext
+
+The context provides everything needed for execution:
+
+```typescript
+interface ExecutionContext {
+  node: Node;                              // The node being executed
+  inputs: Record<string, string>;          // Inputs from connected edges
+  context: Record<string, unknown>;        // Shared execution context
+  apiKeys?: ApiKeys;                       // User's API keys (normal execution)
+  signal?: AbortSignal;                    // Cancellation signal
+  options?: ExecuteOptions;                // Includes shareToken/runId for owner-funded
+  edges?: Edge[];                          // All flow edges
+  onStreamUpdate?: StreamUpdateCallback;   // Streaming callback
+  onNodeStateChange?: NodeStateChangeCallback; // State change callback
 }
 ```
 
@@ -40,96 +70,93 @@ async function executeNode(
 ### Simple Passthrough (Input/Output nodes)
 
 ```typescript
-case "text-input":
-  return { output: inputs["prompt"] || inputs["input"] || "" };
+export const textInputExecutor: NodeExecutor = {
+  type: "text-input",
 
-case "preview-output":
-  return { output: inputs["input"] || Object.values(inputs)[0] || "" };
+  async execute(ctx: ExecutionContext): Promise<ExecuteNodeResult> {
+    const inputValue = typeof ctx.node.data?.inputValue === "string"
+      ? ctx.node.data.inputValue : "";
+    return { output: inputValue };
+  },
+};
 ```
 
 ### Synchronous Transformation
 
 ```typescript
-case "your-transform": {
-  const input = inputs["input"] || "";
-  const config = node.data.transformConfig as string || "";
+export const yourTransformExecutor: NodeExecutor = {
+  type: "your-transform",
+  hasPulseOutput: true,
 
-  // Perform transformation
-  const result = someTransformFunction(input, config);
+  async execute(ctx: ExecutionContext): Promise<ExecuteNodeResult> {
+    const { inputs, node } = ctx;
+    const input = inputs["input"] || "";
+    const config = (node.data.config as string) || "";
 
-  return { output: result };
-}
+    const result = someTransformFunction(input, config);
+
+    return { output: result };
+  },
+};
 ```
 
 ### API Call with Streaming
 
 ```typescript
-case "your-ai-node": {
-  const startTime = Date.now();
-  let streamChunksReceived = 0;
+import { fetchWithTimeout } from "../utils/fetch";
+import { parseTextStream, parseErrorResponse } from "../utils/streaming";
+import { buildApiRequestBody, redactRequestBody } from "../utils/request";
+import { createTextGenerationDebugInfo } from "../utils/debug";
 
-  // Get prompt (from connection or inline value)
-  const hasPromptEdge = "prompt" in inputs;
-  const inlineUserPrompt = typeof node.data?.userPrompt === "string"
-    ? node.data.userPrompt : "";
-  const promptInput = hasPromptEdge ? inputs["prompt"] : inlineUserPrompt;
+export const yourAiNodeExecutor: NodeExecutor = {
+  type: "your-ai-node",
+  hasPulseOutput: true,
+  shouldTrackDownstream: true,
 
-  // Build request body (handle owner-funded vs normal)
-  const requestBody = options?.shareToken
-    ? {
-        type: "your-ai-node",
-        prompt: promptInput,
-        provider: node.data.provider,
-        model: node.data.model,
-        shareToken: options.shareToken,
-        runId: options.runId,
-        // NO apiKeys - server uses owner's keys
-      }
-    : {
-        type: "your-ai-node",
-        prompt: promptInput,
-        provider: node.data.provider,
-        model: node.data.model,
-        apiKeys,
-        // NO shareToken
-      };
+  async execute(ctx: ExecutionContext): Promise<ExecuteNodeResult> {
+    const { node, inputs, apiKeys, signal, options, onStreamUpdate } = ctx;
+    const startTime = Date.now();
 
-  const debugInfo: DebugInfo = {
-    startTime,
-    request: requestBody,
-    streamChunksReceived: 0,
-  };
+    // Get prompt (from connection or inline value)
+    const hasPromptEdge = "prompt" in inputs;
+    const inlineUserPrompt = typeof node.data?.userPrompt === "string"
+      ? node.data.userPrompt : "";
+    const promptInput = hasPromptEdge ? inputs["prompt"] : inlineUserPrompt;
 
-  const response = await fetchWithTimeout("/api/execute", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody),
-    signal,
-  });
+    // Build request body (handles owner-funded vs normal)
+    const requestBody = buildApiRequestBody({
+      type: "your-ai-node",
+      prompt: promptInput,
+      provider: node.data.provider,
+      model: node.data.model,
+      apiKeys,
+      options,
+    });
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(JSON.parse(text).error || "Request failed");
-  }
+    const debugInfo = createTextGenerationDebugInfo(startTime, redactRequestBody(requestBody));
 
-  // Stream response
-  const reader = response.body!.getReader();
-  const decoder = new TextDecoder();
-  let fullOutput = "";
+    const response = await fetchWithTimeout("/api/execute", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+      signal,
+    });
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+    if (!response.ok) {
+      throw new Error(await parseErrorResponse(response, "Request failed"));
+    }
 
-    fullOutput += decoder.decode(value);
-    streamChunksReceived++;
-    debugInfo.streamChunksReceived = streamChunksReceived;
-    onStreamUpdate?.(fullOutput, debugInfo);
-  }
+    // Stream response
+    const reader = response.body!.getReader();
+    const { output } = await parseTextStream(reader, (text, rawChunks) => {
+      debugInfo.streamChunksReceived = rawChunks.length;
+      onStreamUpdate?.(text, debugInfo);
+    });
 
-  debugInfo.endTime = Date.now();
-  return { output: fullOutput, debugInfo };
-}
+    debugInfo.endTime = Date.now();
+    return { output, debugInfo };
+  },
+};
 ```
 
 ## ExecuteNodeResult Interface
@@ -141,6 +168,9 @@ interface ExecuteNodeResult {
   debugInfo?: DebugInfo;         // For API calls (timing, request)
   generatedCode?: string;        // For ai-logic nodes
   codeExplanation?: string;      // For ai-logic nodes
+  stringOutput?: string;         // For preview-output (separate outputs)
+  imageOutput?: string;          // For preview-output
+  audioOutput?: string;          // For preview-output
 }
 ```
 
@@ -161,7 +191,7 @@ To check if an input came from an edge vs inline value:
 
 ```typescript
 const hasPromptEdge = "prompt" in inputs;
-const inlineValue = node.data?.userPrompt as string || "";
+const inlineValue = (node.data?.userPrompt as string) || "";
 const effectivePrompt = hasPromptEdge ? inputs["prompt"] : inlineValue;
 ```
 
@@ -171,14 +201,7 @@ Throw errors for failures - the engine catches them:
 
 ```typescript
 if (!response.ok) {
-  const text = await response.text();
-  let errorMessage: string;
-  try {
-    errorMessage = JSON.parse(text).error || "Request failed";
-  } catch {
-    errorMessage = text || "Request failed";
-  }
-  throw new Error(errorMessage);
+  throw new Error(await parseErrorResponse(response, "Request failed"));
 }
 ```
 
@@ -218,12 +241,8 @@ When a flow is published with "Owner-Funded Execution" enabled, collaborators ru
 1. User visits a live share link (e.g., `/1234/abc123token`)
 2. The live page calls `/api/live/[token]/execute` instead of `/api/execute`
 3. The execution engine automatically passes `shareToken` and `runId` in `options`
-4. Your node's execution code checks for `options?.shareToken` to use owner-funded path
+4. Use `buildApiRequestBody()` which handles both paths automatically
 5. Server-side code retrieves owner's encrypted keys via `getOwnerKeysForExecution()`
-
-**Your node must handle both paths:**
-- Normal execution: `apiKeys` provided, no `shareToken`
-- Owner-funded: `shareToken` provided, no `apiKeys` (server fetches owner's keys)
 
 ## Validation
 

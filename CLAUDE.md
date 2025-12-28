@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev      # Start development server (http://localhost:3000)
 npm run build    # Production build
 npm run lint     # Run ESLint
-npm test         # Run Vitest unit tests (65 tests)
+npm test         # Run Vitest unit tests
 npm run start    # Start production server
 ```
 
