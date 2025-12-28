@@ -1,0 +1,44 @@
+# Realtime Conversation
+
+Real-time voice conversation using OpenAI's Realtime API.
+
+## Overview
+
+The Realtime Conversation node enables live voice chat with AI. It uses WebRTC for low-latency audio streaming and supports multiple voice options.
+
+## Ports
+
+| Port | Type | Direction | Description |
+|------|------|-----------|-------------|
+| Audio In | Audio (emerald) | In | Input audio stream |
+| Instructions | String (cyan) | In | System instructions |
+| Audio Out | Audio (emerald) | Out | Output audio stream |
+| Done | Pulse (orange) | Out | Fires when session ends |
+
+## Configuration
+
+### Voice
+
+Choose from 10 voice options:
+- Alloy, Ash, Ballad, Coral, Echo
+- Sage, Shimmer, Verse, Marin, Cedar
+
+### VAD Mode
+
+Voice Activity Detection determines when the AI should respond:
+
+- **Semantic VAD** - AI detects natural conversation pauses
+- **Server VAD** - Server-side voice activity detection
+- **Manual (PTT)** - Push-to-talk, you control when to send
+
+## Live Transcript
+
+The node displays a live transcript of the conversation, showing both your speech and the AI's responses with timestamps.
+
+## Session Limits
+
+Sessions have a maximum duration of 60 minutes.
+
+## Auto-Start
+
+When running a flow with a Realtime Conversation node connected, the session automatically starts and waits for your voice input.

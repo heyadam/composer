@@ -1,0 +1,51 @@
+# Image Generation
+
+Generate images using AI models.
+
+## Overview
+
+The Image Generation node creates images from text prompts using OpenAI DALL-E or Google Gemini/Imagen models.
+
+## Ports
+
+| Port | Type | Direction | Description |
+|------|------|-----------|-------------|
+| Prompt | String (cyan) | In | Image description |
+| Output | Image (purple) | Out | Generated image |
+| Done | Pulse (orange) | Out | Fires when generation completes |
+
+## Configuration
+
+### Provider & Model
+
+**OpenAI**:
+- GPT Image 1 - Best instruction following and text rendering
+- DALL-E 3 - Higher quality, larger resolutions
+- DALL-E 2 - Lower cost, supports edits/variations
+
+**Google**:
+- Gemini 2.5 Flash Image - Fast generation
+- Gemini 3 Pro Image - High quality
+- Imagen 4.0 - Standard, Ultra, and Fast variants
+
+### Aspect Ratio
+
+Choose from common aspect ratios:
+- 1:1 (square)
+- 16:9 (landscape)
+- 9:16 (portrait)
+- And more
+
+### Quality
+
+For supported models, choose between standard and HD quality.
+
+## Streaming
+
+OpenAI models support streaming partial images, showing progress as the image generates.
+
+## Tips
+
+- Be specific in your prompts for better results
+- Include style descriptions (photorealistic, illustration, etc.)
+- Specify composition, lighting, and mood

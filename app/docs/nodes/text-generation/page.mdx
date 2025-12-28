@@ -1,0 +1,52 @@
+# Text Generation
+
+Generate text using large language models from multiple providers.
+
+## Overview
+
+The Text Generation node sends prompts to AI models and streams back responses. It supports OpenAI, Google Gemini, and Anthropic Claude models.
+
+## Ports
+
+| Port | Type | Direction | Description |
+|------|------|-----------|-------------|
+| Prompt | String (cyan) | In | User message/prompt |
+| System | String (cyan) | In | System instructions |
+| Image | Image (purple) | In | Image for vision prompts |
+| Output | Response (amber) | Out | Streaming AI response |
+| Done | Pulse (orange) | Out | Fires when generation completes |
+
+## Configuration
+
+### Provider & Model
+
+Select your AI provider and model:
+
+- **OpenAI**: GPT-5.2, GPT-5-mini, GPT-5-nano
+- **Google**: Gemini 3 Pro, Gemini 3 Flash
+- **Anthropic**: Claude Opus 4.5, Claude Sonnet 4.5, Claude Haiku 4.5
+
+### Provider-Specific Options
+
+**OpenAI**:
+- Verbosity level
+- Thinking mode
+
+**Google Gemini**:
+- Thinking level (for Gemini 3)
+- Thinking budget (for Gemini 2.5)
+- Safety preset (default, strict, relaxed, none)
+
+## Vision/Multimodal
+
+Connect an image to the Image input for vision prompts. The node automatically switches to a vision-capable model if needed.
+
+## Inline Inputs
+
+If a port isn't connected, you can enter text directly in the node:
+- **User prompt** field for the prompt input
+- **System instructions** field for system input
+
+## Streaming
+
+Responses stream in real-time. Connected Preview Output nodes show the response as it generates.

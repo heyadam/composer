@@ -1,0 +1,38 @@
+# Audio Input
+
+Entry point for audio recording in your flow.
+
+## Overview
+
+The Audio Input node records audio from your microphone. It displays a real-time waveform during recording and outputs the audio data for transcription or other processing.
+
+## Ports
+
+| Port | Type | Direction | Description |
+|------|------|-----------|-------------|
+| Output | Audio (emerald) | Out | Recorded audio data |
+| Done | Pulse (orange) | Out | Fires when recording completes |
+
+## Usage
+
+1. Add an Audio Input node to your canvas
+2. Click the record button to start recording
+3. Click again to stop
+4. The audio is ready to flow to connected nodes
+
+## Auto-Recording
+
+When running a flow, Audio Input nodes that are connected will automatically prompt you to record. The flow waits for your input before continuing.
+
+## Supported Formats
+
+The node automatically selects the best format supported by your browser:
+- WebM with Opus codec (preferred)
+- WebM
+- MP4
+- AAC
+
+## Common Connections
+
+- **Audio Transcription** - Convert speech to text
+- **Realtime Conversation** - Use as input for voice chat

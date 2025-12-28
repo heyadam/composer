@@ -1,0 +1,45 @@
+# AI Logic
+
+Transform data using AI-generated JavaScript code.
+
+## Overview
+
+The AI Logic node (also called Magic Node) uses Claude to generate JavaScript code that transforms your input data. Describe what you want to do, and the AI writes the code.
+
+## Ports
+
+| Port | Type | Direction | Description |
+|------|------|-----------|-------------|
+| Input | String (cyan) | In | Data to transform |
+| Transform | String (cyan) | In | Description of the transformation |
+| Output | String (cyan) | Out | Transformed result |
+| Done | Pulse (orange) | Out | Fires when transformation completes |
+
+## How It Works
+
+1. Connect input data to the Input port
+2. Describe your transformation (e.g., "extract all email addresses")
+3. The node uses Claude Haiku to generate JavaScript code
+4. The code runs against your input and outputs the result
+
+## Code Generation
+
+When the Transform input is connected, code is auto-generated at execution time. The generated code includes:
+
+- A transform function
+- Test cases for validation
+- Error handling
+
+## Viewing the Code
+
+Expand the node to see:
+- **Code view** - The generated JavaScript
+- **Eval view** - Test results and validation
+
+## Use Cases
+
+- Parse and extract data from text
+- Format or restructure content
+- Filter or sort information
+- Calculate values from input
+- Convert between formats

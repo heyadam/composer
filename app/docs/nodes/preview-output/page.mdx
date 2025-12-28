@@ -1,0 +1,34 @@
+# Preview Output
+
+Display final results from your flow.
+
+## Overview
+
+The Preview Output node is the exit point of your flow. It sends connected data to the Preview sidebar for display.
+
+## Ports
+
+| Port | Type | Direction | Description |
+|------|------|-----------|-------------|
+| Response | Response (amber) | In | Streaming text response |
+| Code | Response (amber) | In | React component code for preview |
+
+## Usage
+
+Connect the output of your final processing node to a Preview Output node. When you run the flow, results appear in the Preview sidebar on the right.
+
+## Multiple Outputs
+
+You can have multiple Preview Output nodes in a flow. Each one creates a separate entry in the Preview sidebar, allowing you to see multiple results at once.
+
+## Streaming
+
+Preview Output nodes display streaming responses in real-time. As Text Generation nodes produce output, you'll see it appear character by character.
+
+## Code Preview
+
+When connected to a React Component node's Code output, the Preview sidebar renders the generated component in a sandboxed iframe.
+
+## Debug Mode
+
+Toggle debug mode in the Preview sidebar to see detailed information about each node's execution, including request/response data.
