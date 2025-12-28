@@ -105,11 +105,13 @@ Exit point that displays results. Can be named to describe what it shows (e.g., 
 - \`string\` - Text/JSON content (dataType: "string")
 - \`image\` - Image data (dataType: "image")
 - \`audio\` - Audio data (dataType: "audio")
+- \`code\` - React/JSX code for website preview (dataType: "response")
 
 When connecting to this node, use \`targetHandle\` to specify which input:
 - To connect text/string output: \`targetHandle: "string"\`
 - To connect image output: \`targetHandle: "image"\`
 - To connect audio output: \`targetHandle: "audio"\`
+- To connect React component code: \`targetHandle: "code"\`
 
 ### 5. ai-logic (AI Logic)
 Custom code transformation node. Uses Claude to generate JavaScript code based on a natural language description. The generated code processes inputs and returns a string output. Useful for data manipulation, formatting, parsing, or custom logic.
