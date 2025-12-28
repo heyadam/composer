@@ -24,6 +24,9 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
   const isAudioConnected = edges.some(
     (edge) => edge.target === id && edge.targetHandle === "audio"
   );
+  const isCodeConnected = edges.some(
+    (edge) => edge.target === id && edge.targetHandle === "code"
+  );
 
   const renderFooter = () => {
     if (data.executionError) {
@@ -34,7 +37,7 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
       );
     }
 
-    const hasOutput = data.stringOutput || data.imageOutput || data.audioOutput;
+    const hasOutput = data.stringOutput || data.imageOutput || data.audioOutput || data.codeOutput;
     if (!hasOutput) {
       return <p className="text-xs text-muted-foreground">Output appears here</p>;
     }
@@ -66,6 +69,13 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
         {data.audioOutput && (
           <AudioPreview output={data.audioOutput} compact />
         )}
+
+        {/* Code output - show compact indicator */}
+        {data.codeOutput && (
+          <p className="text-xs text-muted-foreground">
+            Code preview available in sidebar
+          </p>
+        )}
       </div>
     );
   };
@@ -86,6 +96,7 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
             { id: "string", label: "String", colorClass: "cyan", isConnected: isStringConnected },
             { id: "image", label: "Image", colorClass: "purple", isConnected: isImageConnected },
             { id: "audio", label: "Audio", colorClass: "emerald", isConnected: isAudioConnected },
+            { id: "code", label: "Code", colorClass: "amber", isConnected: isCodeConnected },
           ]}
         />
       }

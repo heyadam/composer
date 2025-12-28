@@ -56,6 +56,8 @@ export interface NodeExecutionState {
   imageOutput?: string;
   /** Output node: audio input */
   audioOutput?: string;
+  /** Output node: code input (renders as website preview) */
+  codeOutput?: string;
   /** True if this result came from cache (not freshly executed) */
   fromCache?: boolean;
 }

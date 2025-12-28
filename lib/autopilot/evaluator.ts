@@ -42,6 +42,7 @@ const NODE_INPUT_HANDLES: Record<string, Record<string, string[]>> = {
     string: ["string"],
     image: ["image"],
     audio: ["audio"],
+    code: ["response"],
   },
   "comment": {
     // No inputs
@@ -499,7 +500,7 @@ Please fix these specific issues and regenerate the FlowChanges JSON.
 - image-generation accepts: \`targetHandle: "prompt"\` (string) OR \`targetHandle: "image"\` (image-to-image)
 - realtime-conversation accepts: \`targetHandle: "instructions"\` (string) OR \`targetHandle: "audio-in"\` (audio)
 - audio-transcription accepts: \`targetHandle: "audio"\` (audio, required) OR \`targetHandle: "language"\` (string, optional)
-- preview-output accepts: \`targetHandle: "string"\` (string), \`targetHandle: "image"\` (image), OR \`targetHandle: "audio"\` (audio)
+- preview-output accepts: \`targetHandle: "string"\` (string), \`targetHandle: "image"\` (image), \`targetHandle: "audio"\` (audio), OR \`targetHandle: "code"\` (response)
 - Image data can connect to \`targetHandle: "image"\` on text-generation, image-generation, or preview-output
 - Audio data can connect to \`targetHandle: "audio"\` on audio-transcription, preview-output, OR \`targetHandle: "audio-in"\` on realtime-conversation
 - All new nodes must be connected via edges (unless adding a single standalone node)`;

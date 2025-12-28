@@ -202,6 +202,7 @@ export function useFlowExecution({
                   ...(state.stringOutput !== undefined && { stringOutput: state.stringOutput }),
                   ...(state.imageOutput !== undefined && { imageOutput: state.imageOutput }),
                   ...(state.audioOutput !== undefined && { audioOutput: state.audioOutput }),
+                  ...(state.codeOutput !== undefined && { codeOutput: state.codeOutput }),
                   // Cache indicator
                   ...(state.fromCache !== undefined && { fromCache: state.fromCache }),
                 },
@@ -275,13 +276,14 @@ export function useFlowExecution({
             });
           }
           // Update preview with streaming output while running
-          if (state.output || state.stringOutput || state.imageOutput || state.audioOutput) {
+          if (state.output || state.stringOutput || state.imageOutput || state.audioOutput || state.codeOutput) {
             updatePreviewEntry(nodeId, {
               status: "running",
               output: state.output,
               stringOutput: state.stringOutput,
               imageOutput: state.imageOutput,
               audioOutput: state.audioOutput,
+              codeOutput: state.codeOutput,
             });
           } else if (state.sourceType) {
             // Update source type if provided (for loading state)
@@ -299,6 +301,7 @@ export function useFlowExecution({
             stringOutput: state.stringOutput,
             imageOutput: state.imageOutput,
             audioOutput: state.audioOutput,
+            codeOutput: state.codeOutput,
           });
         }
       }
