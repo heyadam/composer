@@ -11,6 +11,7 @@ Add execution logic for your node by creating an executor file.
 - [ ] Return `ExecuteNodeResult`
 - [ ] Handle errors appropriately
 - [ ] Support owner-funded execution (if API calls)
+- [ ] Consider caching behavior (see Caching section)
 
 ## NodeExecutor Interface
 
@@ -244,6 +245,63 @@ When a flow is published with "Owner-Funded Execution" enabled, collaborators ru
 4. Use `buildApiRequestBody()` which handles both paths automatically
 5. Server-side code retrieves owner's encrypted keys via `getOwnerKeysForExecution()`
 
+## Caching Behavior
+
+The execution engine supports incremental caching. Configure your node's caching behavior:
+
+### Cacheability Categories
+
+| Category | Behavior | Examples |
+|----------|----------|----------|
+| **Implicitly cacheable** | Auto-caches without UI toggle | `text-input`, `image-input` |
+| **Explicitly cacheable** | User enables via UI toggle | `text-generation`, `image-generation` |
+| **Never cacheable** | Always re-executes | `comment`, `preview-output` |
+
+### Adding Cacheability
+
+**For new input nodes** (data entry with no API calls):
+
+Add your node type to `isImplicitlyCacheable()` in `lib/execution/cache/fingerprint.ts`:
+
+```typescript
+export function isImplicitlyCacheable(nodeType: string): boolean {
+  return nodeType === "text-input"
+      || nodeType === "image-input"
+      || nodeType === "your-input-type";  // Add here
+}
+```
+
+**For processing nodes** (API calls or transformations):
+
+1. Add `cacheable?: boolean` to your node data interface
+2. Add UI toggle in your component (see PromptNode for example)
+3. Node is cached when `data.cacheable: true`
+
+**For nodes that should never cache**:
+
+Add your node type to `isNeverCacheable()` in `lib/execution/cache/fingerprint.ts`:
+
+```typescript
+export function isNeverCacheable(nodeType: string): boolean {
+  return nodeType === "comment"
+      || nodeType === "preview-output"
+      || nodeType === "your-non-cacheable-type";  // Add here
+}
+```
+
+### Cache UI Integration
+
+Pass `fromCache={data.fromCache}` to `NodeFrame` to show "Cached" badge:
+
+```typescript
+<NodeFrame
+  title={data.label}
+  status={data.executionStatus}
+  fromCache={data.fromCache}  // Shows "Cached" badge when true
+  // ...
+>
+```
+
 ## Validation
 
 After completing this step, verify:
@@ -253,3 +311,4 @@ After completing this step, verify:
 - [ ] Errors are caught and displayed
 - [ ] Streaming updates appear in real-time (if applicable)
 - [ ] Owner-funded execution works (if API calls)
+- [ ] Cache badge appears on re-run when inputs unchanged (if cacheable)

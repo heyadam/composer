@@ -7,6 +7,7 @@ The execution engine uses a **modular executor pattern**:
 - **Engine** (`lib/execution/engine.ts`): Orchestrates graph traversal, delegates to executors
 - **Executor Registry** (`lib/execution/executor-registry.ts`): Central registry for node executors
 - **Executors** (`lib/execution/executors/`): Individual executor files per node type
+- **Cache** (`lib/execution/cache/`): Incremental execution cache (LRU with fingerprinting)
 - **Utilities** (`lib/execution/utils/`): Shared helpers (fetch, streaming, request, debug)
 - **Types** (`lib/execution/types.ts`): Type definitions for the execution engine
 
@@ -104,3 +105,38 @@ Shared utilities in `lib/execution/utils/`:
 - Maintains history stack up to 50 snapshots
 
 **useClipboard** (`lib/hooks/useClipboard.ts`): Clipboard operations for copy/paste functionality.
+
+## Incremental Execution Cache
+
+The cache system enables ComfyUI-style incremental execution where only nodes with changed inputs re-execute.
+
+**Cache Module** (`lib/execution/cache/`):
+- `cache-manager.ts`: LRU cache with memory limits and validity checking
+- `fingerprint.ts`: Hash computation for config, edges, and inputs
+- `types.ts`: Cache entry and validity result interfaces
+
+**Cacheability Rules**:
+- **Implicitly cacheable**: `text-input`, `image-input` (auto-cache without UI toggle)
+- **Explicitly cacheable**: Processing nodes with `data.cacheable: true`
+- **Never cacheable**: `comment`, `preview-output`
+
+**Cache Validation** (checked in order):
+1. Entry exists in cache
+2. Node type is cacheable
+3. Config hash matches (node.data fields)
+4. Edge topology hash matches (incoming connections)
+5. Input hashes match (upstream output values)
+
+**UI Integration**:
+- `fromCache` prop on node data triggers "Cached" badge in NodeFrame
+- Badge cleared via proactive invalidation when config/edges change
+- Reset button clears cache completely
+
+**Proactive Invalidation** (`useFlowExecution.ts`):
+- Tracks previous node config hashes and edge topology
+- Detects changes on each render via `useEffect`
+- Calls `invalidateDownstream()` to cascade invalidation
+- Clears `fromCache` badge immediately when stale
+
+**Environment Variables** (optional):
+- `NEXT_PUBLIC_CACHE_MAX_SIZE_MB`: Cache memory limit in megabytes (default: 50)

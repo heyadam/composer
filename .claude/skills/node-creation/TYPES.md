@@ -22,6 +22,8 @@ interface ExecutionData {
   executionStatus?: ExecutionStatus;
   executionOutput?: string;
   executionError?: string;
+  fromCache?: boolean;       // True when result came from cache
+  cacheable?: boolean;       // For processing nodes: user-controlled cache toggle
 }
 
 // Your new node data
