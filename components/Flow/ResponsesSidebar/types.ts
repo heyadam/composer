@@ -18,6 +18,8 @@ export interface PreviewEntry {
   imageOutput?: string;
   /** Output node: audio input */
   audioOutput?: string;
+  /** Output node: code input (renders as website preview) */
+  codeOutput?: string;
 }
 
 export interface DebugEntry {

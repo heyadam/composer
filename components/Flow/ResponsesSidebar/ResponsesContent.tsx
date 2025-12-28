@@ -28,6 +28,23 @@ function ResponseCard({ entry }: { entry: PreviewEntry }) {
     if (entry.nodeType === "preview-output") {
       const outputs: React.ReactNode[] = [];
 
+      // Render code output (website preview) - takes priority for visual output
+      if (entry.codeOutput) {
+        // Parse as React component for website preview
+        const reactData = parseReactOutput(entry.codeOutput);
+        if (reactData) {
+          outputs.push(<ReactPreview key="code" data={reactData} />);
+        } else {
+          // Fallback: wrap raw code in a component structure
+          outputs.push(
+            <ReactPreview
+              key="code"
+              data={{ type: "react", code: entry.codeOutput }}
+            />
+          );
+        }
+      }
+
       // Render image output
       if (entry.imageOutput && isImageOutput(entry.imageOutput)) {
         const imageData = parseImageOutput(entry.imageOutput);

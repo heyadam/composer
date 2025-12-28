@@ -49,6 +49,7 @@ export interface OutputNodeData extends Record<string, unknown>, ExecutionData {
   stringOutput?: string;
   imageOutput?: string;
   audioOutput?: string;
+  codeOutput?: string;
 }
 
 // Google safety setting types
@@ -375,6 +376,7 @@ export const NODE_PORT_SCHEMAS: Record<NodeType, NodePortSchema> = {
       { id: "string", label: "string", dataType: "string", required: false },
       { id: "image", label: "image", dataType: "image", required: false },
       { id: "audio", label: "audio", dataType: "audio", required: false },
+      { id: "code", label: "code", dataType: "response", required: false },
     ],
     outputs: [],
   },
