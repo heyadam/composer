@@ -67,21 +67,21 @@ function ResponseCard({ entry }: { entry: PreviewEntry }) {
         );
       }
 
-      // Render string output (text)
+      // Render string output (text) - always as plain text
       if (entry.stringOutput) {
-        // Check if it's actually a React component
+        // Parse out the code if it's wrapped in React JSON format
+        let displayText = entry.stringOutput;
         if (isReactOutput(entry.stringOutput)) {
           const reactData = parseReactOutput(entry.stringOutput);
-          if (reactData) {
-            outputs.push(<ReactPreview key="react" data={reactData} />);
+          if (reactData?.code) {
+            displayText = reactData.code;
           }
-        } else {
-          outputs.push(
-            <p key="string" className="text-sm whitespace-pre-wrap break-words leading-relaxed">
-              {entry.stringOutput}
-            </p>
-          );
         }
+        outputs.push(
+          <p key="string" className="text-sm whitespace-pre-wrap break-words leading-relaxed font-mono">
+            {displayText}
+          </p>
+        );
       }
 
       if (outputs.length > 0) {

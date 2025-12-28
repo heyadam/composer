@@ -180,6 +180,7 @@ export async function executeFlow(
           stringOutput: cachedResult.stringOutput,
           imageOutput: cachedResult.imageOutput,
           audioOutput: cachedResult.audioOutput,
+          codeOutput: cachedResult.codeOutput,
           fromCache: true,
         });
 
@@ -275,6 +276,7 @@ export async function executeFlow(
         stringOutput: result.stringOutput,
         imageOutput: result.imageOutput,
         audioOutput: result.audioOutput,
+        codeOutput: result.codeOutput,
       });
 
       if (node.type === "preview-output") {
