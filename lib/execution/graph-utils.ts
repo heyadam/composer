@@ -68,7 +68,7 @@ export function findNodesByType(type: string, nodes: Node[]): Node[] {
  * Find all output nodes in the graph
  */
 export function findOutputNodes(nodes: Node[]): Node[] {
-  return findNodesByType("output", nodes);
+  return findNodesByType("preview-output", nodes);
 }
 
 /**
@@ -92,9 +92,9 @@ export function findDownstreamOutputNodes(
     for (const edge of outgoing) {
       const target = getTargetNode(edge, nodes);
       if (target) {
-        if (target.type === "output") {
+        if (target.type === "preview-output") {
           outputNodes.push(target);
-        } else if (target.type === "image") {
+        } else if (target.type === "image-generation") {
           // Don't traverse through image nodes - they handle their own downstream outputs
           // This prevents text from leaking through to outputs behind image nodes
         } else {

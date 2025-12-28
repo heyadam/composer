@@ -78,3 +78,11 @@ export interface FlowExecutionContext {
   setExecutionState: (state: ExecutionState) => void;
   userInput: string;
 }
+
+/** Options for owner-funded execution */
+export interface ExecuteOptions {
+  /** Share token for owner-funded execution (grants access to owner's API keys) */
+  shareToken?: string;
+  /** Unique run ID for rate limit deduplication (same for all nodes in one execution) */
+  runId?: string;
+}

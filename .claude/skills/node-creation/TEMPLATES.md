@@ -96,11 +96,20 @@ export function YourInputNode({ id, data }: NodeProps<YourInputNodeType>) {
 }
 ```
 
-### Execution (`lib/execution/engine.ts`)
+### Executor (`lib/execution/executors/your-input.ts`)
 
 ```typescript
-case "your-input":
-  return { output: (node.data.inputValue as string) || "" };
+import type { NodeExecutor, ExecutionContext, ExecuteNodeResult } from "./types";
+
+export const yourInputExecutor: NodeExecutor = {
+  type: "your-input",
+
+  async execute(ctx: ExecutionContext): Promise<ExecuteNodeResult> {
+    const inputValue = typeof ctx.node.data?.inputValue === "string"
+      ? ctx.node.data.inputValue : "";
+    return { output: inputValue };
+  },
+};
 ```
 
 ---
@@ -208,65 +217,61 @@ export function YourProcessingNode({ id, data }: NodeProps<YourProcessingNodeTyp
 }
 ```
 
-### Execution (`lib/execution/engine.ts`)
+### Executor (`lib/execution/executors/your-processing.ts`)
 
 ```typescript
-case "your-processing": {
-  const startTime = Date.now();
+import type { NodeExecutor, ExecutionContext, ExecuteNodeResult } from "./types";
+import { fetchWithTimeout } from "../utils/fetch";
+import { parseTextStream, parseErrorResponse } from "../utils/streaming";
+import { buildApiRequestBody, redactRequestBody } from "../utils/request";
+import { createTextGenerationDebugInfo } from "../utils/debug";
 
-  const hasPromptEdge = "prompt" in inputs;
-  const inlineUserPrompt = typeof node.data?.userPrompt === "string"
-    ? node.data.userPrompt : "";
-  const promptInput = hasPromptEdge ? inputs["prompt"] : inlineUserPrompt;
+export const yourProcessingExecutor: NodeExecutor = {
+  type: "your-processing",
+  hasPulseOutput: true,
+  shouldTrackDownstream: true,
 
-  const requestBody = options?.shareToken
-    ? {
-        type: "your-processing",
-        prompt: promptInput,
-        provider: node.data.provider,
-        model: node.data.model,
-        shareToken: options.shareToken,
-        runId: options.runId,
-      }
-    : {
-        type: "your-processing",
-        prompt: promptInput,
-        provider: node.data.provider,
-        model: node.data.model,
-        apiKeys,
-      };
+  async execute(ctx: ExecutionContext): Promise<ExecuteNodeResult> {
+    const { node, inputs, apiKeys, signal, options, onStreamUpdate } = ctx;
+    const startTime = Date.now();
 
-  const debugInfo: DebugInfo = { startTime, request: requestBody, streamChunksReceived: 0 };
+    const hasPromptEdge = "prompt" in inputs;
+    const inlineUserPrompt = typeof node.data?.userPrompt === "string"
+      ? node.data.userPrompt : "";
+    const promptInput = hasPromptEdge ? inputs["prompt"] : inlineUserPrompt;
 
-  const response = await fetchWithTimeout("/api/execute", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody),
-    signal,
-  });
+    const requestBody = buildApiRequestBody({
+      type: "your-processing",
+      prompt: promptInput,
+      provider: node.data.provider,
+      model: node.data.model,
+      apiKeys,
+      options,
+    });
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(JSON.parse(text).error || "Request failed");
-  }
+    const debugInfo = createTextGenerationDebugInfo(startTime, redactRequestBody(requestBody));
 
-  const reader = response.body!.getReader();
-  const decoder = new TextDecoder();
-  let fullOutput = "";
-  let streamChunksReceived = 0;
+    const response = await fetchWithTimeout("/api/execute", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+      signal,
+    });
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    fullOutput += decoder.decode(value);
-    streamChunksReceived++;
-    debugInfo.streamChunksReceived = streamChunksReceived;
-    onStreamUpdate?.(fullOutput, debugInfo);
-  }
+    if (!response.ok) {
+      throw new Error(await parseErrorResponse(response, "Request failed"));
+    }
 
-  debugInfo.endTime = Date.now();
-  return { output: fullOutput, debugInfo };
-}
+    const reader = response.body!.getReader();
+    const { output } = await parseTextStream(reader, (text, rawChunks) => {
+      debugInfo.streamChunksReceived = rawChunks.length;
+      onStreamUpdate?.(text, debugInfo);
+    });
+
+    debugInfo.endTime = Date.now();
+    return { output, debugInfo };
+  },
+};
 ```
 
 ---
@@ -343,11 +348,19 @@ export function YourOutputNode({ id, data }: NodeProps<YourOutputNodeType>) {
 }
 ```
 
-### Execution (`lib/execution/engine.ts`)
+### Executor (`lib/execution/executors/your-output.ts`)
 
 ```typescript
-case "your-output":
-  return { output: inputs["input"] || Object.values(inputs)[0] || "" };
+import type { NodeExecutor, ExecutionContext, ExecuteNodeResult } from "./types";
+
+export const yourOutputExecutor: NodeExecutor = {
+  type: "your-output",
+
+  async execute(ctx: ExecutionContext): Promise<ExecuteNodeResult> {
+    const output = ctx.inputs["input"] || Object.values(ctx.inputs)[0] || "";
+    return { output };
+  },
+};
 ```
 
 ---
@@ -371,18 +384,26 @@ export interface YourTransformNodeData extends Record<string, unknown>, Executio
 },
 ```
 
-### Execution (`lib/execution/engine.ts`)
+### Executor (`lib/execution/executors/your-transform.ts`)
 
 ```typescript
-case "your-transform": {
-  const input = inputs["input"] || "";
-  const config = (node.data.config as string) || "";
+import type { NodeExecutor, ExecutionContext, ExecuteNodeResult } from "./types";
 
-  // Perform local transformation
-  const result = input.toUpperCase(); // Example transformation
+export const yourTransformExecutor: NodeExecutor = {
+  type: "your-transform",
+  hasPulseOutput: true,
 
-  return { output: result };
-}
+  async execute(ctx: ExecutionContext): Promise<ExecuteNodeResult> {
+    const { inputs, node } = ctx;
+    const input = inputs["input"] || "";
+    const config = (node.data.config as string) || "";
+
+    // Perform local transformation
+    const result = input.toUpperCase(); // Example transformation
+
+    return { output: result };
+  },
+};
 ```
 
 ---
@@ -390,6 +411,14 @@ case "your-transform": {
 ## Registration Checklist
 
 After creating files, register everywhere:
+
+### `lib/execution/executors/index.ts`
+```typescript
+import { yourNodeExecutor } from "./your-node-type";
+
+// Add to registration block:
+registerExecutor(yourNodeExecutor);
+```
 
 ### `components/Flow/nodes/index.ts`
 ```typescript
