@@ -422,7 +422,7 @@ export const NODE_PORT_SCHEMAS: Record<NodeType, NodePortSchema> = {
       { id: "system", label: "system", dataType: "string", required: false },
     ],
     outputs: [
-      { id: "output", label: "react", dataType: "response" },
+      { id: "output", label: "code", dataType: "response" },
       { id: "done", label: "Done", dataType: "pulse" },
     ],
   },

@@ -42,6 +42,7 @@ const NODE_INPUT_HANDLES: Record<string, Record<string, string[]>> = {
     string: ["string"],
     image: ["image"],
     audio: ["audio"],
+    code: ["response"],
   },
   "comment": {
     // No inputs

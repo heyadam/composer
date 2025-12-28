@@ -62,7 +62,7 @@ export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
         <>
           <PortRow
             nodeId={id}
-            output={{ id: "output", label: "React", colorClass: "amber", isConnected: isOutputConnected }}
+            output={{ id: "output", label: "Code", colorClass: "amber", isConnected: isOutputConnected }}
           />
           <PortRow
             nodeId={id}

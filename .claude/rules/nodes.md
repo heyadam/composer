@@ -36,7 +36,11 @@ All node components are in `components/Flow/nodes/` with editable labels.
 - Includes validation with test cases
 - Collapsible code/eval views
 
-**ReactComponentNode** (type: `react-component`): AI-generated React components rendered in sandboxed iframe.
+**ReactComponentNode** (type: `react-component`): AI-generated React components rendered in sandboxed iframe:
+- Component description input (prompt)
+- Additional instructions input (system)
+- Code output port (amber) - connects to preview-output Code input for website preview
+- Multi-provider support (OpenAI, Google, Anthropic)
 
 **AudioTranscriptionNode** (type: `audio-transcription`): Speech-to-text using OpenAI transcription:
 - Models: `gpt-4o-transcribe` (default), `gpt-4o-mini-transcribe`

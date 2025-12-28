@@ -141,6 +141,18 @@ AI-powered React component generator. Takes a description and generates a self-c
 }
 \`\`\`
 
+**Input Handles:**
+- \`prompt\` - Component description (dataType: "string")
+- \`system\` - Additional style/behavior instructions (dataType: "string")
+
+**Output Handles:**
+- \`output\` - Generated React code (dataType: "response") - connect to preview-output's \`code\` handle for website preview
+- \`done\` - Pulse when generation completes (dataType: "pulse")
+
+When connecting react-component output to preview-output for website preview:
+- Use \`targetHandle: "code"\` on the preview-output node
+- Use \`data: { dataType: "response" }\` for the edge
+
 ### 7. image-input (Image Input)
 Image upload entry point. Allows users to upload an image to use in the flow.
 \`\`\`typescript
