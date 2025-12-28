@@ -462,3 +462,181 @@ export const NODE_REQUIRED_FIELDS = {
   "your-node-type": ["label"],
 };
 ```
+
+---
+
+## Documentation Templates
+
+Templates for user-facing documentation in `app/docs/nodes/`.
+
+### Input Node Documentation
+
+Create `app/docs/nodes/your-input/page.mdx`:
+
+```mdx
+# Your Input
+
+Entry point for [data type] data in your workflow.
+
+## Overview
+
+The Your Input node provides [input mechanism] where you can [action]. Use this as the starting point for [use case] workflows.
+
+## Ports
+
+| Port | Type | Direction | Description |
+|------|------|-----------|-------------|
+| Output | String (cyan) | Out | The [data type] entered in the node |
+
+## Tips
+
+- [Tip about using the input effectively]
+- Connect to [suggested downstream nodes]
+```
+
+### Processing Node Documentation (with AI)
+
+Create `app/docs/nodes/your-processing/page.mdx`:
+
+```mdx
+# Your Processing
+
+[Brief description of what this node does].
+
+## Overview
+
+The Your Processing node [detailed explanation]. It supports [providers/features].
+
+## Ports
+
+| Port | Type | Direction | Description |
+|------|------|-----------|-------------|
+| Prompt | String (cyan) | In | [Input description] |
+| System | String (cyan) | In | [Optional input description] |
+| Output | Response (amber) | Out | [Output description] |
+| Done | Pulse (orange) | Out | Fires when processing completes |
+
+## Configuration
+
+### Provider & Model
+
+Select your AI provider and model:
+
+- **OpenAI**: [Available models]
+- **Google**: [Available models]
+- **Anthropic**: [Available models]
+
+### Provider-Specific Options
+
+**OpenAI**:
+- [Option]: [Description]
+
+**Google Gemini**:
+- [Option]: [Description]
+
+## Inline Inputs
+
+If a port isn't connected, you can enter text directly in the node:
+- **[Field name]** field for [purpose]
+
+## Streaming
+
+Responses stream in real-time. Connected Preview Output nodes show the response as it generates.
+```
+
+### Output Node Documentation
+
+Create `app/docs/nodes/your-output/page.mdx`:
+
+```mdx
+# Your Output
+
+Display [content type] at the end of your workflow.
+
+## Overview
+
+The Your Output node [what it displays/does]. Use this as the terminal node for [use case] workflows.
+
+## Ports
+
+| Port | Type | Direction | Description |
+|------|------|-----------|-------------|
+| Input | Response (amber) | In | The content to display |
+
+## Display Features
+
+- [Feature 1]
+- [Feature 2]
+
+## Tips
+
+- Connect from [suggested upstream nodes]
+- [Tip about rendering/formatting]
+```
+
+### Transform Node Documentation (No API)
+
+Create `app/docs/nodes/your-transform/page.mdx`:
+
+```mdx
+# Your Transform
+
+[Brief description of transformation].
+
+## Overview
+
+The Your Transform node [what it does]. It processes data locally without external API calls.
+
+## Ports
+
+| Port | Type | Direction | Description |
+|------|------|-----------|-------------|
+| Input | String (cyan) | In | [Input description] |
+| Output | String (cyan) | Out | [Output description] |
+| Done | Pulse (orange) | Out | Fires when transformation completes |
+
+## Configuration
+
+- **[Option]**: [Description]
+
+## Example
+
+Input: `[example input]`
+Output: `[example output]`
+```
+
+### Navigation Entry (`app/docs/nodes/_meta.js`)
+
+Add your node in the correct category:
+
+```javascript
+export default {
+  index: "Overview",
+  "-- Input Nodes": {
+    type: "separator",
+    title: "Input Nodes",
+  },
+  "text-input": "Text Input",
+  // Add input nodes here
+  "your-input": "Your Input",
+  "-- Processing Nodes": {
+    type: "separator",
+    title: "Processing Nodes",
+  },
+  "text-generation": "Text Generation",
+  // Add processing nodes here
+  "your-processing": "Your Processing",
+  "-- Annotation": {
+    type: "separator",
+    title: "Annotation",
+  },
+  comment: "Comment",
+  "-- Output Nodes": {
+    type: "separator",
+    title: "Output Nodes",
+  },
+  "preview-output": "Preview Output",
+  // Add output nodes here
+  "your-output": "Your Output",
+};
+```
