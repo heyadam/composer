@@ -7,6 +7,9 @@
 
 /**
  * Configuration for the image_generation tool in OpenAI Responses API
+ *
+ * Note: We use string for size to maintain compatibility with UI options
+ * that may differ from the SDK's strict type definitions.
  */
 export interface OpenAIImageGenerationTool {
   type: "image_generation";
@@ -14,8 +17,8 @@ export interface OpenAIImageGenerationTool {
   partial_images?: number;
   /** Image quality: auto, low, medium, high */
   quality?: "auto" | "low" | "medium" | "high";
-  /** Image size */
-  size?: "1024x1024" | "1024x1792" | "1792x1024";
+  /** Image size (e.g., "1024x1024", "1024x1792", "1792x1024") */
+  size?: string;
   /** Output format */
   output_format?: "webp" | "png" | "jpeg";
   /** Source image for image-to-image editing (base64) */
