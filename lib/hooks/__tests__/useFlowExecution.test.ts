@@ -247,7 +247,12 @@ describe("useFlowExecution", () => {
       expect.any(Function), // updateNodeExecutionState
       defaultApiKeys,
       expect.any(AbortSignal),
-      { shareToken: undefined, runId: undefined } // owner-funded execution options
+      expect.objectContaining({
+        shareToken: undefined,
+        runId: undefined,
+        forceExecute: false,
+        cacheManager: expect.any(Object), // CacheManager instance
+      })
     );
   });
 

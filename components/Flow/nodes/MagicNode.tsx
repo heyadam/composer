@@ -108,6 +108,7 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
       iconClassName="bg-orange-500/10 text-orange-600 dark:text-orange-300"
       accentBorderClassName="border-orange-500"
       status={data.executionStatus}
+      fromCache={data.fromCache}
       className="w-[280px]"
       ports={
         <>
@@ -293,6 +294,17 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
             Code will be generated at runtime from connected input.
           </p>
         )}
+
+        {/* Cache toggle */}
+        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none nodrag pt-2 border-t">
+          <input
+            type="checkbox"
+            checked={data.cacheable ?? false}
+            onChange={(e) => updateNodeData(id, { cacheable: e.target.checked })}
+            className="rounded border-input h-3.5 w-3.5 accent-primary"
+          />
+          <span>Cache output</span>
+        </label>
       </div>
     </NodeFrame>
   );

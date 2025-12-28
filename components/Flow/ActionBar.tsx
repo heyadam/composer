@@ -1,11 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   Plus,
   RotateCcw,
   Play,
   Square,
   MessageSquarePlus,
+  Zap,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
@@ -20,7 +22,7 @@ import { getTransition } from "@/lib/motion/presets";
 interface ActionBarProps {
   onToggleNodes: () => void;
   onCommentAround: () => void;
-  onRun: () => void;
+  onRun: (options?: { forceExecute?: boolean }) => void;
   onCancel: () => void;
   onReset: () => void;
   nodesPaletteOpen: boolean;
@@ -56,6 +58,24 @@ export function ActionBar({
   isResizing = false,
   runDisabledReason,
 }: ActionBarProps) {
+  // Track shift key for force execute
+  const [shiftHeld, setShiftHeld] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Shift") setShiftHeld(true);
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Shift") setShiftHeld(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
+
   // Calculate offset to keep centered in visible area when sidebars open
   // Left sidebar overlays canvas, so we need to offset by half its width
   // Right sidebar also overlays canvas now, so we offset by negative half its width
@@ -145,20 +165,26 @@ export function ActionBar({
                 <TooltipTrigger asChild>
                   <span className="inline-flex">
                     <Button
-                      onClick={onRun}
+                      onClick={() => onRun({ forceExecute: shiftHeld })}
                       disabled={!!runDisabledReason}
-                      className="h-10 px-4 rounded-lg gap-2 bg-green-600 text-white hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600"
+                      className={`h-10 px-4 rounded-lg gap-2 text-white disabled:opacity-50 disabled:cursor-not-allowed ${
+                        shiftHeld
+                          ? "bg-amber-600 hover:bg-amber-500 disabled:hover:bg-amber-600"
+                          : "bg-green-600 hover:bg-green-500 disabled:hover:bg-green-600"
+                      }`}
                     >
-                      <Play className="h-4 w-4" />
-                      Run
+                      {shiftHeld ? (
+                        <Zap className="h-4 w-4" />
+                      ) : (
+                        <Play className="h-4 w-4" />
+                      )}
+                      {shiftHeld ? "Force Run" : "Run"}
                     </Button>
                   </span>
                 </TooltipTrigger>
-                {runDisabledReason && (
-                  <TooltipContent side="top" className="bg-neutral-800 text-white border-neutral-700">
-                    {runDisabledReason}
-                  </TooltipContent>
-                )}
+                <TooltipContent side="top" className="bg-neutral-800 text-white border-neutral-700">
+                  {runDisabledReason || (shiftHeld ? "Ignore cache, re-execute all nodes" : "Hold Shift to force re-execute")}
+                </TooltipContent>
               </Tooltip>
             )}
           </div>

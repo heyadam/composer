@@ -17,12 +17,21 @@ import {
 } from "./graph-utils";
 import { getExecutor, hasPulseOutput, shouldTrackDownstream } from "./executor-registry";
 import type { ExecuteNodeResult, ExecutionContext } from "./executors/types";
+import type { CacheManager } from "./cache";
 
 // Import executors to register them
 import "./executors";
 
 // Re-export ExecuteOptions for backward compatibility
 export type { ExecuteOptions } from "./types";
+
+/** Extended options for flow execution with caching support */
+export interface ExecuteFlowOptions extends ExecuteOptions {
+  /** Cache manager for incremental execution */
+  cacheManager?: CacheManager;
+  /** If true, ignore cache and re-execute all nodes */
+  forceExecute?: boolean;
+}
 
 /**
  * Execute a single node using its registered executor.
@@ -69,8 +78,9 @@ export async function executeFlow(
   onNodeStateChange: (nodeId: string, state: NodeExecutionState) => void,
   apiKeys?: ApiKeys,
   signal?: AbortSignal,
-  options?: ExecuteOptions
+  options?: ExecuteFlowOptions
 ): Promise<string> {
+  const { cacheManager, forceExecute, ...executeOptions } = options || {};
   // Check if already cancelled
   if (signal?.aborted) {
     throw new Error("Execution cancelled");
@@ -134,6 +144,67 @@ export async function executeFlow(
     }
 
     executingNodes.add(node.id);
+
+    // Collect inputs early for cache check
+    const inputs = collectNodeInputs(node.id, edges, executedOutputs);
+
+    // Check cache before executing (only if cacheable and not force-executing)
+    const isCacheable = Boolean(node.data?.cacheable);
+    if (cacheManager && isCacheable && !forceExecute) {
+      const cachedResult = cacheManager.get(node.id, node, edges, executedOutputs);
+
+      if (cachedResult) {
+        // Use cached result
+        context[node.id] = cachedResult.output;
+        executedOutputs[node.id] = cachedResult.output;
+        executedNodes.add(node.id);
+        executingNodes.delete(node.id);
+
+        const nodeHasPulseOutput = hasPulseOutput(node.type || "");
+        if (nodeHasPulseOutput) {
+          executedOutputs[`${node.id}:done`] = JSON.stringify({ fired: true, timestamp: Date.now() });
+        }
+
+        onNodeStateChange(node.id, {
+          status: "success",
+          output: cachedResult.output,
+          reasoning: cachedResult.reasoning,
+          debugInfo: cachedResult.debugInfo,
+          generatedCode: cachedResult.generatedCode,
+          codeExplanation: cachedResult.codeExplanation,
+          awaitingInput: false,
+          pulseFired: nodeHasPulseOutput,
+          stringOutput: cachedResult.stringOutput,
+          imageOutput: cachedResult.imageOutput,
+          audioOutput: cachedResult.audioOutput,
+          fromCache: true,
+        });
+
+        if (node.type === "preview-output") {
+          outputs.push(cachedResult.output);
+          return;
+        }
+
+        // Continue to downstream nodes
+        const outgoingEdges = getOutgoingEdges(node.id, edges);
+        const nextPromises: Promise<void>[] = [];
+
+        for (const edge of outgoingEdges) {
+          const targetNode = getTargetNode(edge, nodes);
+          if (targetNode && !executedNodes.has(targetNode.id)) {
+            if (areInputsReady(targetNode.id)) {
+              const promise = executeNodeAndContinue(targetNode);
+              nodePromises[targetNode.id] = promise;
+              nextPromises.push(promise);
+            }
+          }
+        }
+
+        await Promise.all(nextPromises);
+        return;
+      }
+    }
+
     onNodeStateChange(node.id, { status: "running" });
 
     // For streaming nodes, also mark downstream output nodes as running
@@ -147,8 +218,6 @@ export async function executeFlow(
 
     try {
       await new Promise((r) => setTimeout(r, 300));
-
-      const inputs = collectNodeInputs(node.id, edges, executedOutputs);
 
       const result = await executeNode(
         node,
@@ -170,7 +239,7 @@ export async function executeFlow(
           }
         },
         signal,
-        options,
+        executeOptions,
         edges,
         onNodeStateChange
       );
@@ -184,6 +253,11 @@ export async function executeFlow(
       const nodeHasPulseOutput = hasPulseOutput(node.type || "");
       if (nodeHasPulseOutput) {
         executedOutputs[`${node.id}:done`] = JSON.stringify({ fired: true, timestamp: Date.now() });
+      }
+
+      // Store result in cache (if cacheable)
+      if (cacheManager && isCacheable) {
+        cacheManager.set(node.id, node, edges, inputs, result);
       }
 
       onNodeStateChange(node.id, {
