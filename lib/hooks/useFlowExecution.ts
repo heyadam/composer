@@ -10,7 +10,7 @@ import type { PreviewEntry, DebugEntry } from "@/components/Flow/ResponsesSideba
 import type { ApiKeys, ProviderId } from "@/lib/api-keys/types";
 import type { NodeType } from "@/types/flow";
 import { pendingInputRegistry } from "@/lib/execution/pending-input-registry";
-import { CacheManager } from "@/lib/execution/cache";
+import { CacheManager, computeConfigHash } from "@/lib/execution/cache";
 
 export interface UseFlowExecutionProps {
   nodes: Node[];
@@ -56,6 +56,10 @@ export function useFlowExecution({
   nodesRef.current = nodes;
   const abortControllerRef = useRef<AbortController | null>(null);
   const cacheManagerRef = useRef<CacheManager>(new CacheManager());
+  // Track previous node config hashes for cache invalidation
+  const prevNodeHashesRef = useRef<Map<string, string>>(new Map());
+  // Track previous edge set for edge change detection
+  const prevEdgeSetRef = useRef<Set<string>>(new Set());
 
   // Cleanup abort controller on unmount
   useEffect(() => {
@@ -65,6 +69,84 @@ export function useFlowExecution({
       }
     };
   }, []);
+
+  // Proactive cache invalidation when node configs or edges change
+  // This clears stale "Cached" badges immediately when users edit nodes/edges
+  useEffect(() => {
+    const prevHashes = prevNodeHashesRef.current;
+    const prevEdgeSet = prevEdgeSetRef.current;
+    const nodesToInvalidate = new Set<string>();
+
+    // Detect node config changes
+    for (const node of nodes) {
+      const currentHash = computeConfigHash(node);
+      const prevHash = prevHashes.get(node.id);
+
+      // If node existed before and hash changed, mark for invalidation
+      if (prevHash !== undefined && prevHash !== currentHash) {
+        nodesToInvalidate.add(node.id);
+      }
+
+      // Update hash for next comparison
+      prevHashes.set(node.id, currentHash);
+    }
+
+    // Remove hashes for deleted nodes
+    for (const nodeId of prevHashes.keys()) {
+      if (!nodes.find((n) => n.id === nodeId)) {
+        prevHashes.delete(nodeId);
+        // Also invalidate deleted nodes from cache
+        cacheManagerRef.current.invalidateNode(nodeId);
+      }
+    }
+
+    // Detect edge changes - create edge key for comparison
+    const currentEdgeSet = new Set(
+      edges.map((e) => `${e.source}:${e.sourceHandle || "output"}->${e.target}:${e.targetHandle || "input"}`)
+    );
+
+    // Find added edges (in current but not in previous)
+    for (const edgeKey of currentEdgeSet) {
+      if (!prevEdgeSet.has(edgeKey)) {
+        // Edge was added - invalidate target node
+        const targetId = edgeKey.split("->")[1]?.split(":")[0];
+        if (targetId) {
+          nodesToInvalidate.add(targetId);
+        }
+      }
+    }
+
+    // Find removed edges (in previous but not in current)
+    for (const edgeKey of prevEdgeSet) {
+      if (!currentEdgeSet.has(edgeKey)) {
+        // Edge was removed - invalidate target node
+        const targetId = edgeKey.split("->")[1]?.split(":")[0];
+        if (targetId) {
+          nodesToInvalidate.add(targetId);
+        }
+      }
+    }
+
+    // Update edge set for next comparison
+    prevEdgeSetRef.current = currentEdgeSet;
+
+    // Invalidate changed nodes and clear their fromCache badge
+    if (nodesToInvalidate.size > 0) {
+      const nodeIds = Array.from(nodesToInvalidate);
+      for (const nodeId of nodeIds) {
+        cacheManagerRef.current.invalidateDownstream(nodeId, edges);
+      }
+
+      // Clear fromCache flag for invalidated nodes so badge disappears
+      setNodes((nds) =>
+        nds.map((node) =>
+          nodesToInvalidate.has(node.id) && node.data?.fromCache
+            ? { ...node, data: { ...node.data, fromCache: undefined } }
+            : node
+        )
+      );
+    }
+  }, [nodes, edges, setNodes]);
 
   const addPreviewEntry = useCallback(
     (entry: Omit<PreviewEntry, "id" | "timestamp">) => {
