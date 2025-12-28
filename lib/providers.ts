@@ -89,16 +89,23 @@ export const GOOGLE_SAFETY_PRESET_OPTIONS = [
 
 export type GoogleSafetyPreset = (typeof GOOGLE_SAFETY_PRESET_OPTIONS)[number]["value"];
 
+// Type helpers for Google safety settings (used by execution routes)
+export type GoogleHarmCategory = (typeof GOOGLE_HARM_CATEGORY_OPTIONS)[number]["value"];
+export type GoogleHarmThreshold = (typeof GOOGLE_HARM_THRESHOLD_OPTIONS)[number]["value"];
+
 // Helper to convert safety preset to settings array
-export function getSafetySettingsFromPreset(preset: GoogleSafetyPreset) {
-  const categories = [
+export function getSafetySettingsFromPreset(preset: GoogleSafetyPreset): Array<{
+  category: GoogleHarmCategory;
+  threshold: GoogleHarmThreshold;
+}> {
+  const categories: GoogleHarmCategory[] = [
     "HARM_CATEGORY_HATE_SPEECH",
     "HARM_CATEGORY_DANGEROUS_CONTENT",
     "HARM_CATEGORY_HARASSMENT",
     "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-  ] as const;
+  ];
 
-  const thresholdMap: Record<GoogleSafetyPreset, string> = {
+  const thresholdMap: Record<GoogleSafetyPreset, GoogleHarmThreshold> = {
     default: "HARM_BLOCK_THRESHOLD_UNSPECIFIED",
     strict: "BLOCK_LOW_AND_ABOVE",
     relaxed: "BLOCK_ONLY_HIGH",

@@ -140,9 +140,6 @@ export async function POST(request: NextRequest) {
     } else {
       // User-provided API key path
       openaiKey = apiKeys?.openai;
-      if (openaiKey) {
-        console.log("Realtime session: using user-provided API key");
-      }
     }
 
     if (!openaiKey) {

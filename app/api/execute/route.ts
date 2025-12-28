@@ -11,6 +11,11 @@ import type { MagicEvalTestCase, MagicEvalResults } from "@/types/flow";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { decryptKeys } from "@/lib/encryption";
 import { parseImageOutput } from "@/lib/image-utils";
+import { getSafetySettingsFromPreset, type GoogleSafetyPreset } from "@/lib/providers";
+import {
+  type OpenAIImageGenerationTool,
+  isImageGenerationCallItem,
+} from "@/lib/execution/openai-types";
 
 // Required for service role client and decryption
 export const runtime = "nodejs";
@@ -214,35 +219,9 @@ export async function POST(request: NextRequest) {
 
         // Safety settings from preset
         if (googleSafetyPreset && googleSafetyPreset !== "default") {
-          type HarmCategory =
-            | "HARM_CATEGORY_HATE_SPEECH"
-            | "HARM_CATEGORY_DANGEROUS_CONTENT"
-            | "HARM_CATEGORY_HARASSMENT"
-            | "HARM_CATEGORY_SEXUALLY_EXPLICIT";
-          type HarmThreshold =
-            | "HARM_BLOCK_THRESHOLD_UNSPECIFIED"
-            | "BLOCK_LOW_AND_ABOVE"
-            | "BLOCK_MEDIUM_AND_ABOVE"
-            | "BLOCK_ONLY_HIGH"
-            | "BLOCK_NONE";
-
-          const safetyCategories: HarmCategory[] = [
-            "HARM_CATEGORY_HATE_SPEECH",
-            "HARM_CATEGORY_DANGEROUS_CONTENT",
-            "HARM_CATEGORY_HARASSMENT",
-            "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-          ];
-
-          const thresholdMap: Record<string, HarmThreshold> = {
-            strict: "BLOCK_LOW_AND_ABOVE",
-            relaxed: "BLOCK_ONLY_HIGH",
-            none: "BLOCK_NONE",
-          };
-
-          googleOptions.safetySettings = safetyCategories.map((category) => ({
-            category,
-            threshold: thresholdMap[googleSafetyPreset] || "HARM_BLOCK_THRESHOLD_UNSPECIFIED" as HarmThreshold,
-          }));
+          googleOptions.safetySettings = getSafetySettingsFromPreset(
+            googleSafetyPreset as GoogleSafetyPreset
+          );
         }
 
         // Structured outputs
@@ -438,19 +417,14 @@ export async function POST(request: NextRequest) {
         : `Generate an image based on this description: ${fullPrompt}`;
 
       // Build image_generation tool config - include image for editing
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const imageGenTool: any = {
+      const imageGenTool: OpenAIImageGenerationTool = {
         type: "image_generation",
         partial_images: partialImages ?? 3,
         quality: quality || "low",
         size: size || "1024x1024",
         output_format: outputFormat || "webp",
+        ...(isImageEdit && parsedImageInput ? { image: parsedImageInput.value } : {}),
       };
-
-      // Add source image for image-to-image editing
-      if (isImageEdit && parsedImageInput) {
-        imageGenTool.image = parsedImageInput.value;
-      }
 
       // Use OpenAI Responses API directly for streaming partial images
       const stream = await openaiClient.responses.create({
@@ -476,13 +450,11 @@ export async function POST(request: NextRequest) {
                 });
                 controller.enqueue(encoder.encode(data + "\n"));
               } else if (event.type === "response.output_item.done") {
-                // Check for final image in output item
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const item = event.item as any;
-                if (item?.type === "image_generation_call" && item?.result) {
+                // Check for final image in output item using type guard
+                if (isImageGenerationCallItem(event.item) && event.item.result) {
                   const data = JSON.stringify({
                     type: "image",
-                    value: item.result,
+                    value: event.item.result,
                     mimeType,
                   });
                   controller.enqueue(encoder.encode(data + "\n"));

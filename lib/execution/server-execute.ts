@@ -13,8 +13,13 @@ import OpenAI from "openai";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import type { Node, Edge } from "@xyflow/react";
 import { resolveImageInput, modelSupportsVision, getVisionCapableModel } from "@/lib/vision";
-import type { ProviderId } from "@/lib/providers";
+import type { ProviderId, GoogleSafetyPreset } from "@/lib/providers";
+import { getSafetySettingsFromPreset } from "@/lib/providers";
 import { getIncomingEdges, getOutgoingEdges, collectNodeInputs } from "./graph-utils";
+import {
+  type OpenAIImageGenerationTool,
+  isImageGenerationCallItem,
+} from "./openai-types";
 
 interface ApiKeys {
   openai?: string;
@@ -184,37 +189,9 @@ async function executeTextGeneration(
     }
 
     if (googleSafetyPreset && googleSafetyPreset !== "default") {
-      type HarmCategory =
-        | "HARM_CATEGORY_HATE_SPEECH"
-        | "HARM_CATEGORY_DANGEROUS_CONTENT"
-        | "HARM_CATEGORY_HARASSMENT"
-        | "HARM_CATEGORY_SEXUALLY_EXPLICIT";
-      type HarmThreshold =
-        | "HARM_BLOCK_THRESHOLD_UNSPECIFIED"
-        | "BLOCK_LOW_AND_ABOVE"
-        | "BLOCK_MEDIUM_AND_ABOVE"
-        | "BLOCK_ONLY_HIGH"
-        | "BLOCK_NONE";
-
-      const safetyCategories: HarmCategory[] = [
-        "HARM_CATEGORY_HATE_SPEECH",
-        "HARM_CATEGORY_DANGEROUS_CONTENT",
-        "HARM_CATEGORY_HARASSMENT",
-        "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-      ];
-
-      const thresholdMap: Record<string, HarmThreshold> = {
-        strict: "BLOCK_LOW_AND_ABOVE",
-        relaxed: "BLOCK_ONLY_HIGH",
-        none: "BLOCK_NONE",
-      };
-
-      googleOptions.safetySettings = safetyCategories.map((category) => ({
-        category,
-        threshold:
-          thresholdMap[googleSafetyPreset] ||
-          ("HARM_BLOCK_THRESHOLD_UNSPECIFIED" as HarmThreshold),
-      }));
+      googleOptions.safetySettings = getSafetySettingsFromPreset(
+        googleSafetyPreset as GoogleSafetyPreset
+      );
     }
   }
 
@@ -378,18 +355,14 @@ async function executeImageGeneration(
     ? `Edit this image: ${fullPrompt || "Enhance and improve the image quality"}`
     : `Generate an image based on this description: ${fullPrompt}`;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const imageGenTool: any = {
+  const imageGenTool: OpenAIImageGenerationTool = {
     type: "image_generation",
     partial_images: 0, // No partial images for server-side execution
     quality: quality || "low",
     size: size || "1024x1024",
     output_format: outputFormat || "webp",
+    ...(isImageEdit && parsedImageInput ? { image: parsedImageInput.value } : {}),
   };
-
-  if (isImageEdit && parsedImageInput) {
-    imageGenTool.image = parsedImageInput.value;
-  }
 
   // Use OpenAI Responses API (non-streaming)
   const response = await openaiClient.responses.create({
@@ -398,14 +371,12 @@ async function executeImageGeneration(
     tools: [imageGenTool],
   });
 
-  // Find the image result in the response
+  // Find the image result in the response using type guard
   for (const output of response.output || []) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const item = output as any;
-    if (item?.type === "image_generation_call" && item?.result) {
+    if (isImageGenerationCallItem(output) && output.result) {
       return JSON.stringify({
         type: "image",
-        value: item.result,
+        value: output.result,
         mimeType,
       });
     }
