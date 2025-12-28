@@ -427,11 +427,12 @@ export async function POST(request: NextRequest) {
       };
 
       // Use OpenAI Responses API directly for streaming partial images
+      // Cast tools array to satisfy SDK's strict types (our sizes may differ from SDK's enum)
       const stream = await openaiClient.responses.create({
         model: model || "gpt-5.2",
         input: inputText,
         stream: true,
-        tools: [imageGenTool],
+        tools: [imageGenTool] as OpenAI.Responses.Tool[],
       });
 
       // Stream partial images and final image as newline-delimited JSON

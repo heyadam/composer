@@ -365,10 +365,11 @@ async function executeImageGeneration(
   };
 
   // Use OpenAI Responses API (non-streaming)
+  // Cast tools array to satisfy SDK's strict types (our sizes may differ from SDK's enum)
   const response = await openaiClient.responses.create({
     model: model || "gpt-5.2",
     input: inputText,
-    tools: [imageGenTool],
+    tools: [imageGenTool] as OpenAI.Responses.Tool[],
   });
 
   // Find the image result in the response using type guard
