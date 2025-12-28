@@ -1,0 +1,15 @@
+/* Override global styles that break Nextra docs */
+html,
+body {
+  overflow: visible !important;
+  height: auto !important;
+}
+
+/* Fix mobile sidebar background */
+.nextra-mobile-nav {
+  background: white !important;
+}
+
+:is(.dark) .nextra-mobile-nav {
+  background: #111 !important;
+}

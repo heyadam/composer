@@ -1,6 +1,8 @@
 import { Footer, Layout, Navbar } from "nextra-theme-docs";
+import { Head } from "nextra/components";
 import { getPageMap } from "nextra/page-map";
 import "nextra-theme-docs/style.css";
+import "./docs.css";
 import type { ReactNode } from "react";
 
 export const metadata = {
@@ -40,15 +42,18 @@ export default async function DocsLayout({
   const pageMap = await getPageMap("/docs");
 
   return (
-    <Layout
-      navbar={navbar}
-      pageMap={pageMap}
-      docsRepositoryBase="https://github.com/heyadam/composer/tree/main"
-      footer={footer}
-      sidebar={{ defaultMenuCollapseLevel: 1 }}
-      editLink="Edit this page on GitHub"
-    >
-      {children}
-    </Layout>
+    <>
+      <Head />
+      <Layout
+        navbar={navbar}
+        pageMap={pageMap}
+        docsRepositoryBase="https://github.com/heyadam/composer/tree/main"
+        footer={footer}
+        sidebar={{ defaultMenuCollapseLevel: 1 }}
+        editLink="Edit this page on GitHub"
+      >
+        {children}
+      </Layout>
+    </>
   );
 }
