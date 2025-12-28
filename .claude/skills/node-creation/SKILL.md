@@ -17,6 +17,7 @@ This skill guides you through creating new nodes for the Composer visual workflo
 | 4 | [AUTOPILOT.md](AUTOPILOT.md) | Integrate with Autopilot system |
 | 5 | [SIDEBAR.md](SIDEBAR.md) | Register in sidebar and set defaults |
 | 6 | [VALIDATION.md](VALIDATION.md) | Test and validate the implementation |
+| 7 | [DOCUMENTATION.md](DOCUMENTATION.md) | Write user-facing docs for the Nextra docs site |
 
 ## Quick Reference
 
@@ -41,6 +42,8 @@ This skill guides you through creating new nodes for the Composer visual workflo
 | 4 | `lib/autopilot/system-prompt.ts` | LLM docs |
 | 5 | `components/Flow/NodeSidebar.tsx` | Icon |
 | 5 | `components/Flow/AgentFlow.tsx` | Defaults |
+| 7 | `app/docs/nodes/your-node-type/page.mdx` | User docs |
+| 7 | `app/docs/nodes/_meta.js` | Navigation |
 
 ### Port Data Types
 
