@@ -35,7 +35,7 @@ export interface NodeCacheEntry {
  */
 export interface CacheValidityResult {
   valid: boolean;
-  reason?: "not_found" | "config_changed" | "edges_changed" | "inputs_changed";
+  reason?: "not_found" | "config_changed" | "edges_changed" | "inputs_changed" | "not_cacheable";
 }
 
 /**

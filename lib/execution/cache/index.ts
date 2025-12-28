@@ -17,5 +17,6 @@ export {
   computeInputHashes,
   hashString,
   isNeverCacheable,
+  isImplicitlyCacheable,
   estimateResultSize,
 } from "./fingerprint";

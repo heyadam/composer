@@ -52,8 +52,15 @@ const CACHE_RELEVANT_FIELDS: Record<string, string[]> = {
 };
 
 /**
- * FNV-1a hash function for browser compatibility.
+ * FNV-1a hash function (32-bit) for browser compatibility.
  * Fast and produces good distribution for cache keys.
+ *
+ * Note: 32-bit hash has collision probability that increases with input size.
+ * For cache invalidation, false positives (unnecessary re-execution) are safe.
+ * False negatives (missing changes) are mitigated by JSON serialization
+ * producing different strings for different inputs.
+ *
+ * Future consideration: crypto.subtle.digest("SHA-256") for very large inputs.
  */
 export function hashString(str: string): string {
   let hash = 2166136261; // FNV offset basis
@@ -86,9 +93,10 @@ export function computeConfigHash(node: Node): string {
     // Stable JSON serialization (sorted keys)
     const json = JSON.stringify(configObj, Object.keys(configObj).sort());
     return hashString(json);
-  } catch {
+  } catch (e) {
     // Fallback for non-serializable values (circular refs, etc.)
     // Return unique hash per node to force re-execution
+    console.warn(`[Cache] Failed to compute config hash for node ${node.id}:`, e);
     return hashString(`${nodeType}:${node.id}:${Date.now()}`);
   }
 }
@@ -116,8 +124,9 @@ export function computeEdgeHash(nodeId: string, edges: Edge[]): string {
       });
 
     return hashString(JSON.stringify(incomingEdges));
-  } catch {
+  } catch (e) {
     // Fallback for edge serialization errors
+    console.warn(`[Cache] Failed to compute edge hash for node ${nodeId}:`, e);
     return hashString(`edges:${nodeId}:${Date.now()}`);
   }
 }
@@ -137,7 +146,7 @@ export function computeInputHashes(
 
 /**
  * Check if a node type should never be cached.
- * Input nodes and real-time nodes always execute fresh.
+ * Real-time and non-executed nodes always skip caching.
  */
 export function isNeverCacheable(nodeType: string): boolean {
   // These nodes always require fresh execution
@@ -150,6 +159,15 @@ export function isNeverCacheable(nodeType: string): boolean {
 }
 
 /**
+ * Check if a node type is implicitly cacheable.
+ * These nodes auto-cache without requiring user opt-in toggle.
+ * Used for input nodes that should show "Cached" badge when unchanged.
+ */
+export function isImplicitlyCacheable(nodeType: string): boolean {
+  return nodeType === "text-input" || nodeType === "image-input";
+}
+
+/**
  * Estimate the memory size of an execution result in bytes.
  */
 export function estimateResultSize(result: {
@@ -157,6 +175,7 @@ export function estimateResultSize(result: {
   reasoning?: string;
   generatedCode?: string;
   codeExplanation?: string;
+  debugInfo?: unknown;
 }): number {
   let size = 0;
 
@@ -165,6 +184,14 @@ export function estimateResultSize(result: {
   if (result.reasoning) size += result.reasoning.length * 2;
   if (result.generatedCode) size += result.generatedCode.length * 2;
   if (result.codeExplanation) size += result.codeExplanation.length * 2;
+  if (result.debugInfo) {
+    try {
+      size += JSON.stringify(result.debugInfo).length * 2;
+    } catch {
+      // If debugInfo can't be serialized, estimate conservatively
+      size += 1000;
+    }
+  }
 
   // Object overhead
   size += 200;

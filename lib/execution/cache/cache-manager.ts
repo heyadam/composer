@@ -14,10 +14,13 @@ import {
   computeInputHashes,
   hashString,
   isNeverCacheable,
+  isImplicitlyCacheable,
   estimateResultSize,
 } from "./fingerprint";
 
-const DEFAULT_MAX_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
+// Default 50 MB, configurable via NEXT_PUBLIC_CACHE_MAX_SIZE_MB
+const DEFAULT_MAX_SIZE_BYTES =
+  parseInt(process.env.NEXT_PUBLIC_CACHE_MAX_SIZE_MB || "50", 10) * 1024 * 1024;
 
 /**
  * Manages execution cache for incremental flow execution.
@@ -45,6 +48,16 @@ export class CacheManager {
     edges: Edge[],
     upstreamOutputs: Record<string, string>
   ): CacheValidityResult {
+    // Check if node type is cacheable at all
+    const nodeType = node.type || "";
+    if (isNeverCacheable(nodeType)) {
+      return { valid: false, reason: "not_cacheable" };
+    }
+    // For non-implicit nodes, verify the cacheable flag is set
+    if (!isImplicitlyCacheable(nodeType) && !node.data?.cacheable) {
+      return { valid: false, reason: "not_cacheable" };
+    }
+
     const entry = this.entries.get(nodeId);
 
     if (!entry) {
@@ -105,11 +118,11 @@ export class CacheManager {
       this.hits++;
       const entry = this.entries.get(nodeId)!;
       // Update access time for LRU (move to end of Map iteration order)
-      // Mutate in place to avoid unnecessary object copying
-      entry.cachedAt = Date.now();
+      // Create new entry object to avoid mutating potentially returned reference
+      const updatedEntry = { ...entry, cachedAt: Date.now() };
       this.entries.delete(nodeId);
-      this.entries.set(nodeId, entry);
-      return entry.result;
+      this.entries.set(nodeId, updatedEntry);
+      return updatedEntry.result;
     }
 
     this.misses++;

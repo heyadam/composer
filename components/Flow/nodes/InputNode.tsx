@@ -26,6 +26,7 @@ export function InputNode({ id, data }: NodeProps<InputNodeType>) {
       iconClassName="bg-purple-500/10 text-purple-600 dark:text-purple-300"
       accentBorderClassName="border-purple-500"
       status={data.executionStatus}
+      fromCache={data.fromCache}
       className="w-[280px]"
       ports={
         <PortRow

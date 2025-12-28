@@ -16,6 +16,7 @@ import {
   collectNodeInputs,
 } from "./graph-utils";
 import { getExecutor, hasPulseOutput, shouldTrackDownstream } from "./executor-registry";
+import { isImplicitlyCacheable } from "./cache/fingerprint";
 import type { ExecuteNodeResult, ExecutionContext } from "./executors/types";
 import type { CacheManager } from "./cache";
 
@@ -148,8 +149,10 @@ export async function executeFlow(
     // Collect inputs early for cache check
     const inputs = collectNodeInputs(node.id, edges, executedOutputs);
 
-    // Check cache before executing (only if cacheable and not force-executing)
-    const isCacheable = Boolean(node.data?.cacheable);
+    // Check cache before executing
+    // Nodes are cacheable if explicitly opted-in OR if implicitly cacheable (input nodes)
+    const nodeType = node.type || "";
+    const isCacheable = Boolean(node.data?.cacheable) || isImplicitlyCacheable(nodeType);
     if (cacheManager && isCacheable && !forceExecute) {
       const cachedResult = cacheManager.get(node.id, node, edges, executedOutputs);
 
