@@ -1,74 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Canvas, useFrame } from "@react-three/fiber";
-import * as THREE from "three";
-
-function ExtrudedC() {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const phase = useRef(0);
-
-  const geometry = useMemo(() => {
-    // Create C shape using arcs (same as AvyLogo)
-    const outerRadius = 0.7;
-    const innerRadius = 0.4;
-    const startAngle = Math.PI * 0.35;
-    const endAngle = Math.PI * 1.65;
-    const segments = 32;
-
-    const shape = new THREE.Shape();
-
-    shape.moveTo(
-      Math.cos(startAngle) * outerRadius,
-      Math.sin(startAngle) * outerRadius
-    );
-    shape.absarc(0, 0, outerRadius, startAngle, endAngle, false);
-    shape.lineTo(
-      Math.cos(endAngle) * innerRadius,
-      Math.sin(endAngle) * innerRadius
-    );
-    shape.absarc(0, 0, innerRadius, endAngle, startAngle, true);
-    shape.lineTo(
-      Math.cos(startAngle) * outerRadius,
-      Math.sin(startAngle) * outerRadius
-    );
-
-    const extrudeSettings = {
-      depth: 0.4,
-      bevelEnabled: true,
-      bevelThickness: 0.06,
-      bevelSize: 0.06,
-      bevelOffset: 0,
-      bevelSegments: 3,
-      curveSegments: segments,
-    };
-
-    const geom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    geom.center();
-
-    return geom;
-  }, []);
-
-  useFrame((_, delta) => {
-    if (!meshRef.current) return;
-    phase.current += delta * 0.8;
-    const maxAngle = 25 * (Math.PI / 180);
-    meshRef.current.rotation.y = Math.sin(phase.current) * maxAngle;
-  });
-
-  return (
-    <mesh ref={meshRef} geometry={geometry}>
-      <meshStandardMaterial
-        color="#ffffff"
-        emissive="#4080ff"
-        emissiveIntensity={0.3}
-        metalness={0.5}
-        roughness={0.3}
-      />
-    </mesh>
-  );
-}
+import { Logo3D } from "@/components/Logo3D";
 
 /**
  * Full-screen blocker shown on mobile devices.
@@ -101,18 +35,8 @@ export function MobileBlocker() {
       aria-describedby="mobile-blocker-desc"
     >
       {/* Logo */}
-      <div className="mb-6" style={{ width: 120, height: 120 }}>
-        <Canvas
-          camera={{ position: [0, 0, 3], fov: 45 }}
-          gl={{ antialias: true, alpha: true }}
-          dpr={[2, 4]}
-          style={{ background: "transparent" }}
-        >
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[5, 5, 5]} intensity={1} />
-          <directionalLight position={[-5, -5, -5]} intensity={0.3} />
-          <ExtrudedC />
-        </Canvas>
+      <div className="mb-6">
+        <Logo3D size={120} />
       </div>
 
       {/* Title */}
