@@ -1,0 +1,29 @@
+# Text Input
+
+Entry point for text data in your flow.
+
+## Overview
+
+The Text Input node provides a text area where you enter content that flows to connected nodes. It's the most common starting point for AI workflows.
+
+## Ports
+
+| Port | Type | Direction | Description |
+|------|------|-----------|-------------|
+| Output | String (cyan) | Out | The text you entered |
+
+## Usage
+
+1. Add a Text Input node to your canvas
+2. Type or paste text into the text area
+3. Connect the output to a processing node (like Text Generation)
+
+## Caching
+
+Text Input nodes are automatically cached. The node only re-executes when the text content changes.
+
+## Tips
+
+- Use multiple Text Input nodes to provide different inputs to the same processing node
+- Connect to the "system" input of a Text Generation node for system instructions
+- Connect to the "prompt" input for the user message

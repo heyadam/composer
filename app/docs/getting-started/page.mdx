@@ -1,0 +1,52 @@
+# Getting Started
+
+Create your first AI workflow in minutes.
+
+## Prerequisites
+
+You'll need API keys from at least one AI provider:
+
+- **OpenAI** - For GPT models, DALL-E, and audio transcription
+- **Google** - For Gemini models and Imagen
+- **Anthropic** - For Claude models
+
+## The Interface
+
+When you open Composer, you'll see:
+
+- **Canvas** - The main area where you build flows by placing and connecting nodes
+- **Add Node** - Button at the bottom to open the node palette
+- **Run** - Execute your flow
+- **Preview** - Right sidebar showing outputs from your flow
+
+## Creating Your First Flow
+
+### 1. Add a Text Input Node
+
+Click **Add Node** and drag a **Text Input** node onto the canvas. This is where you'll enter your prompt.
+
+### 2. Add a Text Generation Node
+
+Add a **Text Generation** node. This node sends your input to an AI model and returns a response.
+
+### 3. Connect the Nodes
+
+Drag from the output port (right side) of the Text Input node to the input port (left side) of the Text Generation node. A cyan line will appear showing the connection.
+
+### 4. Add an Output Node
+
+Add a **Preview Output** node and connect it to the Text Generation node's output. This displays the final result in the preview sidebar.
+
+### 5. Configure and Run
+
+1. Type a prompt in the Text Input node
+2. Select your AI provider and model in the Text Generation node
+3. Click **Run** to execute the flow
+
+Your AI response will appear in the Preview sidebar.
+
+## Next Steps
+
+- Explore [all node types](/docs/nodes) to see what's possible
+- Try adding image generation or audio transcription to your flows
+- Share your flow with collaborators using the Share button

@@ -1,0 +1,40 @@
+# Audio Transcription
+
+Convert speech to text using OpenAI's transcription API.
+
+## Overview
+
+The Audio Transcription node takes audio input and outputs the transcribed text. It uses OpenAI's transcription models for accurate speech-to-text conversion.
+
+## Ports
+
+| Port | Type | Direction | Description |
+|------|------|-----------|-------------|
+| Audio | Audio (emerald) | In | Audio to transcribe |
+| Language | String (cyan) | In | Optional language hint |
+| Output | String (cyan) | Out | Transcribed text |
+| Done | Pulse (orange) | Out | Fires when transcription completes |
+
+## Configuration
+
+### Model
+
+- **gpt-4o-transcribe** (default) - High quality transcription
+- **gpt-4o-mini-transcribe** - Cost-optimized, faster
+
+## Language Hint
+
+Optionally specify the language using ISO 639-1 codes:
+- `en` - English
+- `es` - Spanish
+- `fr` - French
+- `de` - German
+- And many more
+
+Providing a language hint can improve accuracy for non-English audio.
+
+## Common Workflow
+
+1. **Audio Input** -> **Audio Transcription** -> **Text Generation**
+
+This pattern records audio, transcribes it to text, then processes the text with an AI model.

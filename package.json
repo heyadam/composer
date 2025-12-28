@@ -48,6 +48,8 @@
     "motion": "^12.23.26",
     "nanoid": "^5.1.6",
     "next": "16.0.10",
+    "nextra": "^4.6.1",
+    "nextra-theme-docs": "^4.6.1",
     "openai": "^6.10.0",
     "perfect-cursors": "^1.0.5",
     "react": "19.2.1",

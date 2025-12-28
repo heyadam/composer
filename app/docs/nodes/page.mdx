@@ -1,0 +1,59 @@
+# Nodes Overview
+
+Nodes are the building blocks of Composer flows. Each node has a specific function and can be connected to other nodes via ports.
+
+## Node Categories
+
+### Input Nodes
+
+Entry points for data in your flow:
+
+- [Text Input](/docs/nodes/text-input) - Enter text
+- [Image Input](/docs/nodes/image-input) - Upload images
+- [Audio Input](/docs/nodes/audio-input) - Record audio
+
+### Processing Nodes
+
+Transform and generate content:
+
+- [Text Generation](/docs/nodes/text-generation) - LLM text generation
+- [Image Generation](/docs/nodes/image-generation) - AI image creation
+- [AI Logic](/docs/nodes/ai-logic) - Custom code transformation
+- [React Component](/docs/nodes/react-component) - Generate React UI components
+- [Audio Transcription](/docs/nodes/audio-transcription) - Speech to text
+- [Realtime Conversation](/docs/nodes/realtime-conversation) - Voice chat with AI
+
+### Annotation
+
+- [Comment](/docs/nodes/comment) - Add notes and organize your flow
+
+### Output Nodes
+
+- [Preview Output](/docs/nodes/preview-output) - Display final results
+
+## Port Types
+
+Ports are color-coded by data type:
+
+| Color | Type | Description |
+|-------|------|-------------|
+| Cyan | String | Text data |
+| Purple | Image | Image data |
+| Amber | Response | Streaming response data |
+| Emerald | Audio | Audio stream or buffer |
+| Rose | Boolean | True/false values |
+| Orange | Pulse | Completion signal |
+
+## Connections
+
+- Drag from an output port (right side) to an input port (left side) to connect nodes
+- Ports of the same type can be connected (cyan to cyan, etc.)
+- The **Pulse** output fires when a processing node completes, useful for triggering sequential operations
+
+## Caching
+
+Processing nodes can be cached to avoid re-execution:
+
+- **Input nodes** (text-input, image-input) are automatically cached
+- **Processing nodes** have an optional "cacheable" toggle
+- Cached nodes show a "Cached" badge and skip execution when inputs haven't changed

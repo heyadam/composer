@@ -1,0 +1,42 @@
+# React Component
+
+Generate interactive React components from descriptions.
+
+## Overview
+
+The React Component node uses AI to generate React components based on your description. The generated components are rendered in a sandboxed preview.
+
+## Ports
+
+| Port | Type | Direction | Description |
+|------|------|-----------|-------------|
+| Description | String (cyan) | In | What the component should do |
+| Instructions | String (cyan) | In | Additional system instructions |
+| Code | Response (amber) | Out | Generated component code |
+| Done | Pulse (orange) | Out | Fires when generation completes |
+
+## Configuration
+
+### Provider & Model
+
+Select your AI provider and model for code generation:
+- OpenAI GPT models
+- Google Gemini models
+- Anthropic Claude models
+
+## Usage
+
+1. Describe the component you want (e.g., "a todo list with add/remove buttons")
+2. Optionally provide additional instructions for styling or behavior
+3. Run the flow
+4. The generated component appears in the Preview sidebar
+
+## Preview
+
+Connect the Code output to a Preview Output node to see the rendered component. The preview uses a sandboxed iframe for security.
+
+## Tips
+
+- Be specific about functionality and appearance
+- Mention any libraries or styling preferences
+- Describe interactive behavior explicitly

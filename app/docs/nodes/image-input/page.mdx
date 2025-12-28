@@ -1,0 +1,35 @@
+# Image Input
+
+Entry point for image data in your flow.
+
+## Overview
+
+The Image Input node lets you upload images that can be used in vision-enabled AI models or as input for image processing.
+
+## Ports
+
+| Port | Type | Direction | Description |
+|------|------|-----------|-------------|
+| Output | Image (purple) | Out | The uploaded image |
+
+## Usage
+
+1. Add an Image Input node to your canvas
+2. Click to upload an image or drag and drop
+3. Connect the output to a node that accepts image input
+
+## Supported Formats
+
+- PNG
+- JPEG/JPG
+- WebP
+- GIF
+
+## Common Connections
+
+- **Text Generation** (image input) - For vision/multimodal prompts
+- **Image Generation** - As a reference or starting image
+
+## Caching
+
+Image Input nodes are automatically cached. The node only re-executes when the image changes.
