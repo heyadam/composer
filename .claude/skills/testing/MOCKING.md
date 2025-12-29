@@ -200,7 +200,7 @@ const reader = createMockReader([
 ## Mocking React Flow
 
 ```typescript
-vi.mock("reactflow", () => ({
+vi.mock("@xyflow/react", () => ({
   useReactFlow: () => ({
     getNodes: vi.fn().mockReturnValue([]),
     getEdges: vi.fn().mockReturnValue([]),

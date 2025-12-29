@@ -59,7 +59,7 @@ describe("useMyHook", () => {
 ```typescript
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { myNodeExecutor } from "../executors/my-node";
-import type { Node } from "reactflow";
+import type { Node } from "@xyflow/react";
 import type { ExecutionContext } from "@/lib/execution/types";
 
 function createNode(
@@ -130,7 +130,7 @@ describe("my-node executor", () => {
 ```typescript
 import { describe, it, expect, beforeEach } from "vitest";
 import { CacheManager } from "../cache-manager";
-import type { Node, Edge } from "reactflow";
+import type { Node, Edge } from "@xyflow/react";
 
 function createNode(id: string, type: string, data = {}): Node {
   return {
@@ -360,7 +360,7 @@ describe("MyComponent", () => {
 ## Test Data Builders Template
 
 ```typescript
-import type { Node, Edge } from "reactflow";
+import type { Node, Edge } from "@xyflow/react";
 
 // Node builder
 export function createNode(
