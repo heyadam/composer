@@ -367,7 +367,7 @@ describe("executor integration", () => {
         userPrompt: "Echo: {{prompt}}"
       }),
     ];
-    const edges = [createEdge("input", "gen", "output", "prompt")];
+    const edges = [createEdge("input", "gen", "output", "input")];
 
     // Mock the AI API
     vi.mocked(callTextGeneration).mockResolvedValue({

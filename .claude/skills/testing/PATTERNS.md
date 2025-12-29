@@ -44,7 +44,7 @@ function createEdge(
   source: string,
   target: string,
   sourceHandle = "output",
-  targetHandle = "prompt"
+  targetHandle = "input"
 ): Edge {
   return {
     id: `${source}-${target}`,

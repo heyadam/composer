@@ -161,7 +161,15 @@ global.fetch = vi.fn().mockImplementation((url) => {
 
 ### Mock Stream Reader
 
+Simplified test helper for mocking `ReadableStreamDefaultReader`. This implements
+only the methods needed for testing - not a complete implementation.
+
 ```typescript
+/**
+ * Creates a mock stream reader for testing NDJSON parsing.
+ * Note: This is a simplified test helper, not a full implementation.
+ * Only implements read(), cancel(), releaseLock(), and closed.
+ */
 function createMockReader(
   chunks: string[]
 ): ReadableStreamDefaultReader<Uint8Array> {

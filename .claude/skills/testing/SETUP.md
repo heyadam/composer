@@ -122,6 +122,7 @@ import { executeFlow } from "@/lib/execution/engine";
 console.log(result.current);
 
 // Pause test execution (in watch mode)
+// ⚠️ WARNING: Remove before committing - will timeout CI!
 await new Promise(resolve => setTimeout(resolve, 1000000));
 
 // Use test.only to run single test
@@ -130,3 +131,26 @@ it.only("should do something", () => {});
 // Skip a test
 it.skip("broken test", () => {});
 ```
+
+## Code Coverage
+
+```bash
+# Run tests with coverage report
+npx vitest run --coverage
+
+# Run coverage in watch mode
+npx vitest --coverage
+```
+
+Coverage report shows which lines, branches, and functions are untested. Focus on:
+- Critical paths (execution engine, cache invalidation)
+- Error handling branches
+- Edge cases in graph utilities
+
+## Real Test Examples
+
+See actual tests for reference patterns:
+- Hooks: `lib/hooks/__tests__/useFlowExecution.test.ts`
+- Execution: `lib/execution/__tests__/executors.test.ts`
+- Caching: `lib/execution/cache/__tests__/cache-manager.test.ts`
+- Streaming: `lib/execution/__tests__/streaming.test.ts`

@@ -423,10 +423,47 @@ export function createFlow(config: {
   return { nodes, edges };
 }
 
-// Usage
+// Usage (createNode and createEdge defined above)
 const { nodes, edges } = createFlow({
   inputs: ["input-1"],
   processors: ["gen-1", "gen-2"],
   outputs: ["output-1"],
 });
 ```
+
+## Best Practices
+
+### When to Use `mockResolvedValue` vs `mockImplementation`
+
+```typescript
+// Use mockResolvedValue for simple return values
+mockFn.mockResolvedValue({ data: "result" });
+
+// Use mockImplementation when you need:
+// - Conditional logic based on arguments
+// - Side effects
+// - Complex async behavior
+mockFn.mockImplementation((id) => {
+  if (id === "special") return Promise.resolve({ special: true });
+  return Promise.resolve({ special: false });
+});
+```
+
+### Avoid Testing Implementation Details
+
+```typescript
+// ❌ Bad - testing internal state
+expect(hook.internalCache.size).toBe(3);
+
+// ✅ Good - testing behavior
+expect(hook.getCachedValue("key")).toBe("value");
+```
+
+### When to Use Integration vs Unit Tests
+
+| Use Unit Tests For | Use Integration Tests For |
+|-------------------|--------------------------|
+| Pure functions | Full flow execution |
+| Individual hooks | Multi-node interactions |
+| Single executors | Cache + execution together |
+| Edge cases | Happy path end-to-end |
