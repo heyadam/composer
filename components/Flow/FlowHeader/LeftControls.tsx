@@ -1,6 +1,7 @@
 "use client";
 
-import { PanelLeft, Folder, FilePlus, FolderOpen, Save, Cloud, Globe } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { PanelLeft, Folder, FilePlus, FolderOpen, Download, Cloud, Globe } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +23,7 @@ export function LeftControls({
   autopilotOpen,
   onAutopilotToggle,
   showLabels,
+  isAuthenticated,
   isCollaborating,
   collaborationFlowName,
   isCollaborationSaving,
@@ -29,7 +31,7 @@ export function LeftControls({
   onOpenTemplates,
   onOpenMyFlows,
   onOpenFlow,
-  onSaveFlow,
+  onDownload,
   liveSession,
   isRealtimeConnected,
   collaborators,
@@ -41,6 +43,22 @@ export function LeftControls({
   onOwnerKeysChange,
   onDisconnect,
 }: LeftControlsProps) {
+  const router = useRouter();
+
+  // Handle New Flow based on auth state and collaboration mode
+  const handleNewFlow = () => {
+    if (isCollaborating) {
+      // Collaborating on someone else's flow: open in new tab
+      window.open("/f/new", "_blank");
+    } else if (isAuthenticated) {
+      // Authenticated user on their own flow: navigate to create new
+      router.push("/f/new");
+    } else {
+      // Anonymous demo mode: clear canvas and show templates
+      onNewFlow();
+      onOpenTemplates();
+    }
+  };
   return (
     <div className="flex items-center gap-2">
       {/* Autopilot */}
@@ -84,57 +102,37 @@ export function LeftControls({
           sideOffset={8}
           className="bg-neutral-900 border-neutral-700 text-white min-w-[160px]"
         >
-          {isCollaborating ? (
-            <>
-              {/* Collaboration mode: show flow name and limited actions */}
-              <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                {collaborationFlowName || "Live Flow"}
-              </div>
-              <DropdownMenuSeparator className="bg-neutral-700" />
-              <DropdownMenuItem
-                onClick={() => window.open("/", "_blank")}
-                className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
-              >
-                <FilePlus className="h-4 w-4 mr-2" />
-                New Flow (new tab)
-              </DropdownMenuItem>
-            </>
-          ) : (
-            <>
-              <DropdownMenuItem
-                onClick={() => {
-                  onNewFlow();
-                  onOpenTemplates();
-                }}
-                className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
-              >
-                <FilePlus className="h-4 w-4 mr-2" />
-                New Flow
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-neutral-700" />
-              <DropdownMenuItem
-                onClick={onOpenMyFlows}
-                className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
-              >
-                <Cloud className="h-4 w-4 mr-2" />
-                My Flows
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onOpenFlow}
-                className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
-              >
-                <FolderOpen className="h-4 w-4 mr-2" />
-                Open from file...
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onSaveFlow}
-                className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Save as...
-              </DropdownMenuItem>
-            </>
+          <DropdownMenuItem
+            onClick={handleNewFlow}
+            className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
+          >
+            <FilePlus className="h-4 w-4 mr-2" />
+            New Flow
+          </DropdownMenuItem>
+          <DropdownMenuSeparator className="bg-neutral-700" />
+          {isAuthenticated && (
+            <DropdownMenuItem
+              onClick={onOpenMyFlows}
+              className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
+            >
+              <Cloud className="h-4 w-4 mr-2" />
+              My Flows
+            </DropdownMenuItem>
           )}
+          <DropdownMenuItem
+            onClick={onOpenFlow}
+            className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
+          >
+            <FolderOpen className="h-4 w-4 mr-2" />
+            Open from file...
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={onDownload}
+            className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 

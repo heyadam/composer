@@ -40,6 +40,7 @@ import { useFlowExecution } from "@/lib/hooks/useFlowExecution";
 import { useAutopilotIntegration } from "@/lib/hooks/useAutopilotIntegration";
 import { useNodeParenting } from "@/lib/hooks/useNodeParenting";
 import { useFlowOperations } from "@/lib/hooks/useFlowOperations";
+import { createSavedFlow, downloadFlow } from "@/lib/flow-storage";
 import { useUndoRedo } from "@/lib/hooks/useUndoRedo";
 import type { NodeType, CommentColor } from "@/types/flow";
 import { SettingsDialogControlled } from "./SettingsDialogControlled";
@@ -50,6 +51,7 @@ import { useTemplatesModal } from "./TemplatesModal/hooks";
 import type { PendingAutopilotMessage, AutopilotMode, AutopilotModel } from "@/lib/autopilot/types";
 import { ResponsesSidebar } from "./ResponsesSidebar";
 import { useApiKeys } from "@/lib/api-keys";
+import { useAuth } from "@/lib/auth";
 import { useBackgroundSettings, getBackgroundStyle, getShimmerStyle } from "@/lib/hooks/useBackgroundSettings";
 import { ShareDialog } from "./ShareDialog";
 import { useCollaboration, type CollaborationModeProps } from "@/lib/hooks/useCollaboration";
@@ -92,6 +94,9 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
 
   // API keys context
   const { keys: apiKeys, hasRequiredKey, getKeyStatuses, isDevMode, isLoaded } = useApiKeys();
+
+  // Auth context
+  const { user } = useAuth();
 
   // Flow execution hook
   const {
@@ -253,6 +258,13 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     },
     setIdCounter,
   });
+
+  // Download flow as .avy.json file
+  const handleDownload = useCallback(() => {
+    const name = flowMetadata?.name || "flow";
+    const flow = createSavedFlow(nodes, edges, name, flowMetadata);
+    downloadFlow(flow);
+  }, [nodes, edges, flowMetadata]);
 
   // Published flow info state (for owner collaboration mode and ShareDialog)
   const [publishedFlowInfo, setPublishedFlowInfo] = useState<{
@@ -954,11 +966,12 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
           onLivePopoverChange={setLivePopoverOpen}
           shareDialogOpen={shareDialogOpen}
           onShareDialogChange={setShareDialogOpen}
+          isAuthenticated={!!user}
           onNewFlow={handleNewFlow}
           onOpenTemplates={openTemplatesModal}
           onOpenMyFlows={() => setMyFlowsDialogOpen(true)}
           onOpenFlow={handleOpenFlow}
-          onSaveFlow={() => setSaveDialogOpen(true)}
+          onDownload={handleDownload}
           onDisconnect={handleDisconnect}
           onOwnerKeysChange={(enabled) => setPublishedFlowInfo(prev => prev ? { ...prev, useOwnerKeys: enabled } : null)}
           isPanning={isPanning}

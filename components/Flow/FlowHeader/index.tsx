@@ -43,11 +43,12 @@ export function FlowHeader({
   onLivePopoverChange,
   shareDialogOpen,
   onShareDialogChange,
+  isAuthenticated,
   onNewFlow,
   onOpenTemplates,
   onOpenMyFlows,
   onOpenFlow,
-  onSaveFlow,
+  onDownload,
   onDisconnect,
   onOwnerKeysChange,
   isPanning,
@@ -82,6 +83,7 @@ export function FlowHeader({
             autopilotOpen={autopilotOpen}
             onAutopilotToggle={onAutopilotToggle}
             showLabels={showLabels}
+            isAuthenticated={isAuthenticated}
             isCollaborating={isCollaborating}
             collaborationFlowName={collaborationFlowName}
             isCollaborationSaving={isCollaborationSaving}
@@ -89,7 +91,7 @@ export function FlowHeader({
             onOpenTemplates={onOpenTemplates}
             onOpenMyFlows={onOpenMyFlows}
             onOpenFlow={onOpenFlow}
-            onSaveFlow={onSaveFlow}
+            onDownload={onDownload}
             liveSession={liveSession}
             isRealtimeConnected={isRealtimeConnected}
             collaborators={collaborators}
