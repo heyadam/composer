@@ -49,6 +49,7 @@ const CACHE_RELEVANT_FIELDS: Record<string, string[]> = {
   "realtime-conversation": ["instructions", "voice", "vadMode"],
   "preview-output": [],
   comment: [],
+  switch: ["isOn"],
 };
 
 /**
@@ -154,6 +155,7 @@ export function isNeverCacheable(nodeType: string): boolean {
     "audio-input", // Requires user recording
     "realtime-conversation", // Real-time interaction
     "comment", // Not executed
+    "switch", // State changes on pulse inputs
   ]);
   return neverCache.has(nodeType);
 }

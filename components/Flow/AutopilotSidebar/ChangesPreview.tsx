@@ -20,6 +20,7 @@ import {
   Mic,
   AudioWaveform,
   FileAudio,
+  ToggleLeft,
   ChevronDown,
   CheckCircle2,
   AlertTriangle,
@@ -48,6 +49,7 @@ const iconMap: Record<NodeType, typeof Keyboard> = {
   "react-component": Code,
   "realtime-conversation": Mic,
   "audio-transcription": FileAudio,
+  "switch": ToggleLeft,
 };
 
 const nodeTypeLabels: Record<NodeType, string> = {
@@ -62,6 +64,7 @@ const nodeTypeLabels: Record<NodeType, string> = {
   "react-component": "React Component",
   "realtime-conversation": "Realtime Audio",
   "audio-transcription": "Transcribe",
+  "switch": "Switch",
 };
 
 const dataTypeColors: Record<
@@ -83,6 +86,14 @@ const dataTypeColors: Record<
   audio: {
     bg: "bg-emerald-500/10",
     text: "text-emerald-600 dark:text-emerald-400",
+  },
+  boolean: {
+    bg: "bg-rose-500/10",
+    text: "text-rose-600 dark:text-rose-400",
+  },
+  pulse: {
+    bg: "bg-orange-500/10",
+    text: "text-orange-600 dark:text-orange-400",
   },
 };
 

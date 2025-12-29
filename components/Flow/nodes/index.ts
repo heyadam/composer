@@ -10,6 +10,7 @@ import { CommentNode } from "./CommentNode";
 import { ReactNode } from "./ReactNode";
 import { RealtimeNode } from "./RealtimeNode";
 import { AudioTranscriptionNode } from "./AudioTranscriptionNode";
+import { SwitchNode } from "./SwitchNode";
 
 export const nodeTypes: NodeTypes = {
   "text-input": InputNode,
@@ -23,6 +24,7 @@ export const nodeTypes: NodeTypes = {
   "react-component": ReactNode,
   "realtime-conversation": RealtimeNode,
   "audio-transcription": AudioTranscriptionNode,
+  "switch": SwitchNode,
 };
 
-export { InputNode, OutputNode, PromptNode, ImageNode, ImageInputNode, AudioInputNode, MagicNode, CommentNode, ReactNode, RealtimeNode, AudioTranscriptionNode };
+export { InputNode, OutputNode, PromptNode, ImageNode, ImageInputNode, AudioInputNode, MagicNode, CommentNode, ReactNode, RealtimeNode, AudioTranscriptionNode, SwitchNode };

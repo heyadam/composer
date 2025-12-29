@@ -32,6 +32,7 @@ export const VALID_NODE_TYPES = [
   "comment",
   "realtime-conversation",
   "audio-transcription",
+  "switch",
 ] as const;
 
 export type ValidNodeType = (typeof VALID_NODE_TYPES)[number];
@@ -70,6 +71,7 @@ export const NODE_REQUIRED_FIELDS: Record<ValidNodeType, string[]> = {
   comment: ["title"],
   "realtime-conversation": ["label", "voice", "vadMode"],
   "audio-transcription": ["label"],
+  "switch": ["label"],
 };
 
 /**

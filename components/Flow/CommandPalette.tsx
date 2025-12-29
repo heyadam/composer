@@ -16,6 +16,7 @@ import {
   Mic,
   AudioWaveform,
   FileAudio,
+  ToggleLeft,
   ArrowRight,
   X,
 } from "lucide-react";
@@ -36,6 +37,7 @@ const iconMap: Record<NodeType, typeof Keyboard> = {
   "react-component": Code,
   "realtime-conversation": Mic,
   "audio-transcription": FileAudio,
+  "switch": ToggleLeft,
 };
 
 // Extended node definitions with categories
@@ -55,7 +57,7 @@ const categorizedNodes = [
   {
     category: "Logic",
     nodes: nodeDefinitions.filter((n) =>
-      ["ai-logic"].includes(n.type)
+      ["ai-logic", "switch"].includes(n.type)
     ),
   },
   {
@@ -82,7 +84,6 @@ export function CommandPalette({
   const [mode, setMode] = useState<"search" | "ai">("search");
   const [search, setSearch] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [listKey, setListKey] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -116,7 +117,6 @@ export function CommandPalette({
       setSearch("");
       setMode("search");
       setSelectedIndex(0);
-      setListKey((k) => k + 1); // Force list remount to re-trigger animations
       // Focus input after animation
       setTimeout(() => inputRef.current?.focus(), 50);
     }
@@ -357,18 +357,7 @@ export function CommandPalette({
                       No nodes found for &ldquo;{search}&rdquo;
                     </div>
                   ) : (
-                    <motion.div
-                      key={listKey}
-                      initial="hidden"
-                      animate="visible"
-                      variants={{
-                        visible: {
-                          transition: {
-                            staggerChildren: 0.03,
-                          },
-                        },
-                      }}
-                    >
+                    <>
                       {categorizedNodes.map((category) => {
                         const visibleNodes = category.nodes.filter((node) =>
                           filteredNodes.some((fn) => fn.type === node.type)
@@ -390,7 +379,7 @@ export function CommandPalette({
                               const { icon: iconColorClass, bg: bgColorClass } = getColorClasses(node.color);
 
                               return (
-                                <motion.button
+                                <button
                                   key={node.type}
                                   id={`node-${node.type}`}
                                   role="option"
@@ -410,11 +399,6 @@ export function CommandPalette({
                                       ? "bg-white/5"
                                       : "hover:bg-white/[0.02]"
                                   )}
-                                  variants={{
-                                    hidden: { opacity: 0 },
-                                    visible: { opacity: 1 },
-                                  }}
-                                  transition={springs.snappy}
                                 >
                                   {/* Selection Indicator */}
                                   <div
@@ -460,13 +444,13 @@ export function CommandPalette({
                                         : "opacity-0 -translate-x-2"
                                     )}
                                   />
-                                </motion.button>
+                                </button>
                               );
                             })}
                           </div>
                         );
                       })}
-                    </motion.div>
+                    </>
                   )}
                 </div>
               )}
