@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { PanelLeft, Folder, FilePlus, FolderOpen, Download, Cloud, Globe } from "lucide-react";
+import { PanelLeft, Folder, FilePlus, FolderOpen, Download, Cloud, Globe, Save } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +24,7 @@ export function LeftControls({
   onAutopilotToggle,
   showLabels,
   isAuthenticated,
+  onSaveFlow,
   isCollaborating,
   collaborationFlowName,
   isCollaborationSaving: _isCollaborationSaving,
@@ -103,6 +104,13 @@ export function LeftControls({
           >
             <FilePlus className="h-4 w-4 mr-2" />
             New Flow
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={onSaveFlow}
+            className="cursor-pointer hover:bg-neutral-800 focus:bg-neutral-800"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            Save Flow
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-neutral-700" />
           {isAuthenticated && (

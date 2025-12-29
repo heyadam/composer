@@ -41,6 +41,7 @@ export interface FlowHeaderProps {
 
   // Flow operations
   isAuthenticated: boolean;
+  onSaveFlow: () => void;
   onNewFlow: () => void;
   onOpenTemplates: () => void;
   onOpenMyFlows: () => void;
@@ -63,6 +64,7 @@ export interface LeftControlsProps {
 
   // Flow dropdown
   isAuthenticated: boolean;
+  onSaveFlow: () => void;
   isCollaborating: boolean;
   collaborationFlowName: string | null;
   isCollaborationSaving: boolean;

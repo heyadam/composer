@@ -962,6 +962,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
           isCollaborationSaving={isCollaborationSaving}
           showLabels={showLabels}
           showSettingsWarning={showSettingsWarning}
+          onSaveFlow={() => setSaveDialogOpen(true)}
           livePopoverOpen={livePopoverOpen}
           onLivePopoverChange={setLivePopoverOpen}
           shareDialogOpen={shareDialogOpen}

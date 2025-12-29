@@ -44,6 +44,7 @@ export function FlowHeader({
   shareDialogOpen,
   onShareDialogChange,
   isAuthenticated,
+  onSaveFlow,
   onNewFlow,
   onOpenTemplates,
   onOpenMyFlows,
@@ -84,6 +85,7 @@ export function FlowHeader({
             onAutopilotToggle={onAutopilotToggle}
             showLabels={showLabels}
             isAuthenticated={isAuthenticated}
+            onSaveFlow={onSaveFlow}
             isCollaborating={isCollaborating}
             collaborationFlowName={collaborationFlowName}
             isCollaborationSaving={isCollaborationSaving}
