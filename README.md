@@ -150,7 +150,8 @@ Open [http://localhost:3000](http://localhost:3000) to use the workflow builder.
 3. Enable "Owner-Funded Execution" if you want collaborators to use your API keys
 4. Copy and share the link with collaborators
 5. Collaborators see your cursor and edits in real-time
-6. Click Unpublish to revoke access (auto-unpublishes when you leave)
+6. "New Flow" opens in a new tab when collaborating (to stay in session)
+7. Click Unpublish to revoke access (auto-unpublishes when you leave)
 
 ## Tech Stack
 

@@ -26,7 +26,7 @@ export function LeftControls({
   isAuthenticated,
   isCollaborating,
   collaborationFlowName,
-  isCollaborationSaving,
+  isCollaborationSaving: _isCollaborationSaving,
   onNewFlow,
   onOpenTemplates,
   onOpenMyFlows,
@@ -89,12 +89,7 @@ export function LeftControls({
             title="Files"
           >
             <Folder className="w-4 h-4 shrink-0" />
-            <AnimatedLabel show={showLabels}>
-              Flow
-              {isCollaborating && isCollaborationSaving && (
-                <span className="ml-1 text-xs text-muted-foreground/50">Saving...</span>
-              )}
-            </AnimatedLabel>
+            <AnimatedLabel show={showLabels}>Flow</AnimatedLabel>
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent

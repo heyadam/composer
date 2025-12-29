@@ -19,6 +19,8 @@
 
 **Auto-Unpublish**: Flow is automatically unpublished when owner leaves the page (uses `navigator.sendBeacon` for reliable cleanup).
 
+**New Flow Behavior**: When collaborating on someone else's flow, "New Flow" opens in a new tab to avoid leaving the session.
+
 **Publish API Route** (`app/api/flows/[id]/publish/route.ts`):
 - POST: Publishes flow with unique `live_id` and `share_token`
 - DELETE: Unpublishes flow (supports sendBeacon method override)
