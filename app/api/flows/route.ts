@@ -146,8 +146,19 @@ export async function POST(request: NextRequest) {
       if (insertNodesError) {
         console.error("Error inserting nodes:", insertNodesError);
         // Clean up on failure
-        await supabase.from("flows").delete().eq("id", actualFlowId);
-        await supabase.storage.from("flows").remove([actualStoragePath]);
+        const { error: cleanupFlowError } = await supabase
+          .from("flows")
+          .delete()
+          .eq("id", actualFlowId);
+        if (cleanupFlowError) {
+          console.error("Cleanup: failed to delete flow:", cleanupFlowError);
+        }
+        const { error: cleanupStorageError } = await supabase.storage
+          .from("flows")
+          .remove([actualStoragePath]);
+        if (cleanupStorageError) {
+          console.error("Cleanup: failed to delete storage:", cleanupStorageError);
+        }
         return NextResponse.json(
           { success: false, error: "Failed to save nodes" },
           { status: 500 }
@@ -165,9 +176,26 @@ export async function POST(request: NextRequest) {
       if (insertEdgesError) {
         console.error("Error inserting edges:", insertEdgesError);
         // Clean up on failure
-        await supabase.from("flow_nodes").delete().eq("flow_id", actualFlowId);
-        await supabase.from("flows").delete().eq("id", actualFlowId);
-        await supabase.storage.from("flows").remove([actualStoragePath]);
+        const { error: cleanupNodesError } = await supabase
+          .from("flow_nodes")
+          .delete()
+          .eq("flow_id", actualFlowId);
+        if (cleanupNodesError) {
+          console.error("Cleanup: failed to delete nodes:", cleanupNodesError);
+        }
+        const { error: cleanupFlowError } = await supabase
+          .from("flows")
+          .delete()
+          .eq("id", actualFlowId);
+        if (cleanupFlowError) {
+          console.error("Cleanup: failed to delete flow:", cleanupFlowError);
+        }
+        const { error: cleanupStorageError } = await supabase.storage
+          .from("flows")
+          .remove([actualStoragePath]);
+        if (cleanupStorageError) {
+          console.error("Cleanup: failed to delete storage:", cleanupStorageError);
+        }
         return NextResponse.json(
           { success: false, error: "Failed to save edges" },
           { status: 500 }
