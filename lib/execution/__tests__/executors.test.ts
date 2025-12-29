@@ -7,6 +7,7 @@ import { imageInputExecutor } from "../executors/image-input";
 import { audioInputExecutor } from "../executors/audio-input";
 import { previewOutputExecutor } from "../executors/preview-output";
 import { commentExecutor } from "../executors/comment";
+import { switchExecutor } from "../executors/switch";
 
 function createMockContext(overrides: Partial<ExecutionContext> = {}): ExecutionContext {
   return {
@@ -316,5 +317,241 @@ describe("comment executor", () => {
     const result = await commentExecutor.execute(ctx);
 
     expect(result.output).toBe("");
+  });
+});
+
+describe("switch executor", () => {
+  it("has correct type", () => {
+    expect(switchExecutor.type).toBe("switch");
+  });
+
+  it("does not emit pulse output", () => {
+    expect(switchExecutor.hasPulseOutput).toBe(false);
+  });
+
+  it("returns 'false' by default when isOn is not set", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "switch-1",
+        type: "switch",
+        position: { x: 0, y: 0 },
+        data: {},
+      } as Node,
+    });
+
+    const result = await switchExecutor.execute(ctx);
+
+    expect(result.output).toBe("false");
+    expect(result.switchState).toBe(false);
+  });
+
+  it("returns 'true' when isOn is true", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "switch-1",
+        type: "switch",
+        position: { x: 0, y: 0 },
+        data: { isOn: true },
+      } as Node,
+    });
+
+    const result = await switchExecutor.execute(ctx);
+
+    expect(result.output).toBe("true");
+    expect(result.switchState).toBe(true);
+  });
+
+  it("flips state from false to true when flip pulse is fired", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "switch-1",
+        type: "switch",
+        position: { x: 0, y: 0 },
+        data: { isOn: false },
+      } as Node,
+      inputs: {
+        flip: JSON.stringify({ fired: true, timestamp: Date.now() }),
+      },
+    });
+
+    const result = await switchExecutor.execute(ctx);
+
+    expect(result.output).toBe("true");
+    expect(result.switchState).toBe(true);
+  });
+
+  it("flips state from true to false when flip pulse is fired", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "switch-1",
+        type: "switch",
+        position: { x: 0, y: 0 },
+        data: { isOn: true },
+      } as Node,
+      inputs: {
+        flip: JSON.stringify({ fired: true, timestamp: Date.now() }),
+      },
+    });
+
+    const result = await switchExecutor.execute(ctx);
+
+    expect(result.output).toBe("false");
+    expect(result.switchState).toBe(false);
+  });
+
+  it("sets to on when turnOn pulse fires", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "switch-1",
+        type: "switch",
+        position: { x: 0, y: 0 },
+        data: { isOn: false },
+      } as Node,
+      inputs: {
+        turnOn: JSON.stringify({ fired: true, timestamp: Date.now() }),
+      },
+    });
+
+    const result = await switchExecutor.execute(ctx);
+
+    expect(result.output).toBe("true");
+    expect(result.switchState).toBe(true);
+  });
+
+  it("turnOn has no effect when already on", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "switch-1",
+        type: "switch",
+        position: { x: 0, y: 0 },
+        data: { isOn: true },
+      } as Node,
+      inputs: {
+        turnOn: JSON.stringify({ fired: true, timestamp: Date.now() }),
+      },
+    });
+
+    const result = await switchExecutor.execute(ctx);
+
+    expect(result.output).toBe("true");
+    expect(result.switchState).toBe(true);
+  });
+
+  it("sets to off when turnOff pulse fires", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "switch-1",
+        type: "switch",
+        position: { x: 0, y: 0 },
+        data: { isOn: true },
+      } as Node,
+      inputs: {
+        turnOff: JSON.stringify({ fired: true, timestamp: Date.now() }),
+      },
+    });
+
+    const result = await switchExecutor.execute(ctx);
+
+    expect(result.output).toBe("false");
+    expect(result.switchState).toBe(false);
+  });
+
+  it("turnOff has no effect when already off", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "switch-1",
+        type: "switch",
+        position: { x: 0, y: 0 },
+        data: { isOn: false },
+      } as Node,
+      inputs: {
+        turnOff: JSON.stringify({ fired: true, timestamp: Date.now() }),
+      },
+    });
+
+    const result = await switchExecutor.execute(ctx);
+
+    expect(result.output).toBe("false");
+    expect(result.switchState).toBe(false);
+  });
+
+  it("prioritizes turnOff over turnOn and flip", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "switch-1",
+        type: "switch",
+        position: { x: 0, y: 0 },
+        data: { isOn: true },
+      } as Node,
+      inputs: {
+        flip: JSON.stringify({ fired: true, timestamp: Date.now() }),
+        turnOn: JSON.stringify({ fired: true, timestamp: Date.now() }),
+        turnOff: JSON.stringify({ fired: true, timestamp: Date.now() }),
+      },
+    });
+
+    const result = await switchExecutor.execute(ctx);
+
+    expect(result.output).toBe("false");
+    expect(result.switchState).toBe(false);
+  });
+
+  it("prioritizes turnOn over flip", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "switch-1",
+        type: "switch",
+        position: { x: 0, y: 0 },
+        data: { isOn: false },
+      } as Node,
+      inputs: {
+        flip: JSON.stringify({ fired: true, timestamp: Date.now() }),
+        turnOn: JSON.stringify({ fired: true, timestamp: Date.now() }),
+      },
+    });
+
+    const result = await switchExecutor.execute(ctx);
+
+    expect(result.output).toBe("true");
+    expect(result.switchState).toBe(true);
+  });
+
+  it("handles invalid pulse data gracefully", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "switch-1",
+        type: "switch",
+        position: { x: 0, y: 0 },
+        data: { isOn: false },
+      } as Node,
+      inputs: {
+        flip: "invalid json",
+      },
+    });
+
+    const result = await switchExecutor.execute(ctx);
+
+    // State unchanged because invalid pulse is not treated as fired
+    expect(result.output).toBe("false");
+    expect(result.switchState).toBe(false);
+  });
+
+  it("ignores pulse with fired: false", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "switch-1",
+        type: "switch",
+        position: { x: 0, y: 0 },
+        data: { isOn: false },
+      } as Node,
+      inputs: {
+        flip: JSON.stringify({ fired: false, timestamp: Date.now() }),
+      },
+    });
+
+    const result = await switchExecutor.execute(ctx);
+
+    expect(result.output).toBe("false");
+    expect(result.switchState).toBe(false);
   });
 });

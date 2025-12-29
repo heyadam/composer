@@ -29,8 +29,9 @@ export function SwitchNode({ id, data }: NodeProps<SwitchNodeType>) {
     (edge) => edge.source === id && edge.sourceHandle === "output"
   );
 
-  // Manual toggle (only when no pulse inputs are connected)
-  const canManualToggle = !isFlipConnected && !isTurnOnConnected && !isTurnOffConnected;
+  // Manual toggle (only when no pulse inputs are connected and not executing)
+  const isExecuting = data.executionStatus === "running";
+  const canManualToggle = !isFlipConnected && !isTurnOnConnected && !isTurnOffConnected && !isExecuting;
 
   const handleToggle = () => {
     if (canManualToggle) {
@@ -82,8 +83,8 @@ export function SwitchNode({ id, data }: NodeProps<SwitchNodeType>) {
         )}
       </Button>
 
-      {/* Helper text when pulse inputs connected */}
-      {!canManualToggle && (
+      {/* Helper text when pulse inputs connected or executing */}
+      {!canManualToggle && !isExecuting && (
         <p className="text-xs text-muted-foreground text-center mt-1">
           Controlled by pulse inputs
         </p>

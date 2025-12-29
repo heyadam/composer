@@ -155,7 +155,7 @@ export function isNeverCacheable(nodeType: string): boolean {
     "audio-input", // Requires user recording
     "realtime-conversation", // Real-time interaction
     "comment", // Not executed
-    "switch", // State changes on pulse inputs
+    "switch", // Stateful toggle (manual or pulse-driven)
   ]);
   return neverCache.has(nodeType);
 }

@@ -21,6 +21,7 @@ describe("executor integration", () => {
     "audio-transcription",
     "realtime-conversation",
     "comment",
+    "switch",
   ];
 
   it("has all expected executors registered", () => {
@@ -92,6 +93,10 @@ describe("executor integration", () => {
       expect(getExecutor("comment")?.hasPulseOutput).toBeFalsy();
     });
 
+    it("switch node does not have pulse output", () => {
+      expect(getExecutor("switch")?.hasPulseOutput).toBeFalsy();
+    });
+
     it("preview-output does not have pulse output", () => {
       expect(getExecutor("preview-output")?.hasPulseOutput).toBeFalsy();
     });
@@ -110,6 +115,7 @@ describe("executor integration", () => {
       expect(getExecutor("comment")?.shouldTrackDownstream).toBeFalsy();
       expect(getExecutor("ai-logic")?.shouldTrackDownstream).toBeFalsy();
       expect(getExecutor("audio-transcription")?.shouldTrackDownstream).toBeFalsy();
+      expect(getExecutor("switch")?.shouldTrackDownstream).toBeFalsy();
     });
   });
 });
