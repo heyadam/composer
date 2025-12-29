@@ -40,6 +40,7 @@ import { useFlowExecution } from "@/lib/hooks/useFlowExecution";
 import { useAutopilotIntegration } from "@/lib/hooks/useAutopilotIntegration";
 import { useNodeParenting } from "@/lib/hooks/useNodeParenting";
 import { useFlowOperations } from "@/lib/hooks/useFlowOperations";
+import { useFlowCleanup } from "@/lib/hooks/useFlowCleanup";
 import { createSavedFlow, downloadFlow } from "@/lib/flow-storage";
 import { useUndoRedo } from "@/lib/hooks/useUndoRedo";
 import type { NodeType, CommentColor } from "@/types/flow";
@@ -330,6 +331,14 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
 
     return null;
   }, [publishedFlowInfo, currentFlowId, isCollaborating, liveId, shareToken, collaborationMode]);
+
+  // Flow cleanup on page unload (delete empty "Untitled" flows, rename non-empty to "Draft")
+  useFlowCleanup({
+    flowId: currentFlowId,
+    flowName: flowMetadata?.name,
+    nodes,
+    isOwner,
+  });
 
   // Templates modal hook (after useCollaboration so we have isCollaborating)
   const {
