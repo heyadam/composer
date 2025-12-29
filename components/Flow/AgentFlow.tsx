@@ -40,6 +40,7 @@ import { useFlowExecution } from "@/lib/hooks/useFlowExecution";
 import { useAutopilotIntegration } from "@/lib/hooks/useAutopilotIntegration";
 import { useNodeParenting } from "@/lib/hooks/useNodeParenting";
 import { useFlowOperations } from "@/lib/hooks/useFlowOperations";
+import { createSavedFlow, downloadFlow } from "@/lib/flow-storage";
 import { useUndoRedo } from "@/lib/hooks/useUndoRedo";
 import type { NodeType, CommentColor } from "@/types/flow";
 import { SettingsDialogControlled } from "./SettingsDialogControlled";
@@ -50,6 +51,7 @@ import { useTemplatesModal } from "./TemplatesModal/hooks";
 import type { PendingAutopilotMessage, AutopilotMode, AutopilotModel } from "@/lib/autopilot/types";
 import { ResponsesSidebar } from "./ResponsesSidebar";
 import { useApiKeys } from "@/lib/api-keys";
+import { useAuth } from "@/lib/auth";
 import { useBackgroundSettings, getBackgroundStyle, getShimmerStyle } from "@/lib/hooks/useBackgroundSettings";
 import { ShareDialog } from "./ShareDialog";
 import { useCollaboration, type CollaborationModeProps } from "@/lib/hooks/useCollaboration";
@@ -92,6 +94,9 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
 
   // API keys context
   const { keys: apiKeys, hasRequiredKey, getKeyStatuses, isDevMode, isLoaded } = useApiKeys();
+
+  // Auth context
+  const { user } = useAuth();
 
   // Flow execution hook
   const {
@@ -254,6 +259,13 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     setIdCounter,
   });
 
+  // Download flow as .avy.json file
+  const handleDownload = useCallback(() => {
+    const name = flowMetadata?.name || "flow";
+    const flow = createSavedFlow(nodes, edges, name, flowMetadata);
+    downloadFlow(flow);
+  }, [nodes, edges, flowMetadata]);
+
   // Published flow info state (for owner collaboration mode and ShareDialog)
   const [publishedFlowInfo, setPublishedFlowInfo] = useState<{
     flowId: string;
@@ -396,21 +408,8 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     };
   }, [currentFlowId]);
 
-  // Unpublish flow when owner leaves the page
-  useEffect(() => {
-    if (!isOwner || !currentFlowId || !publishedFlowInfo) return;
-
-    const handleBeforeUnload = () => {
-      // Use sendBeacon for reliable delivery during page unload
-      navigator.sendBeacon(
-        `/api/flows/${currentFlowId}/publish`,
-        new Blob([JSON.stringify({ _method: "DELETE" })], { type: "application/json" })
-      );
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isOwner, currentFlowId, publishedFlowInfo]);
+  // Note: Auto-unpublish on page leave has been removed
+  // Flows are now always live once created (Figma-style)
 
   // Auto-open settings dialog when no API keys are configured
   // Only show if NUX is complete (step 2 of NUX guides users to API keys)
@@ -967,13 +966,13 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
           onLivePopoverChange={setLivePopoverOpen}
           shareDialogOpen={shareDialogOpen}
           onShareDialogChange={setShareDialogOpen}
+          isAuthenticated={!!user}
           onNewFlow={handleNewFlow}
           onOpenTemplates={openTemplatesModal}
           onOpenMyFlows={() => setMyFlowsDialogOpen(true)}
           onOpenFlow={handleOpenFlow}
-          onSaveFlow={() => setSaveDialogOpen(true)}
+          onDownload={handleDownload}
           onDisconnect={handleDisconnect}
-          onUnpublish={() => setPublishedFlowInfo(null)}
           onOwnerKeysChange={(enabled) => setPublishedFlowInfo(prev => prev ? { ...prev, useOwnerKeys: enabled } : null)}
           isPanning={isPanning}
           canvasWidth={canvasWidth}
@@ -1027,14 +1026,10 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
         onOpenChange={setShareDialogOpen}
         flowId={currentFlowId}
         flowName={flowMetadata?.name || "Untitled Flow"}
-        initialLiveId={publishedFlowInfo?.liveId}
-        initialShareToken={publishedFlowInfo?.shareToken}
-        initialUseOwnerKeys={publishedFlowInfo?.useOwnerKeys}
-        onPublish={(flowId, liveId, shareToken, useOwnerKeys) => {
-          setPublishedFlowInfo({ flowId, liveId, shareToken, useOwnerKeys });
-          // Open the live settings popover after a brief delay to let the dialog close
-          setTimeout(() => setLivePopoverOpen(true), 100);
-        }}
+        liveId={publishedFlowInfo?.liveId}
+        shareToken={publishedFlowInfo?.shareToken}
+        useOwnerKeys={publishedFlowInfo?.useOwnerKeys}
+        onOwnerKeysChange={(enabled) => setPublishedFlowInfo(prev => prev ? { ...prev, useOwnerKeys: enabled } : null)}
         onSaveFlow={saveFlowToCloud}
         isSaving={isSaving}
       />

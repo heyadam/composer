@@ -40,15 +40,15 @@ export interface FlowHeaderProps {
   onShareDialogChange: (open: boolean) => void;
 
   // Flow operations
+  isAuthenticated: boolean;
   onNewFlow: () => void;
   onOpenTemplates: () => void;
   onOpenMyFlows: () => void;
   onOpenFlow: () => void;
-  onSaveFlow: () => void;
+  onDownload: () => void;
   onDisconnect?: () => void;
 
   // Published flow callbacks
-  onUnpublish?: () => void;
   onOwnerKeysChange?: (enabled: boolean) => void;
 
   // Logo state
@@ -62,6 +62,7 @@ export interface LeftControlsProps {
   showLabels: boolean;
 
   // Flow dropdown
+  isAuthenticated: boolean;
   isCollaborating: boolean;
   collaborationFlowName: string | null;
   isCollaborationSaving: boolean;
@@ -69,7 +70,7 @@ export interface LeftControlsProps {
   onOpenTemplates: () => void;
   onOpenMyFlows: () => void;
   onOpenFlow: () => void;
-  onSaveFlow: () => void;
+  onDownload: () => void;
 
   // Share/Live
   liveSession: LiveSession | null;
@@ -80,7 +81,6 @@ export interface LeftControlsProps {
   onLivePopoverChange: (open: boolean) => void;
   shareDialogOpen: boolean;
   onShareDialogChange: (open: boolean) => void;
-  onUnpublish?: () => void;
   onOwnerKeysChange?: (enabled: boolean) => void;
   onDisconnect?: () => void;
 }

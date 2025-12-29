@@ -85,15 +85,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate a unique ID for this flow
-    const flowId = crypto.randomUUID();
-    const storagePath = `${user.id}/${flowId}.json`;
+    // Create the flow record atomically with tokens using RPC
+    // RPC generates unique ID and storage path internally
+    const tempStoragePath = `${user.id}/${crypto.randomUUID()}.json`;
+    const { data: rpcResult, error: rpcError } = await supabase.rpc(
+      "create_flow_with_tokens",
+      {
+        p_user_id: user.id,
+        p_name: flow.metadata.name,
+        p_storage_path: tempStoragePath,
+      }
+    );
+
+    if (rpcError || !rpcResult || rpcResult.length === 0) {
+      console.error("Error creating flow with tokens:", rpcError);
+      return NextResponse.json(
+        { success: false, error: "Failed to create flow record" },
+        { status: 500 }
+      );
+    }
+
+    // RPC returns array, get first row
+    const createdFlow = rpcResult[0];
+    const actualFlowId = createdFlow.id;
+    const actualStoragePath = createdFlow.storage_path;
 
     // Upload flow content to storage (backup)
     const flowJson = JSON.stringify(flow);
     const { error: uploadError } = await supabase.storage
       .from("flows")
-      .upload(storagePath, flowJson, {
+      .upload(actualStoragePath, flowJson, {
         contentType: "application/json",
         upsert: false,
       });
@@ -103,32 +124,21 @@ export async function POST(request: NextRequest) {
       // Continue anyway - DB is the primary storage now
     }
 
-    // Create the database record
-    const { data: flowRecord, error: insertError } = await supabase
+    // Fetch the full flow record for response
+    const { data: flowRecord, error: fetchError } = await supabase
       .from("flows")
-      .insert({
-        id: flowId,
-        user_id: user.id,
-        name: flow.metadata.name,
-        description: flow.metadata.description || null,
-        storage_path: storagePath,
-      })
       .select()
+      .eq("id", actualFlowId)
       .single();
 
-    if (insertError) {
-      console.error("Error creating flow record:", insertError);
-      // Try to clean up the uploaded file
-      await supabase.storage.from("flows").remove([storagePath]);
-      return NextResponse.json(
-        { success: false, error: "Failed to create flow record" },
-        { status: 500 }
-      );
+    if (fetchError) {
+      console.error("Error fetching created flow:", fetchError);
+      // Flow was created, just can't return full record
     }
 
     // Insert nodes into DB
     if (flow.nodes.length > 0) {
-      const nodeRecords = nodesToRecords(flow.nodes, flowId);
+      const nodeRecords = nodesToRecords(flow.nodes, actualFlowId);
       const { error: insertNodesError } = await supabase
         .from("flow_nodes")
         .insert(nodeRecords);
@@ -136,8 +146,19 @@ export async function POST(request: NextRequest) {
       if (insertNodesError) {
         console.error("Error inserting nodes:", insertNodesError);
         // Clean up on failure
-        await supabase.from("flows").delete().eq("id", flowId);
-        await supabase.storage.from("flows").remove([storagePath]);
+        const { error: cleanupFlowError } = await supabase
+          .from("flows")
+          .delete()
+          .eq("id", actualFlowId);
+        if (cleanupFlowError) {
+          console.error("Cleanup: failed to delete flow:", cleanupFlowError);
+        }
+        const { error: cleanupStorageError } = await supabase.storage
+          .from("flows")
+          .remove([actualStoragePath]);
+        if (cleanupStorageError) {
+          console.error("Cleanup: failed to delete storage:", cleanupStorageError);
+        }
         return NextResponse.json(
           { success: false, error: "Failed to save nodes" },
           { status: 500 }
@@ -147,7 +168,7 @@ export async function POST(request: NextRequest) {
 
     // Insert edges into DB
     if (flow.edges.length > 0) {
-      const edgeRecords = edgesToRecords(flow.edges, flowId);
+      const edgeRecords = edgesToRecords(flow.edges, actualFlowId);
       const { error: insertEdgesError } = await supabase
         .from("flow_edges")
         .insert(edgeRecords);
@@ -155,9 +176,26 @@ export async function POST(request: NextRequest) {
       if (insertEdgesError) {
         console.error("Error inserting edges:", insertEdgesError);
         // Clean up on failure
-        await supabase.from("flow_nodes").delete().eq("flow_id", flowId);
-        await supabase.from("flows").delete().eq("id", flowId);
-        await supabase.storage.from("flows").remove([storagePath]);
+        const { error: cleanupNodesError } = await supabase
+          .from("flow_nodes")
+          .delete()
+          .eq("flow_id", actualFlowId);
+        if (cleanupNodesError) {
+          console.error("Cleanup: failed to delete nodes:", cleanupNodesError);
+        }
+        const { error: cleanupFlowError } = await supabase
+          .from("flows")
+          .delete()
+          .eq("id", actualFlowId);
+        if (cleanupFlowError) {
+          console.error("Cleanup: failed to delete flow:", cleanupFlowError);
+        }
+        const { error: cleanupStorageError } = await supabase.storage
+          .from("flows")
+          .remove([actualStoragePath]);
+        if (cleanupStorageError) {
+          console.error("Cleanup: failed to delete storage:", cleanupStorageError);
+        }
         return NextResponse.json(
           { success: false, error: "Failed to save edges" },
           { status: 500 }
