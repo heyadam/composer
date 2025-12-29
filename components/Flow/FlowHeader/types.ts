@@ -48,7 +48,6 @@ export interface FlowHeaderProps {
   onDisconnect?: () => void;
 
   // Published flow callbacks
-  onUnpublish?: () => void;
   onOwnerKeysChange?: (enabled: boolean) => void;
 
   // Logo state
@@ -80,7 +79,6 @@ export interface LeftControlsProps {
   onLivePopoverChange: (open: boolean) => void;
   shareDialogOpen: boolean;
   onShareDialogChange: (open: boolean) => void;
-  onUnpublish?: () => void;
   onOwnerKeysChange?: (enabled: boolean) => void;
   onDisconnect?: () => void;
 }

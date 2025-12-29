@@ -14,17 +14,12 @@ import {
   Copy,
   Check,
   ExternalLink,
-  Loader2,
   AlertTriangle,
   Globe,
   Key,
   Users,
 } from "lucide-react";
-import {
-  unpublishFlow,
-  getUserKeysStatus,
-  updatePublishSettings,
-} from "@/lib/flows/api";
+import { getUserKeysStatus, updatePublishSettings } from "@/lib/flows/api";
 
 interface LiveSettingsPopoverProps {
   flowId?: string;
@@ -33,7 +28,6 @@ interface LiveSettingsPopoverProps {
   useOwnerKeys: boolean;
   isOwner: boolean;
   collaboratorCount: number;
-  onUnpublish?: () => void;
   onOwnerKeysChange?: (enabled: boolean) => void;
   onDisconnect?: () => void;
   disconnectLabel?: string;
@@ -49,7 +43,6 @@ export function LiveSettingsPopover({
   useOwnerKeys: initialUseOwnerKeys,
   isOwner,
   collaboratorCount,
-  onUnpublish,
   onOwnerKeysChange,
   onDisconnect,
   disconnectLabel = "Disconnect and start fresh",
@@ -58,7 +51,6 @@ export function LiveSettingsPopover({
   onOpenChange,
 }: LiveSettingsPopoverProps) {
   const [copied, setCopied] = useState(false);
-  const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Owner-funded execution state
@@ -67,7 +59,8 @@ export function LiveSettingsPopover({
   const [isLoadingKeyStatus, setIsLoadingKeyStatus] = useState(false);
   const [isTogglingOwnerKeys, setIsTogglingOwnerKeys] = useState(false);
 
-  const shareUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/${liveId}/${shareToken}`;
+  // Use new /f/ URL format
+  const shareUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/f/${liveId}/${shareToken}`;
 
   // Fetch owner key status
   useEffect(() => {
@@ -99,30 +92,6 @@ export function LiveSettingsPopover({
 
   const handleOpenInNewTab = () => {
     window.open(shareUrl, "_blank");
-  };
-
-  const handleUnpublish = async () => {
-    if (!flowId) {
-      setError("Missing flow ID for unpublish");
-      return;
-    }
-    if (!onUnpublish) {
-      setError("Unpublish is not available");
-      return;
-    }
-
-    setIsUnpublishing(true);
-    setError(null);
-
-    const result = await unpublishFlow(flowId);
-
-    if (result.success) {
-      onUnpublish();
-    } else {
-      setError(result.error || "Failed to unpublish flow");
-    }
-
-    setIsUnpublishing(false);
   };
 
   const handleToggleOwnerKeys = async (enabled: boolean) => {
@@ -253,29 +222,6 @@ export function LiveSettingsPopover({
                     Store your API keys in Settings to enable this
                   </p>
                 )}
-              </div>
-
-              {/* Unpublish */}
-              <div className="pt-2 border-t border-neutral-700">
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleUnpublish}
-                  disabled={isUnpublishing || !flowId || !onUnpublish}
-                  className="w-full h-8 text-xs"
-                >
-                  {isUnpublishing ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
-                      Unpublishing...
-                    </>
-                  ) : (
-                    "Unpublish Flow"
-                  )}
-                </Button>
-                <p className="text-[10px] text-neutral-500 mt-1.5 text-center">
-                  This will revoke access for all collaborators
-                </p>
               </div>
             </>
           )}

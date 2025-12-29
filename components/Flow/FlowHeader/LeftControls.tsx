@@ -38,7 +38,6 @@ export function LeftControls({
   onLivePopoverChange,
   shareDialogOpen: _shareDialogOpen,
   onShareDialogChange,
-  onUnpublish,
   onOwnerKeysChange,
   onDisconnect,
 }: LeftControlsProps) {
@@ -148,7 +147,6 @@ export function LeftControls({
           useOwnerKeys={liveSession.useOwnerKeys}
           isOwner={isOwner}
           collaboratorCount={collaborators.length}
-          onUnpublish={isOwner ? onUnpublish : undefined}
           onOwnerKeysChange={isOwner ? onOwnerKeysChange : undefined}
           onDisconnect={!isOwner && isCollaborating ? onDisconnect : undefined}
           open={livePopoverOpen}

@@ -21,12 +21,7 @@ import {
   Globe,
   Key,
 } from "lucide-react";
-import {
-  publishFlow,
-  unpublishFlow,
-  getUserKeysStatus,
-  updatePublishSettings,
-} from "@/lib/flows/api";
+import { getUserKeysStatus, updatePublishSettings } from "@/lib/flows/api";
 import { useAuth } from "@/lib/auth";
 
 interface ShareDialogProps {
@@ -34,16 +29,17 @@ interface ShareDialogProps {
   onOpenChange: (open: boolean) => void;
   flowId: string | null;
   flowName: string;
-  initialLiveId?: string | null;
-  initialShareToken?: string | null;
-  initialUseOwnerKeys?: boolean;
-  onPublish?: (
-    flowId: string,
-    liveId: string,
-    shareToken: string,
-    useOwnerKeys: boolean
-  ) => void;
+  /** Flow's live_id (always populated for saved flows) */
+  liveId?: string | null;
+  /** Flow's share_token (always populated for saved flows) */
+  shareToken?: string | null;
+  /** Current owner-funded execution setting */
+  useOwnerKeys?: boolean;
+  /** Callback when owner keys setting changes */
+  onOwnerKeysChange?: (enabled: boolean) => void;
+  /** Callback to save the flow (for unsaved flows) */
   onSaveFlow?: (name: string) => Promise<string | null>;
+  /** True while flow is being saved */
   isSaving?: boolean;
 }
 
@@ -52,30 +48,22 @@ export function ShareDialog({
   onOpenChange,
   flowId,
   flowName,
-  initialLiveId,
-  initialShareToken,
-  initialUseOwnerKeys,
-  onPublish,
+  liveId,
+  shareToken,
+  useOwnerKeys: initialUseOwnerKeys = false,
+  onOwnerKeysChange,
   onSaveFlow,
   isSaving = false,
 }: ShareDialogProps) {
   const { user } = useAuth();
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [isUnpublishing, setIsUnpublishing] = useState(false);
-  const [liveId, setLiveId] = useState<string | null>(initialLiveId || null);
-  const [shareToken, setShareToken] = useState<string | null>(
-    initialShareToken || null
-  );
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Save flow state (for when flow is not saved yet)
   const [saveName, setSaveName] = useState(flowName || "My Flow");
-  // Track if we started from unsaved state (to prevent flicker when flowId updates mid-save)
-  const [startedUnsaved, setStartedUnsaved] = useState(!flowId);
 
   // Owner-funded execution state
-  const [useOwnerKeys, setUseOwnerKeys] = useState(initialUseOwnerKeys || false);
+  const [useOwnerKeys, setUseOwnerKeys] = useState(initialUseOwnerKeys);
   const [hasStoredKeys, setHasStoredKeys] = useState(false);
   const [isLoadingKeyStatus, setIsLoadingKeyStatus] = useState(false);
   const [isTogglingOwnerKeys, setIsTogglingOwnerKeys] = useState(false);
@@ -83,22 +71,18 @@ export function ShareDialog({
   // Reset state when dialog opens with new props
   useEffect(() => {
     if (open) {
-      setLiveId(initialLiveId || null);
-      setShareToken(initialShareToken || null);
-      setUseOwnerKeys(initialUseOwnerKeys || false);
+      setUseOwnerKeys(initialUseOwnerKeys);
       setSaveName(flowName || "My Flow");
-      setStartedUnsaved(!flowId);
       setError(null);
     }
-  }, [open, initialLiveId, initialShareToken, initialUseOwnerKeys, flowName, flowId]);
+  }, [open, initialUseOwnerKeys, flowName]);
 
-  // Fetch owner key status when dialog opens with a published flow
+  // Fetch owner key status when dialog opens with a saved flow
   useEffect(() => {
-    if (open && liveId && flowId) {
+    if (open && flowId) {
       setIsLoadingKeyStatus(true);
       getUserKeysStatus()
         .then((status) => {
-          // Compute hasKeys from individual provider flags
           const hasKeys = !!(
             status.hasOpenai ||
             status.hasGoogle ||
@@ -108,59 +92,13 @@ export function ShareDialog({
         })
         .finally(() => setIsLoadingKeyStatus(false));
     }
-  }, [open, liveId, flowId]);
+  }, [open, flowId]);
 
-  const isPublished = liveId && shareToken;
-  const shareUrl = isPublished
-    ? `${window.location.origin}/${liveId}/${shareToken}`
-    : null;
-
-  const handlePublish = async () => {
-    if (!flowId) {
-      setError("Flow must be saved before publishing");
-      return;
-    }
-
-    setIsPublishing(true);
-    setError(null);
-
-    const result = await publishFlow(flowId);
-
-    if (result.success && result.live_id && result.share_token) {
-      setLiveId(result.live_id);
-      setShareToken(result.share_token);
-      onPublish?.(
-        flowId,
-        result.live_id,
-        result.share_token,
-        result.use_owner_keys ?? true
-      );
-      // Close dialog after successful publish since Live popover is now available
-      onOpenChange(false);
-    } else {
-      setError(result.error || "Failed to publish flow");
-    }
-
-    setIsPublishing(false);
-  };
-
-  const handleUnpublish = async () => {
-    if (!flowId) return;
-
-    setIsUnpublishing(true);
-    setError(null);
-
-    const result = await unpublishFlow(flowId);
-
-    if (result.success) {
-      setLiveId(null);
-      setShareToken(null);
-    } else {
-      setError(result.error || "Failed to unpublish flow");
-    }
-
-    setIsUnpublishing(false);
-  };
+  // Build share URL using new /f/ format
+  const shareUrl =
+    liveId && shareToken
+      ? `${window.location.origin}/f/${liveId}/${shareToken}`
+      : null;
 
   const handleCopy = async () => {
     if (!shareUrl) return;
@@ -176,7 +114,6 @@ export function ShareDialog({
   };
 
   const handleToggleOwnerKeys = async (enabled: boolean) => {
-    // Use flowId (owner-authenticated) NOT shareToken (collaborator-accessible)
     if (!flowId) return;
 
     setIsTogglingOwnerKeys(true);
@@ -188,6 +125,7 @@ export function ShareDialog({
       });
       if (result.success) {
         setUseOwnerKeys(enabled);
+        onOwnerKeysChange?.(enabled);
       } else {
         setError(result.error || "Failed to update owner keys setting");
       }
@@ -199,6 +137,18 @@ export function ShareDialog({
     }
   };
 
+  const handleSaveFlow = async () => {
+    if (!onSaveFlow || !saveName.trim()) return;
+
+    setError(null);
+    const savedFlowId = await onSaveFlow(saveName.trim());
+
+    if (savedFlowId) {
+      // Flow saved successfully - close dialog, user can reopen to see share URL
+      onOpenChange(false);
+    }
+  };
+
   // Not signed in
   if (!user) {
     return (
@@ -207,7 +157,7 @@ export function ShareDialog({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Globe className="h-5 w-5" />
-              Go Live
+              Share Flow
             </DialogTitle>
             <DialogDescription className="text-neutral-400">
               Sign in to share your flow with others.
@@ -216,7 +166,7 @@ export function ShareDialog({
           <div className="flex flex-col items-center gap-4 py-6">
             <AlertTriangle className="h-12 w-12 text-amber-500" />
             <p className="text-center text-neutral-300">
-              You need to be signed in to publish and share flows.
+              You need to be signed in to save and share flows.
             </p>
           </div>
         </DialogContent>
@@ -225,46 +175,17 @@ export function ShareDialog({
   }
 
   // Flow not saved yet - show save form
-  // Keep showing save form while saving/publishing to prevent flicker
-  if (!flowId || (startedUnsaved && (isSaving || isPublishing))) {
-    const handleSaveAndPublish = async () => {
-      if (!onSaveFlow || !saveName.trim()) return;
-
-      setError(null);
-      const savedFlowId = await onSaveFlow(saveName.trim());
-
-      if (savedFlowId) {
-        // Flow saved successfully, now publish it
-        setIsPublishing(true);
-        const result = await publishFlow(savedFlowId);
-
-        if (result.success && result.live_id && result.share_token) {
-          setLiveId(result.live_id);
-          setShareToken(result.share_token);
-          onPublish?.(
-            savedFlowId,
-            result.live_id,
-            result.share_token,
-            result.use_owner_keys ?? true
-          );
-          onOpenChange(false);
-        } else {
-          setError(result.error || "Failed to publish flow");
-        }
-        setIsPublishing(false);
-      }
-    };
-
+  if (!flowId) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md bg-neutral-900 border-neutral-700 text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Globe className="h-5 w-5" />
-              Go Live
+              Share Flow
             </DialogTitle>
             <DialogDescription className="text-neutral-400">
-              Name your flow to save and publish it.
+              Name your flow to save it and get a shareable link.
             </DialogDescription>
           </DialogHeader>
 
@@ -282,24 +203,24 @@ export function ShareDialog({
                 value={saveName}
                 onChange={(e) => setSaveName(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && saveName.trim() && !isSaving && !isPublishing) {
-                    handleSaveAndPublish();
+                  if (e.key === "Enter" && saveName.trim() && !isSaving) {
+                    handleSaveFlow();
                   }
                 }}
                 placeholder="Enter a name for your flow..."
                 className="bg-neutral-800 border-neutral-600 text-white placeholder:text-neutral-500"
                 autoFocus
-                disabled={isSaving || isPublishing}
+                disabled={isSaving}
               />
             </div>
 
             <p className="text-sm text-neutral-400">
-              Your flow will be saved to the cloud and published with a shareable link.
+              Your flow will be saved to the cloud with a shareable link.
             </p>
 
             <Button
-              onClick={handleSaveAndPublish}
-              disabled={!saveName.trim() || isSaving || isPublishing}
+              onClick={handleSaveFlow}
+              disabled={!saveName.trim() || isSaving}
               className="w-full"
             >
               {isSaving ? (
@@ -307,15 +228,10 @@ export function ShareDialog({
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Saving...
                 </>
-              ) : isPublishing ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Publishing...
-                </>
               ) : (
                 <>
                   <Globe className="h-4 w-4 mr-2" />
-                  Save & Go Live
+                  Save Flow
                 </>
               )}
             </Button>
@@ -325,18 +241,17 @@ export function ShareDialog({
     );
   }
 
+  // Flow is saved - show share settings
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-neutral-900 border-neutral-700 text-white">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5" />
-            {isPublished ? "Share Link" : "Go Live"}
+            Share Flow
           </DialogTitle>
           <DialogDescription className="text-neutral-400">
-            {isPublished
-              ? `Share "${flowName}" with collaborators`
-              : `Publish "${flowName}" to get a shareable link`}
+            Share &ldquo;{flowName}&rdquo; with collaborators
           </DialogDescription>
         </DialogHeader>
 
@@ -347,15 +262,15 @@ export function ShareDialog({
           </div>
         )}
 
-        {isPublished ? (
-          <div className="space-y-4">
-            {/* Share URL */}
+        <div className="space-y-4">
+          {/* Share URL */}
+          {shareUrl ? (
             <div className="space-y-2">
               <Label className="text-neutral-300">Share URL</Label>
               <div className="flex gap-2">
                 <Input
                   readOnly
-                  value={shareUrl || ""}
+                  value={shareUrl}
                   className="bg-neutral-800 border-neutral-600 text-neutral-200 font-mono text-sm"
                 />
                 <Button
@@ -380,103 +295,54 @@ export function ShareDialog({
                 </Button>
               </div>
             </div>
-
-            {/* Warning */}
-            <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-md text-amber-400 text-sm">
-              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-              <span>
-                Anyone with this link can edit your flow, including prompts and
-                settings. Only share with people you trust.
-              </span>
+          ) : (
+            <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-md text-amber-400 text-sm">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>Share URL not available. Try refreshing the page.</span>
             </div>
+          )}
 
-            {/* Live ID display */}
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-neutral-400">Live ID</span>
-              <span className="font-mono text-neutral-200">{liveId}</span>
-            </div>
+          {/* Warning */}
+          <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-md text-amber-400 text-sm">
+            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+            <span>
+              Anyone with this link can edit your flow, including prompts and
+              settings. Only share with people you trust.
+            </span>
+          </div>
 
-            {/* Owner-funded execution toggle */}
-            <div className="space-y-3 pt-3 border-t border-neutral-700">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <Label className="text-sm font-medium flex items-center gap-2">
-                    <Key className="h-4 w-4" />
-                    Owner-Funded Execution
-                  </Label>
-                  <p className="text-xs text-neutral-400 mt-1">
-                    Use your API keys for collaborators&apos; executions
-                  </p>
-                </div>
-                <Switch
-                  checked={useOwnerKeys}
-                  onCheckedChange={handleToggleOwnerKeys}
-                  disabled={
-                    !hasStoredKeys || isLoadingKeyStatus || isTogglingOwnerKeys
-                  }
-                />
+          {/* Owner-funded execution toggle */}
+          <div className="space-y-3 pt-3 border-t border-neutral-700">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Key className="h-4 w-4" />
+                  Owner-Funded Execution
+                </Label>
+                <p className="text-xs text-neutral-400 mt-1">
+                  Use your API keys for collaborators&apos; executions
+                </p>
               </div>
-              {!hasStoredKeys && !isLoadingKeyStatus && (
-                <p className="text-xs text-amber-400">
-                  Store your API keys in Settings to enable this feature
-                </p>
-              )}
-              {isLoadingKeyStatus && (
-                <p className="text-xs text-neutral-500">
-                  Checking stored keys...
-                </p>
-              )}
+              <Switch
+                checked={useOwnerKeys}
+                onCheckedChange={handleToggleOwnerKeys}
+                disabled={
+                  !hasStoredKeys || isLoadingKeyStatus || isTogglingOwnerKeys
+                }
+              />
             </div>
-
-            {/* Unpublish */}
-            <div className="pt-2 border-t border-neutral-700">
-              <Button
-                variant="destructive"
-                onClick={handleUnpublish}
-                disabled={isUnpublishing}
-                className="w-full"
-              >
-                {isUnpublishing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Unpublishing...
-                  </>
-                ) : (
-                  "Unpublish Flow"
-                )}
-              </Button>
-              <p className="text-xs text-neutral-500 mt-2 text-center">
-                This will revoke access for all collaborators
+            {!hasStoredKeys && !isLoadingKeyStatus && (
+              <p className="text-xs text-amber-400">
+                Store your API keys in Settings to enable this feature
               </p>
-            </div>
+            )}
+            {isLoadingKeyStatus && (
+              <p className="text-xs text-neutral-500">
+                Checking stored keys...
+              </p>
+            )}
           </div>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-neutral-300">
-              Publishing your flow will generate a unique link that you can
-              share with collaborators. They&apos;ll be able to view and edit
-              the flow in real-time.
-            </p>
-
-            <Button
-              onClick={handlePublish}
-              disabled={isPublishing}
-              className="w-full"
-            >
-              {isPublishing ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Publishing...
-                </>
-              ) : (
-                <>
-                  <Globe className="h-4 w-4 mr-2" />
-                  Publish & Get Link
-                </>
-              )}
-            </Button>
-          </div>
-        )}
+        </div>
       </DialogContent>
     </Dialog>
   );

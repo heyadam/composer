@@ -396,21 +396,8 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     };
   }, [currentFlowId]);
 
-  // Unpublish flow when owner leaves the page
-  useEffect(() => {
-    if (!isOwner || !currentFlowId || !publishedFlowInfo) return;
-
-    const handleBeforeUnload = () => {
-      // Use sendBeacon for reliable delivery during page unload
-      navigator.sendBeacon(
-        `/api/flows/${currentFlowId}/publish`,
-        new Blob([JSON.stringify({ _method: "DELETE" })], { type: "application/json" })
-      );
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isOwner, currentFlowId, publishedFlowInfo]);
+  // Note: Auto-unpublish on page leave has been removed
+  // Flows are now always live once created (Figma-style)
 
   // Auto-open settings dialog when no API keys are configured
   // Only show if NUX is complete (step 2 of NUX guides users to API keys)
@@ -973,7 +960,6 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
           onOpenFlow={handleOpenFlow}
           onSaveFlow={() => setSaveDialogOpen(true)}
           onDisconnect={handleDisconnect}
-          onUnpublish={() => setPublishedFlowInfo(null)}
           onOwnerKeysChange={(enabled) => setPublishedFlowInfo(prev => prev ? { ...prev, useOwnerKeys: enabled } : null)}
           isPanning={isPanning}
           canvasWidth={canvasWidth}
@@ -1027,14 +1013,10 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
         onOpenChange={setShareDialogOpen}
         flowId={currentFlowId}
         flowName={flowMetadata?.name || "Untitled Flow"}
-        initialLiveId={publishedFlowInfo?.liveId}
-        initialShareToken={publishedFlowInfo?.shareToken}
-        initialUseOwnerKeys={publishedFlowInfo?.useOwnerKeys}
-        onPublish={(flowId, liveId, shareToken, useOwnerKeys) => {
-          setPublishedFlowInfo({ flowId, liveId, shareToken, useOwnerKeys });
-          // Open the live settings popover after a brief delay to let the dialog close
-          setTimeout(() => setLivePopoverOpen(true), 100);
-        }}
+        liveId={publishedFlowInfo?.liveId}
+        shareToken={publishedFlowInfo?.shareToken}
+        useOwnerKeys={publishedFlowInfo?.useOwnerKeys}
+        onOwnerKeysChange={(enabled) => setPublishedFlowInfo(prev => prev ? { ...prev, useOwnerKeys: enabled } : null)}
         onSaveFlow={saveFlowToCloud}
         isSaving={isSaving}
       />

@@ -49,7 +49,6 @@ export function FlowHeader({
   onOpenFlow,
   onSaveFlow,
   onDisconnect,
-  onUnpublish,
   onOwnerKeysChange,
   isPanning,
   canvasWidth,
@@ -99,7 +98,6 @@ export function FlowHeader({
             onLivePopoverChange={onLivePopoverChange}
             shareDialogOpen={shareDialogOpen}
             onShareDialogChange={onShareDialogChange}
-            onUnpublish={onUnpublish}
             onOwnerKeysChange={onOwnerKeysChange}
             onDisconnect={onDisconnect}
           />

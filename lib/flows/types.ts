@@ -11,9 +11,10 @@ export interface FlowRecord {
   storage_path: string;
   created_at: string;
   updated_at: string;
-  // Live sharing fields
-  live_id: string | null;
-  share_token: string | null;
+  // Live sharing fields (always populated for new flows)
+  live_id: string;
+  share_token: string;
+  last_accessed_at: string;
   allow_public_execute: boolean;
   use_owner_keys: boolean;
   daily_execution_count: number;
@@ -60,6 +61,7 @@ export interface FlowEdgeRecord {
 export interface LiveFlowData {
   flow: {
     id: string;
+    user_id: string;
     name: string;
     description: string | null;
     live_id: string;
