@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings, PanelRight } from "lucide-react";
+import { Settings, PanelRight, BookOpen } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -19,6 +19,23 @@ export function RightControls({
 }: RightControlsProps) {
   return (
     <div className="flex items-center gap-2">
+      {/* Docs */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <a
+            href="/docs"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 transition-colors rounded-full border bg-background/50 backdrop-blur-sm text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-muted-foreground/40"
+          >
+            <BookOpen className="w-5 h-5" />
+          </a>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="bg-neutral-800 text-white border-neutral-700">
+          Documentation
+        </TooltipContent>
+      </Tooltip>
+
       {/* Settings */}
       <Tooltip>
         <TooltipTrigger asChild>
