@@ -58,7 +58,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Fetch the flow record to check ownership and name
     const { data: flowRecord, error: fetchError } = await supabase
       .from("flows")
-      .select("name, live_id, storage_path")
+      .select("name, live_id, storage_path, updated_at")
       .eq("id", id)
       .eq("user_id", user.id)
       .single();
@@ -73,10 +73,24 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ success: true, action: "skipped", reason: "already_named" });
     }
 
+    // Skip if flow was recently updated (within 2 seconds) to avoid race with auto-save
+    const updatedAt = new Date(flowRecord.updated_at).getTime();
+    const now = Date.now();
+    if (now - updatedAt < 2000) {
+      return NextResponse.json({ success: true, action: "skipped", reason: "recently_updated" });
+    }
+
     // Empty flow - delete it
     if (nodeCount === 0) {
-      // Delete from storage (best effort)
-      await supabase.storage.from("flows").remove([flowRecord.storage_path]);
+      // Delete from storage (best effort, log failures for monitoring)
+      const { error: storageError } = await supabase.storage.from("flows").remove([flowRecord.storage_path]);
+      if (storageError) {
+        console.error("Failed to delete flow storage (orphaned file):", {
+          flowId: id,
+          storagePath: flowRecord.storage_path,
+          error: storageError,
+        });
+      }
 
       // Delete the flow record (cascades to flow_nodes/flow_edges via FK)
       const { error: deleteError } = await supabase
