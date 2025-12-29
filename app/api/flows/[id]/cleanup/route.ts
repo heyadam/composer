@@ -73,10 +73,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ success: true, action: "skipped", reason: "already_named" });
     }
 
-    // Skip if flow was recently updated (within 2 seconds) to avoid race with auto-save
+    // Skip if flow was recently updated to avoid race with auto-save.
+    // The auto-save in useCollaboration uses 500ms debounce (see lib/hooks/useCollaboration.ts:374).
+    // We use 3 seconds to provide headroom for network latency and edge cases.
+    const CLEANUP_GRACE_PERIOD_MS = 3000;
     const updatedAt = new Date(flowRecord.updated_at).getTime();
     const now = Date.now();
-    if (now - updatedAt < 2000) {
+    if (now - updatedAt < CLEANUP_GRACE_PERIOD_MS) {
       return NextResponse.json({ success: true, action: "skipped", reason: "recently_updated" });
     }
 

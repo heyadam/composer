@@ -220,7 +220,7 @@ describe("POST /api/flows/[id]/cleanup", () => {
     });
 
     it("should skip when flow was recently updated", async () => {
-      // Flow updated 1 second ago (within 2 second threshold)
+      // Flow updated 1 second ago (within 3 second grace period)
       mockSingle.mockResolvedValue({
         data: createMockFlowRecord(1), // 1 second ago
         error: null,

@@ -58,7 +58,9 @@ export function useFlowCleanup({
         return;
       }
 
-      // Count non-comment nodes (comment nodes are annotations, not workflow nodes)
+      // Count non-comment nodes (comment nodes are annotations, not workflow nodes).
+      // Nodes with undefined/missing types are intentionally counted as content
+      // to prevent accidental deletion of flows with corrupted metadata.
       const nodeCount = currentNodes.filter((n) => n.type !== "comment").length;
 
       // Send cleanup request via sendBeacon (fire-and-forget)
