@@ -7,58 +7,15 @@ import { cn } from "@/lib/utils";
 import type { CommentNodeData, CommentColor } from "@/types/flow";
 import { useCommentEdit } from "../CommentEditContext";
 
-// Color theme mappings
-const COMMENT_COLORS: Record<
-  CommentColor,
-  {
-    headerBg: string;
-    headerText: string;
-    border: string;
-    bg: string;
-  }
-> = {
-  gray: {
-    headerBg: "bg-gray-500/20",
-    headerText: "text-gray-700 dark:text-gray-300",
-    border: "border-t-gray-500",
-    bg: "bg-gray-500/5",
-  },
-  blue: {
-    headerBg: "bg-blue-500/20",
-    headerText: "text-blue-700 dark:text-blue-300",
-    border: "border-t-blue-500",
-    bg: "bg-blue-500/5",
-  },
-  green: {
-    headerBg: "bg-green-500/20",
-    headerText: "text-green-700 dark:text-green-300",
-    border: "border-t-green-500",
-    bg: "bg-green-500/5",
-  },
-  yellow: {
-    headerBg: "bg-yellow-500/20",
-    headerText: "text-yellow-700 dark:text-yellow-300",
-    border: "border-t-yellow-500",
-    bg: "bg-yellow-500/5",
-  },
-  purple: {
-    headerBg: "bg-purple-500/20",
-    headerText: "text-purple-700 dark:text-purple-300",
-    border: "border-t-purple-500",
-    bg: "bg-purple-500/5",
-  },
-  pink: {
-    headerBg: "bg-pink-500/20",
-    headerText: "text-pink-700 dark:text-pink-300",
-    border: "border-t-pink-500",
-    bg: "bg-pink-500/5",
-  },
-  orange: {
-    headerBg: "bg-orange-500/20",
-    headerText: "text-orange-700 dark:text-orange-300",
-    border: "border-t-orange-500",
-    bg: "bg-orange-500/5",
-  },
+// Map comment colors to CSS classes
+const COMMENT_COLOR_CLASS: Record<CommentColor, string> = {
+  gray: "node-comment-gray",
+  blue: "node-comment-blue",
+  green: "node-comment-green",
+  yellow: "node-comment-yellow",
+  purple: "node-comment-purple",
+  pink: "node-comment-pink",
+  orange: "node-comment-orange",
 };
 
 export function CommentNode({
@@ -68,7 +25,7 @@ export function CommentNode({
 }: NodeProps & { data: CommentNodeData }) {
   const { updateNodeData } = useReactFlow();
   const { markUserEdited } = useCommentEdit();
-  const theme = COMMENT_COLORS[data.color] || COMMENT_COLORS.gray;
+  const colorClass = COMMENT_COLOR_CLASS[data.color] || COMMENT_COLOR_CLASS.gray;
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitleValue, setEditTitleValue] = useState(data.label);
@@ -109,24 +66,17 @@ export function CommentNode({
       />
       <div
         className={cn(
-          "size-full rounded-lg border border-t-[3px] overflow-hidden",
-          theme.border,
-          "border-border/40",
-          theme.bg,
+          "node-comment size-full",
+          colorClass,
           selected && "ring-2 ring-primary/30"
         )}
       >
         {/* Header bar */}
-        <div
-          className={cn(
-            "flex items-start gap-2 px-3 py-2 border-b border-border/30",
-            theme.headerBg
-          )}
-        >
+        <div className="node-comment-header">
           {data.isGenerating ? (
-            <Loader2 className={cn("size-4 mt-0.5 shrink-0 animate-spin", theme.headerText)} />
+            <Loader2 className="node-comment-icon animate-spin" />
           ) : (
-            <MessageSquare className={cn("size-4 mt-0.5 shrink-0", theme.headerText)} />
+            <MessageSquare className="node-comment-icon" />
           )}
           <div className="flex-1 min-w-0">
             {isEditingTitle ? (
@@ -142,18 +92,12 @@ export function CommentNode({
                     setIsEditingTitle(false);
                   }
                 }}
-                className={cn(
-                  "nodrag w-full bg-transparent border-none outline-none text-sm font-medium",
-                  theme.headerText
-                )}
+                className="nodrag node-comment-title w-full bg-transparent border-none outline-none"
               />
             ) : (
               <div
                 onClick={handleStartEditTitle}
-                className={cn(
-                  "text-sm font-medium cursor-text hover:bg-background/20 rounded px-1 -mx-1 truncate",
-                  theme.headerText
-                )}
+                className="node-comment-title"
               >
                 {data.label || "Untitled Comment"}
               </div>
@@ -172,13 +116,13 @@ export function CommentNode({
                   }
                 }}
                 placeholder="Add description..."
-                className="nodrag w-full bg-transparent border-none outline-none text-xs mt-1 resize-none opacity-70"
+                className="nodrag node-comment-description w-full bg-transparent border-none outline-none mt-1 resize-none"
                 rows={2}
               />
             ) : (
               <div
                 onClick={handleStartEditDesc}
-                className="text-xs mt-1 opacity-70 cursor-text hover:bg-background/20 rounded px-1 -mx-1 line-clamp-2"
+                className="node-comment-description"
               >
                 {data.description || "Add description..."}
               </div>
