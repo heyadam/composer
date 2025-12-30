@@ -96,3 +96,59 @@ export interface RunStatusResult {
   outputs?: Record<string, StructuredOutput>;
   errors?: Record<string, string>;
 }
+
+// ============================================================================
+// Streaming Types (MCP 2025-03-26 Streamable HTTP)
+// ============================================================================
+
+/**
+ * Progress notification sent during streaming execution.
+ * Follows MCP notifications/progress format.
+ */
+export interface ProgressNotification {
+  /** Unique token to correlate progress with the original request */
+  progressToken: string;
+  /** Number of nodes completed */
+  progress: number;
+  /** Total number of executable nodes (if known) */
+  total?: number;
+  /** Human-readable progress message */
+  message?: string;
+  /** Node execution event details */
+  node?: NodeExecutionEvent;
+}
+
+/**
+ * Event emitted when a node's execution status changes.
+ * Used for real-time progress updates during streaming execution.
+ */
+export interface NodeExecutionEvent {
+  /** Unique node identifier */
+  nodeId: string;
+  /** Human-readable node label */
+  nodeLabel: string;
+  /** Node type (e.g., "text-generation", "image-generation") */
+  nodeType: string;
+  /** Current execution status */
+  status: "running" | "success" | "error";
+  /** Output data (only for preview-output nodes on success) */
+  output?: StructuredOutput;
+  /** Error message (only on error status) */
+  error?: string;
+  /** ISO 8601 timestamp */
+  timestamp: string;
+}
+
+/**
+ * Final result sent at the end of a streaming execution.
+ */
+export interface StreamingRunResult {
+  /** Overall execution status */
+  status: "completed" | "failed";
+  /** Outputs from preview-output nodes (keyed by label) */
+  outputs?: Record<string, StructuredOutput>;
+  /** Errors from failed nodes (keyed by label) */
+  errors?: Record<string, string>;
+  /** Total execution time in milliseconds */
+  duration_ms: number;
+}

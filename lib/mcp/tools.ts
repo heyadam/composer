@@ -10,11 +10,27 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { decryptKeys } from "@/lib/encryption";
 import { recordToNode, recordToEdge } from "@/lib/flows/transform";
-import { executeFlowServer } from "@/lib/execution/server-execute";
+import {
+  executeFlowServer,
+  executeFlowServerWithProgress,
+} from "@/lib/execution/server-execute";
 import { jobStore } from "./job-store";
 import { transformOutputs } from "./output-parser";
+import {
+  formatSSEEvent,
+  formatResultEvent,
+  formatErrorEvent,
+  formatHeartbeat,
+  JsonRpcErrorCode,
+} from "./sse";
 import type { FlowNodeRecord, FlowEdgeRecord } from "@/lib/flows/types";
-import type { FlowInfo, FlowJob, RunFlowResult, RunStatusResult } from "./types";
+import type {
+  FlowInfo,
+  FlowJob,
+  RunFlowResult,
+  RunStatusResult,
+  StreamingRunResult,
+} from "./types";
 import type { Node } from "@xyflow/react";
 
 // ============================================================================
@@ -490,4 +506,287 @@ async function executeJobAsync(job: FlowJob): Promise<void> {
       });
     }
   }
+}
+
+// ============================================================================
+// Streaming Execution
+// ============================================================================
+
+/** Node types that should not be counted for progress tracking */
+const NON_EXECUTABLE_NODE_TYPES = ["comment"] as const;
+
+/**
+ * Count the number of executable nodes in a flow.
+ * Excludes comment nodes and other non-executable node types.
+ *
+ * @param nodes - Array of nodes to count
+ * @returns Number of executable nodes
+ */
+export function countExecutableNodes(nodes: Node[]): number {
+  return nodes.filter(
+    (node) =>
+      !NON_EXECUTABLE_NODE_TYPES.includes(
+        node.type as (typeof NON_EXECUTABLE_NODE_TYPES)[number]
+      )
+  ).length;
+}
+
+/**
+ * Create a ReadableStream for SSE-based flow execution.
+ *
+ * This function returns a stream that emits:
+ * - Progress events as JSON-RPC notifications via SSE
+ * - Heartbeats every 15 seconds to keep the connection alive
+ * - Final result as JSON-RPC response
+ *
+ * The stream handles:
+ * - Token and rate limit validation
+ * - Flow loading and owner key decryption
+ * - Real-time progress tracking during execution
+ * - Client disconnect handling via AbortSignal
+ * - Error responses in JSON-RPC format
+ *
+ * @param token - Share token for the flow (12 alphanumeric characters)
+ * @param inputs - Input values for text-input nodes (keyed by node label or ID)
+ * @param requestId - JSON-RPC request ID for correlating the response
+ * @param signal - AbortSignal for client disconnect handling
+ * @returns ReadableStream that emits SSE-formatted events
+ *
+ * @example
+ * ```typescript
+ * const stream = createFlowExecutionStream(
+ *   "abc123xyz789",
+ *   { "User Input": "Hello world" },
+ *   "req-123",
+ *   request.signal
+ * );
+ *
+ * return new Response(stream, {
+ *   headers: { "Content-Type": "text/event-stream" }
+ * });
+ * ```
+ */
+export function createFlowExecutionStream(
+  token: string,
+  inputs: Record<string, string>,
+  requestId: string | number,
+  signal: AbortSignal
+): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    async start(controller) {
+      // Setup heartbeat interval (15 seconds)
+      const heartbeat = setInterval(() => {
+        if (!signal.aborted) {
+          controller.enqueue(encoder.encode(formatHeartbeat()));
+        }
+      }, 15000);
+
+      const startTime = Date.now();
+
+      try {
+        // Validate token format
+        validateToken(token);
+        const validatedInputs = validateInputs(inputs);
+
+        const supabase = createServiceRoleClient();
+
+        // Check minute-level rate limit
+        const { data: minuteLimit, error: minuteError } = await supabase
+          .rpc("check_minute_rate_limit", {
+            p_share_token: token,
+            p_limit: RATE_LIMITS.PER_MINUTE,
+          })
+          .single<{ allowed: boolean; current_count: number; reset_at: string }>();
+
+        if (minuteError) {
+          throw new Error("Rate limit check unavailable. Please try again.");
+        }
+
+        if (!minuteLimit?.allowed) {
+          const retryAfter = minuteLimit?.reset_at
+            ? Math.ceil(
+                (new Date(minuteLimit.reset_at).getTime() - Date.now()) / 1000
+              )
+            : 60;
+          throw new Error(`Rate limit exceeded. Try again in ${retryAfter} seconds.`);
+        }
+
+        // Check daily execution quota
+        const { data: quotaResult, error: quotaError } = await supabase.rpc(
+          "execute_live_flow_check",
+          {
+            p_share_token: token,
+            p_daily_limit: RATE_LIMITS.PER_DAY,
+          }
+        );
+
+        if (quotaError) {
+          throw new Error("Quota check unavailable. Please try again.");
+        }
+
+        if (!quotaResult?.allowed) {
+          throw new Error(quotaResult?.reason || "Daily execution quota exceeded.");
+        }
+
+        // Load flow data
+        const { data: rawFlowData, error: flowError } = await supabase.rpc(
+          "get_live_flow",
+          { p_share_token: token }
+        );
+
+        if (flowError || !rawFlowData) {
+          throw new Error("Failed to load flow");
+        }
+
+        // Validate flow data structure
+        const flowData = validateFlowData(rawFlowData);
+
+        // Check if owner-funded execution is enabled
+        if (!flowData.flow.use_owner_keys) {
+          throw new Error(
+            "This flow requires owner-funded execution to be enabled. " +
+              "The flow owner must enable 'Use Owner Keys' in the share settings."
+          );
+        }
+
+        // Get owner's encrypted API keys
+        const { data: encryptedKeys, error: keysError } = await supabase.rpc(
+          "get_owner_keys_for_execution",
+          { p_share_token: token }
+        );
+
+        if (keysError || !encryptedKeys) {
+          throw new Error(
+            "Owner API keys not available. " +
+              "The flow owner must store their API keys to enable execution."
+          );
+        }
+
+        // Decrypt keys
+        const encryptionKey = process.env.ENCRYPTION_KEY;
+        if (!encryptionKey) {
+          throw new Error("Server configuration error: encryption key not set");
+        }
+
+        const apiKeys = decryptKeys(encryptedKeys, encryptionKey);
+
+        // Convert DB records to React Flow format
+        const nodes = flowData.nodes.map(recordToNode);
+        const edges = flowData.edges.map(recordToEdge);
+
+        // Build input overrides map
+        const inputOverrides: Record<string, string> = {};
+        for (const node of nodes) {
+          if (node.type === "text-input") {
+            const label = (node.data?.label as string) || node.id;
+            if (validatedInputs[label] !== undefined) {
+              inputOverrides[node.id] = validatedInputs[label];
+            } else if (validatedInputs[node.id] !== undefined) {
+              inputOverrides[node.id] = validatedInputs[node.id];
+            }
+          }
+        }
+
+        // Log execution for rate limiting
+        const { error: logError } = await supabase.rpc("log_execution", {
+          p_share_token: token,
+        });
+        if (logError) {
+          console.warn("Failed to log execution (non-critical):", logError.message);
+        }
+
+        // Count executable nodes for progress tracking
+        const totalNodes = countExecutableNodes(nodes);
+        let completedNodes = 0;
+
+        // Progress callback that emits SSE events
+        const onProgress = (event: {
+          nodeId: string;
+          nodeLabel: string;
+          nodeType: string;
+          status: "running" | "success" | "error";
+          output?: import("./types").StructuredOutput;
+          error?: string;
+          timestamp: string;
+        }) => {
+          if (signal.aborted) return;
+
+          // Count completed nodes (both success and error count as completed)
+          if (event.status === "success" || event.status === "error") {
+            completedNodes++;
+          }
+
+          // Emit progress notification
+          controller.enqueue(
+            encoder.encode(
+              formatSSEEvent({
+                jsonrpc: "2.0",
+                method: "notifications/progress",
+                params: {
+                  progressToken: String(requestId),
+                  progress: completedNodes,
+                  total: totalNodes,
+                  message: `${event.nodeLabel}: ${event.status}`,
+                  node: event,
+                },
+              })
+            )
+          );
+        };
+
+        // Execute flow with progress callbacks and abort signal
+        const result = await executeFlowServerWithProgress(
+          nodes,
+          edges,
+          apiKeys,
+          Object.keys(inputOverrides).length > 0 ? inputOverrides : undefined,
+          onProgress,
+          signal
+        );
+
+        // Check for cancellation before sending final result
+        if (signal.aborted) {
+          throw new Error("Execution cancelled");
+        }
+
+        // Transform outputs to structured format
+        const structuredOutputs = transformOutputs(result.outputs);
+        const hasErrors = Object.keys(result.errors).length > 0;
+
+        // Build final result
+        const finalResult: StreamingRunResult = {
+          status: hasErrors ? "failed" : "completed",
+          outputs: structuredOutputs,
+          errors: hasErrors ? result.errors : undefined,
+          duration_ms: Date.now() - startTime,
+        };
+
+        // Send final result
+        controller.enqueue(encoder.encode(formatResultEvent(requestId, finalResult)));
+      } catch (error) {
+        // Send error response
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        controller.enqueue(
+          encoder.encode(
+            formatErrorEvent(
+              requestId,
+              JsonRpcErrorCode.INTERNAL_ERROR,
+              errorMessage
+            )
+          )
+        );
+      } finally {
+        clearInterval(heartbeat);
+        controller.close();
+      }
+    },
+
+    cancel() {
+      // Called when the client disconnects
+      // The signal parameter already handles abort propagation to the execution
+    },
+  });
 }

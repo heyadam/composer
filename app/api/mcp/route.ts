@@ -4,19 +4,32 @@
  * Exposes Composer flow operations via the Model Context Protocol.
  * Uses stateless mode for serverless compatibility.
  *
+ * Supports both polling-based and SSE streaming execution:
+ * - Polling: Call run_flow to get job_id, then poll get_run_status
+ * - Streaming: Call run_flow with Accept: text/event-stream header
+ *
  * Tools:
  * - get_flow_info: Discover flow inputs/outputs by share token
- * - run_flow: Start async flow execution, returns job_id
+ * - run_flow: Start async flow execution (supports SSE streaming)
  * - get_run_status: Poll for job status and results
  */
+
+// Edge runtime required for SSE streaming on Vercel
+export const runtime = "edge";
+
+// Allow up to 5 minutes for flow execution (matches EXECUTION_LIMITS.TIMEOUT_MS)
+export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
 import { z } from "zod";
 
-// Allow up to 5 minutes for flow execution (matches EXECUTION_LIMITS.TIMEOUT_MS)
-export const maxDuration = 300;
-import { getFlowInfo, runFlow, getRunStatus } from "@/lib/mcp/tools";
+import {
+  getFlowInfo,
+  runFlow,
+  getRunStatus,
+  createFlowExecutionStream,
+} from "@/lib/mcp/tools";
 
 // ============================================================================
 // Zod Schemas for Runtime Validation
@@ -121,13 +134,13 @@ async function handleJsonRpcRequest(
   switch (method) {
     case "initialize":
       return {
-        protocolVersion: "2024-11-05",
+        protocolVersion: "2025-03-26",
         capabilities: {
           tools: {},
         },
         serverInfo: {
           name: "composer-mcp",
-          version: "1.0.0",
+          version: "2.0.0",
         },
       };
 
@@ -217,6 +230,9 @@ function buildErrorResponse(
  * POST /api/mcp
  *
  * Handle MCP JSON-RPC requests
+ *
+ * For run_flow with Accept: text/event-stream header, returns an SSE stream
+ * with real-time progress updates instead of returning a job_id for polling.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -225,6 +241,47 @@ export async function POST(request: NextRequest) {
     // Handle single request or batch
     const isBatch = Array.isArray(body);
     const requests = isBatch ? body : [body];
+
+    // Check if client accepts SSE (only applicable for single run_flow requests)
+    const acceptsSSE = request.headers.get("Accept")?.includes("text/event-stream");
+
+    // For single run_flow requests with SSE accept header, return streaming response
+    if (!isBatch && acceptsSSE && requests.length === 1) {
+      const req = requests[0];
+      const parseResult = JsonRpcRequestSchema.safeParse(req);
+
+      if (parseResult.success) {
+        const validatedReq = parseResult.data;
+
+        // Check if this is a tools/call for run_flow
+        // Also verify we have a valid request ID (streaming requires an ID to correlate the response)
+        if (validatedReq.method === "tools/call" && validatedReq.id !== null) {
+          const toolParseResult = ToolCallParamsSchema.safeParse(validatedReq.params);
+          if (toolParseResult.success && toolParseResult.data.name === "run_flow") {
+            const args = toolParseResult.data.arguments;
+
+            // Return SSE stream directly (no after() needed - stream keeps function alive)
+            const stream = createFlowExecutionStream(
+              args.token as string,
+              (args.inputs as Record<string, string>) || {},
+              validatedReq.id,
+              request.signal
+            );
+
+            return new Response(stream, {
+              headers: {
+                "Content-Type": "text/event-stream",
+                "Cache-Control": "no-cache, no-transform",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+              },
+            });
+          }
+        }
+      }
+    }
+
+    // Standard JSON-RPC handling for non-SSE requests
     const responses: unknown[] = [];
 
     for (const req of requests) {
@@ -299,10 +356,12 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     name: "composer-mcp",
-    version: "1.0.0",
+    version: "2.0.0",
+    protocolVersion: "2025-03-26",
     description:
       "MCP server for Composer - a visual AI workflow builder. " +
-      "Use POST to interact with the JSON-RPC API.",
+      "Use POST to interact with the JSON-RPC API. " +
+      "Supports SSE streaming for real-time execution progress.",
     tools: TOOLS.map((t) => t.name),
   });
 }
