@@ -318,14 +318,16 @@ html, body {
 /* Base node container - refined glass */
 .node-frame {
   @apply relative;
-  background: rgba(17, 17, 17, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  isolation: isolate;
+  background: rgba(30, 30, 34, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.3),
-    0 4px 16px rgba(0, 0, 0, 0.2);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 4px 16px rgba(0, 0, 0, 0.3);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: visible;
 }
