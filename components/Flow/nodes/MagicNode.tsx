@@ -7,6 +7,7 @@ import { Wand2, ChevronDown, ChevronRight, RefreshCw, AlertCircle, Loader2, Chec
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
 import { InputWithHandle } from "./InputWithHandle";
+import { NodeFooter } from "./NodeFooter";
 import { CacheToggle } from "./CacheToggle";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -107,17 +108,7 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
           />
         </>
       }
-      footer={
-        data.executionError ? (
-          <p className="text-xs text-rose-400 whitespace-pre-wrap line-clamp-4">
-            {data.executionError}
-          </p>
-        ) : data.executionOutput ? (
-          <p className="text-xs text-white/60 whitespace-pre-wrap line-clamp-4">
-            {data.executionOutput}
-          </p>
-        ) : null
-      }
+      footer={<NodeFooter error={data.executionError} output={data.executionOutput} />}
     >
       <div className="space-y-3">
         {/* Transformation description input with handle */}

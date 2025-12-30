@@ -74,7 +74,7 @@ export function AudioTranscriptionNode({ id, data }: NodeProps<AudioTranscriptio
         )}
 
         {/* Cache toggle */}
-        <CacheToggle nodeId={id} checked={data.cacheable ?? false} className="pt-2 border-t border-white/[0.04]" />
+        <CacheToggle nodeId={id} checked={data.cacheable ?? false} className="pt-2 border-t border-white/[0.06]" />
       </div>
     </NodeFrame>
   );

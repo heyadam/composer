@@ -6,6 +6,7 @@ import { Sparkles, Upload } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
 import { InputWithHandle } from "./InputWithHandle";
+import { NodeFooter } from "./NodeFooter";
 import { ProviderModelSelector } from "./ProviderModelSelector";
 import { ConfigSelect } from "./ConfigSelect";
 import { CacheToggle } from "./CacheToggle";
@@ -42,47 +43,6 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
   const currentModel = data.model || DEFAULT_IMAGE_MODEL;
   const currentModelConfig = IMAGE_PROVIDERS[currentProvider].models.find((m) => m.value === currentModel);
 
-  const renderFooter = () => {
-    if (data.executionError) {
-      return (
-        <p className="text-xs text-rose-400 whitespace-pre-wrap line-clamp-4">
-          {data.executionError}
-        </p>
-      );
-    }
-
-    if (data.executionOutput) {
-      const imageData = parseImageOutput(data.executionOutput);
-      if (imageData) {
-        return (
-          <div
-            className="w-full rounded-lg overflow-hidden bg-black/30 border border-white/10"
-            style={{ minHeight: "80px" }}
-          >
-            <img
-              src={getImageDataUrl(imageData)}
-              alt="Generated"
-              style={{
-                width: "100%",
-                height: "auto",
-                maxHeight: "120px",
-                objectFit: "cover",
-                display: "block"
-              }}
-            />
-          </div>
-        );
-      }
-      return (
-        <p className="text-xs text-white/60 whitespace-pre-wrap line-clamp-4">
-          {data.executionOutput}
-        </p>
-      );
-    }
-
-    return null;
-  };
-
   return (
     <NodeFrame
       title={data.label}
@@ -104,7 +64,7 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
           />
         </>
       }
-      footer={renderFooter()}
+      footer={<NodeFooter error={data.executionError} imageOutput={data.executionOutput} />}
     >
       <div className="space-y-3">
         <input

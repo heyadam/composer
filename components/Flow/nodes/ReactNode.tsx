@@ -101,7 +101,7 @@ export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
         </InputWithHandle>
 
         {/* Configuration */}
-        <div className="space-y-2.5 pt-3 border-t border-white/[0.04]">
+        <div className="space-y-2.5 pt-3 border-t border-white/[0.06]">
           <ProviderModelSelector
             providers={PROVIDERS}
             currentProvider={currentProvider}
