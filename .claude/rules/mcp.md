@@ -88,7 +88,7 @@ interface StructuredOutput {
 
 **Execution Limits**:
 - Timeout: 5 minutes
-- Max output size: 5MB (supports larger images)
+- Max output size: 10MB (supports larger images)
 
 **Owner-Funded Execution**: Required for MCP execution. Flow owner's API keys are decrypted server-side using `ENCRYPTION_KEY` env var.
 

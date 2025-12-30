@@ -43,8 +43,8 @@ type InputNodeType = (typeof INPUT_NODE_TYPES)[number];
 const EXECUTION_LIMITS = {
   /** Maximum execution time in milliseconds (5 minutes) */
   TIMEOUT_MS: 5 * 60 * 1000,
-  /** Maximum output size in bytes (5MB) - supports larger images */
-  MAX_OUTPUT_SIZE: 5_000_000,
+  /** Maximum output size in bytes (10MB) - supports larger images */
+  MAX_OUTPUT_SIZE: 10_000_000,
 } as const;
 
 // ============================================================================
@@ -464,7 +464,7 @@ async function executeJobAsync(job: FlowJob): Promise<void> {
   // Transform raw string outputs to structured format with explicit types
   const structuredOutputs = transformOutputs(rawOutputs);
 
-  // Check output size (now 5MB to support larger images)
+  // Check output size (10MB to support larger images)
   const outputSize = JSON.stringify(structuredOutputs).length;
   if (outputSize > EXECUTION_LIMITS.MAX_OUTPUT_SIZE) {
     const sizeInMB = (outputSize / 1024 / 1024).toFixed(1);
