@@ -293,6 +293,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
   // Collaboration mode hook
   const {
     isCollaborating,
+    initialized: collaborationInitialized,
     liveId,
     shareToken,
     flowName: collaborationFlowName,
@@ -341,7 +342,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     isOwner,
   });
 
-  // Templates modal hook (after useCollaboration so we have isCollaborating)
+  // Templates modal hook (after useCollaboration so we have isCollaborating and isOwner)
   const {
     isOpen: templatesModalOpen,
     open: openTemplatesModal,
@@ -350,9 +351,10 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
   } = useTemplatesModal({
     isLoaded,
     isCollaborating,
+    collaborationInitialized,
+    isOwner,
     nodes,
     edges,
-    flowMetadata,
   });
 
   // Calculate available space between sidebars for responsive labels

@@ -3,16 +3,16 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import type { Node, Edge } from "@xyflow/react";
 import { isNuxComplete } from "@/components/Flow/WelcomeDialog";
-import type { FlowMetadata } from "@/lib/flow-storage/types";
 
 const STORAGE_KEY = "avy-show-templates-modal";
 
 interface UseTemplatesModalOptions {
   isLoaded: boolean;
   isCollaborating: boolean;
+  collaborationInitialized: boolean;
+  isOwner: boolean;
   nodes: Node[];
   edges: Edge[];
-  flowMetadata: FlowMetadata | undefined;
 }
 
 interface UseTemplatesModalReturn {
@@ -42,9 +42,10 @@ function shouldShowTemplatesModal(): boolean {
 export function useTemplatesModal({
   isLoaded,
   isCollaborating,
+  collaborationInitialized,
+  isOwner,
   nodes,
   edges,
-  flowMetadata,
 }: UseTemplatesModalOptions): UseTemplatesModalReturn {
   const [isOpen, setIsOpen] = useState(false);
   const hasAutoOpenedRef = useRef(false);
@@ -53,17 +54,17 @@ export function useTemplatesModal({
   // 1. API keys loaded
   // 2. NUX complete
   // 3. Not permanently dismissed
-  // 4. Not collaborating
-  // 5. Flow is empty (no nodes/edges)
-  // 6. No cloud flow loaded
+  // 4. Either: not collaborating (demo mode) OR is owner (auto-live mode)
+  // 5. If collaborating, must wait for initialization before checking nodes
+  // 6. Flow is empty (no nodes/edges)
   const shouldAutoOpen =
     isLoaded &&
     isNuxComplete() &&
     shouldShowTemplatesModal() &&
-    !isCollaborating &&
+    (!isCollaborating || isOwner) &&
+    (!isCollaborating || collaborationInitialized) &&
     nodes.length === 0 &&
-    edges.length === 0 &&
-    !flowMetadata;
+    edges.length === 0;
 
   // Auto-open on mount when conditions are met
   useEffect(() => {

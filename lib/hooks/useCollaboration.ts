@@ -91,6 +91,8 @@ export interface UseCollaborationOptions {
 
 export interface UseCollaborationReturn {
   isCollaborating: boolean;
+  // True when initial flow data has been loaded from collaborationMode
+  initialized: boolean;
   shareToken: string | null;
   liveId: string | null;
   flowName: string | null;
@@ -973,6 +975,7 @@ export function useCollaboration({
 
   return {
     isCollaborating,
+    initialized,
     shareToken,
     liveId,
     flowName,
