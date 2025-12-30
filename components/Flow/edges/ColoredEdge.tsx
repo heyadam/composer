@@ -2,15 +2,16 @@
 
 import { BaseEdge, getSmoothStepPath, type EdgeProps } from "@xyflow/react";
 
-// Color mapping based on data type
+// Color mapping based on data type - "Luminous Precision" palette
+// Sophisticated, muted tones that glow on dark backgrounds
 const edgeColors = {
-  string: "#d1d5db",   // gray-300
-  image: "#d1d5db",    // gray-300
-  response: "#d1d5db", // gray-300
-  audio: "#34d399",    // emerald-400
-  boolean: "#fb7185",  // rose-400
-  pulse: "#fb923c",    // orange-400
-  default: "#d1d5db",  // gray-300
+  string: "#8EC8F6",   // Soft azure - logical, flowing data
+  image: "#C9B8FA",    // Lavender bloom - creative, visual
+  response: "#F6D98E", // Champagne gold - valuable output
+  audio: "#8EF6E4",    // Electric mint - wavelengths, frequency
+  boolean: "#F6A8B8",  // Soft coral - binary, warm
+  pulse: "#F6C88E",    // Apricot signal - trigger, burst
+  default: "#8EC8F6",  // Soft azure (default to string)
 };
 
 export function ColoredEdge({

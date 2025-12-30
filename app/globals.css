@@ -303,16 +303,16 @@ html, body {
    muted accents, and refined typography.
 */
 
-/* Node accent colors - muted, sophisticated */
+/* Node accent colors - "Luminous Precision" palette */
 :root {
-  --node-violet: 139 92 246;
-  --node-fuchsia: 217 70 239;
-  --node-cyan: 34 211 238;
-  --node-rose: 251 113 133;
-  --node-amber: 251 191 36;
-  --node-emerald: 52 211 153;
-  --node-blue: 96 165 250;
-  --node-teal: 45 212 191;
+  --node-violet: 180 160 230;   /* Soft violet - text input */
+  --node-fuchsia: 201 184 250;  /* Lavender bloom - image input */
+  --node-cyan: 142 200 246;     /* Soft azure - text generation */
+  --node-rose: 246 168 184;     /* Soft coral - image generation */
+  --node-amber: 246 217 142;    /* Champagne gold - ai logic */
+  --node-emerald: 160 230 200;  /* Soft sage - preview output */
+  --node-blue: 160 190 246;     /* Periwinkle - react component */
+  --node-teal: 142 246 228;     /* Electric mint - audio */
 }
 
 /* Base node container - refined glass */
@@ -426,30 +426,30 @@ html, body {
     0 2px 4px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Port colors - refined */
+/* Port colors - "Luminous Precision" palette */
 .port-cyan {
-  background-color: rgb(34 211 238) !important;
-  color: rgb(34 211 238);
+  background-color: #8EC8F6 !important; /* Soft azure - string/text */
+  color: #8EC8F6;
 }
 .port-purple {
-  background-color: rgb(192 132 252) !important;
-  color: rgb(192 132 252);
+  background-color: #C9B8FA !important; /* Lavender bloom - image */
+  color: #C9B8FA;
 }
 .port-amber {
-  background-color: rgb(251 191 36) !important;
-  color: rgb(251 191 36);
+  background-color: #F6D98E !important; /* Champagne gold - response */
+  color: #F6D98E;
 }
 .port-emerald {
-  background-color: rgb(52 211 153) !important;
-  color: rgb(52 211 153);
+  background-color: #8EF6E4 !important; /* Electric mint - audio */
+  color: #8EF6E4;
 }
 .port-rose {
-  background-color: rgb(251 113 133) !important;
-  color: rgb(251 113 133);
+  background-color: #F6A8B8 !important; /* Soft coral - boolean */
+  color: #F6A8B8;
 }
 .port-orange {
-  background-color: rgb(251 146 60) !important;
-  color: rgb(251 146 60);
+  background-color: #F6C88E !important; /* Apricot signal - pulse */
+  color: #F6C88E;
 }
 
 /* Port label - subtle */
