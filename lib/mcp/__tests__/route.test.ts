@@ -194,6 +194,7 @@ describe("MCP Route", () => {
         mockGetRunStatus.mockResolvedValue({
           job_id: "job_abc123def456ghij",
           status: "completed",
+          message: "Flow completed successfully! The outputs field contains the results.",
           created_at: "2024-01-01T00:00:00Z",
           outputs: { result: { type: "text", value: "Done" } },
         });
@@ -220,6 +221,7 @@ describe("MCP Route", () => {
         mockGetRunStatus.mockResolvedValue({
           job_id: "job_abc123def456ghij",
           status: "completed",
+          message: "Flow completed successfully! The outputs field contains the results.",
           created_at: "2024-01-01T00:00:00Z",
           outputs: { result: { type: "text", value: "Done" } },
         });
@@ -355,7 +357,9 @@ describe("MCP Route", () => {
       });
     });
 
-    describe("SSE streaming", () => {
+    // SSE streaming is currently disabled to prevent context bloat in Cursor
+    // These tests are skipped but kept for when SSE is re-enabled
+    describe.skip("SSE streaming (disabled)", () => {
       it("should return SSE response when Accept header includes text/event-stream", async () => {
         // Create a mock ReadableStream for the SSE response
         const mockStream = new ReadableStream({
@@ -464,6 +468,7 @@ describe("MCP Route", () => {
         mockGetRunStatus.mockResolvedValue({
           job_id: "job_abc123def456ghij",
           status: "completed",
+          message: "Flow completed successfully! The outputs field contains the results.",
           created_at: "2024-01-01T00:00:00Z",
           outputs: { result: { type: "text", value: "Done" } },
         });

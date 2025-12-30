@@ -75,12 +75,23 @@ export interface FlowInfo {
 }
 
 /**
+ * Submission confirmation status for run_flow responses.
+ * Uses "started" to clearly distinguish from polling statuses.
+ * This prevents LLMs from confusing the submission response with
+ * a polling response and retrying run_flow instead of calling get_run_status.
+ */
+export type SubmissionStatus = "started";
+
+/**
  * Result from run_flow tool
  */
 export interface RunFlowResult {
   job_id: string;
-  status: JobStatus;
+  /** Always "started" to indicate successful submission. Use get_run_status to poll for completion. */
+  status: SubmissionStatus;
   message: string;
+  /** Explicit instruction for the LLM on what to do next */
+  next_action: "call get_run_status";
   quota_remaining?: number;
 }
 
@@ -90,6 +101,8 @@ export interface RunFlowResult {
 export interface RunStatusResult {
   job_id: string;
   status: JobStatus;
+  /** Guidance message for LLM on what to do next */
+  message: string;
   created_at: string;
   started_at?: string;
   completed_at?: string;

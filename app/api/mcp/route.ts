@@ -75,10 +75,10 @@ const TOOLS = [
   {
     name: "run_flow",
     description:
-      "Execute a Composer flow asynchronously with optional input values. " +
-      "Returns a job_id that you can poll with get_run_status. " +
-      "Requires owner-funded execution to be enabled on the flow. " +
-      "Note: Only text-input nodes can receive values; image/audio inputs use pre-configured data.",
+      "STEP 1 of 2: Start a Composer flow execution. " +
+      "Returns a job_id - the flow runs asynchronously in the background. " +
+      "CRITICAL: After calling run_flow, you MUST IMMEDIATELY call get_run_status with the returned job_id. " +
+      "The flow takes 5-60 seconds. Do NOT stop after run_flow - always follow up with get_run_status.",
     inputSchema: {
       type: "object",
       properties: {
@@ -100,14 +100,16 @@ const TOOLS = [
   {
     name: "get_run_status",
     description:
-      "Check the status of an async flow execution and retrieve results when complete. " +
-      "Poll this until status is 'completed' or 'failed'.",
+      "STEP 2 of 2: Get results after calling run_flow. REQUIRED - you must call this after run_flow. " +
+      "Pass the job_id from run_flow's response. " +
+      "If status is 'running', wait 3 seconds and call get_run_status again. " +
+      "Repeat until status is 'completed' (outputs available) or 'failed' (check errors).",
     inputSchema: {
       type: "object",
       properties: {
         job_id: {
           type: "string",
-          description: "Job ID returned from run_flow",
+          description: "Job ID returned from run_flow - required to check status",
         },
         token: {
           type: "string",
@@ -243,8 +245,11 @@ export async function POST(request: NextRequest) {
     const isBatch = Array.isArray(body);
     const requests = isBatch ? body : [body];
 
-    // Check if client accepts SSE (only applicable for single run_flow requests)
-    const acceptsSSE = request.headers.get("Accept")?.includes("text/event-stream");
+    // SSE streaming disabled for now - causes context bloat in Cursor
+    // Cursor sends Accept: text/event-stream but can't handle large streaming responses,
+    // which fills context and causes the LLM to lose track of the conversation.
+    // Polling mode (run_flow -> get_run_status) works reliably with small responses.
+    const acceptsSSE = false; // request.headers.get("Accept")?.includes("text/event-stream");
 
     // For single run_flow requests with SSE accept header, return streaming response
     if (!isBatch && acceptsSSE && requests.length === 1) {

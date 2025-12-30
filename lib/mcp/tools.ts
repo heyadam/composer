@@ -30,6 +30,7 @@ import type {
   RunFlowResult,
   RunStatusResult,
   StreamingRunResult,
+  StructuredOutput,
 } from "./types";
 import type { Node } from "@xyflow/react";
 
@@ -321,8 +322,14 @@ export async function runFlow(
   return {
     response: {
       job_id: job.id,
-      status: job.status,
-      message: `Job ${job.id} created. Use get_run_status to check progress.`,
+      // Use "started" (not job.status) to clearly indicate this is a submission confirmation
+      // This prevents LLMs from confusing the response with a polling status and retrying run_flow
+      status: "started" as const,
+      message:
+        `Flow execution started. ` +
+        `NEXT STEP: Call get_run_status with job_id "${job.id}" to get results. ` +
+        `Poll every 2-3 seconds until status is "completed" or "failed".`,
+      next_action: "call get_run_status" as const,
       quota_remaining: quotaResult.remaining,
     },
     executionPromise,
@@ -357,15 +364,83 @@ export async function getRunStatus(
     throw new Error(`Job not found: ${jobId}. Jobs expire after 1 hour.`);
   }
 
+  // Generate contextual message based on status
+  let message: string;
+  switch (job.status) {
+    case "pending":
+      message = "Flow is queued and will start shortly. Call get_run_status again in 2-3 seconds.";
+      break;
+    case "running":
+      message = "Flow is still executing. Call get_run_status again in 2-3 seconds to check progress.";
+      break;
+    case "completed":
+      message = "Flow completed successfully! The outputs field contains the results.";
+      break;
+    case "failed":
+      message = "Flow execution failed. Check the errors field for details.";
+      break;
+    default:
+      message = `Status: ${job.status}`;
+  }
+
+  // Summarize large outputs to prevent context bloat in MCP clients
+  // Binary data (images, audio) is truncated to show only metadata
+  const summarizedOutputs = job.outputs
+    ? summarizeOutputsForContext(job.outputs)
+    : undefined;
+
   return {
     job_id: job.id,
     status: job.status,
+    message,
     created_at: job.createdAt.toISOString(),
     started_at: job.startedAt?.toISOString(),
     completed_at: job.completedAt?.toISOString(),
-    outputs: job.outputs,
+    outputs: summarizedOutputs,
     errors: job.errors,
   };
+}
+
+/**
+ * Summarize outputs to prevent context bloat in MCP clients.
+ * Binary data (images, audio) is replaced with metadata.
+ * Text outputs are truncated if too long.
+ */
+function summarizeOutputsForContext(
+  outputs: Record<string, StructuredOutput>
+): Record<string, StructuredOutput> {
+  const MAX_TEXT_LENGTH = 2000;
+  const result: Record<string, StructuredOutput> = {};
+
+  for (const [key, output] of Object.entries(outputs)) {
+    if (output.type === "image" || output.type === "audio") {
+      // Replace binary data with metadata summary
+      const sizeKB = Math.round((output.value.length * 3) / 4 / 1024); // base64 to KB
+      result[key] = {
+        type: output.type,
+        value: `[${output.type.toUpperCase()}: ${sizeKB}KB, ${output.mimeType || "unknown format"}]`,
+        mimeType: output.mimeType,
+      };
+    } else if (output.type === "text" && output.value.length > MAX_TEXT_LENGTH) {
+      // Truncate long text
+      result[key] = {
+        type: output.type,
+        value: output.value.slice(0, MAX_TEXT_LENGTH) + `\n\n[TRUNCATED: ${output.value.length} chars total]`,
+      };
+    } else if (output.type === "code" && output.value.length > MAX_TEXT_LENGTH) {
+      // Truncate long code
+      result[key] = {
+        type: output.type,
+        value: output.value.slice(0, MAX_TEXT_LENGTH) + `\n\n// [TRUNCATED: ${output.value.length} chars total]`,
+        mimeType: output.mimeType,
+      };
+    } else {
+      // Keep small outputs as-is
+      result[key] = output;
+    }
+  }
+
+  return result;
 }
 
 // ============================================================================
