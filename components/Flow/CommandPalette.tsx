@@ -17,6 +17,7 @@ import {
   AudioWaveform,
   FileAudio,
   ToggleLeft,
+  Combine,
   ArrowRight,
   X,
 } from "lucide-react";
@@ -38,6 +39,7 @@ const iconMap: Record<NodeType, typeof Keyboard> = {
   "realtime-conversation": Mic,
   "audio-transcription": FileAudio,
   "switch": ToggleLeft,
+  "string-combine": Combine,
 };
 
 // Extended node definitions with categories
@@ -57,7 +59,7 @@ const categorizedNodes = [
   {
     category: "Logic",
     nodes: nodeDefinitions.filter((n) =>
-      ["ai-logic", "switch"].includes(n.type)
+      ["ai-logic", "switch", "string-combine"].includes(n.type)
     ),
   },
   {

@@ -83,6 +83,7 @@ const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
   "realtime-conversation": { label: "Realtime Audio", voice: "marin", vadMode: "semantic_vad", instructions: "You are a helpful assistant. Always respond in English." },
   "audio-transcription": { label: "Transcribe", model: "gpt-4o-transcribe" },
   "switch": { label: "Switch", isOn: false },
+  "string-combine": { label: "String Combine", separator: "" },
 };
 
 export function AgentFlow({ collaborationMode }: AgentFlowProps) {

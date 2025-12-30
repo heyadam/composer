@@ -33,6 +33,7 @@ export const VALID_NODE_TYPES = [
   "realtime-conversation",
   "audio-transcription",
   "switch",
+  "string-combine",
 ] as const;
 
 export type ValidNodeType = (typeof VALID_NODE_TYPES)[number];
@@ -72,6 +73,7 @@ export const NODE_REQUIRED_FIELDS: Record<ValidNodeType, string[]> = {
   "realtime-conversation": ["label", "voice", "vadMode"],
   "audio-transcription": ["label"],
   "switch": ["label"],
+  "string-combine": ["label"],
 };
 
 /**

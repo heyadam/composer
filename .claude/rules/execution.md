@@ -70,6 +70,7 @@ Each node type has its own executor file in `lib/execution/executors/`:
 | `react-component.ts` | react-component | hasPulseOutput, shouldTrackDownstream |
 | `audio-transcription.ts` | audio-transcription | hasPulseOutput |
 | `realtime-conversation.ts` | realtime-conversation | hasPulseOutput |
+| `string-combine.ts` | string-combine | hasPulseOutput |
 | `comment.ts` | comment | - |
 
 All executors are registered via `lib/execution/executors/index.ts`.

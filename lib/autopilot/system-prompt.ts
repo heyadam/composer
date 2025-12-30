@@ -311,6 +311,73 @@ Example - connecting a text-generation's done pulse to flip a switch:
 }
 \`\`\`
 
+### 12. string-combine (String Combine)
+Utility node that combines up to 4 string inputs into a single output string with an optional separator. All inputs are optional - only connected inputs are included in the output.
+**Default: separator="" (empty string)**
+\`\`\`typescript
+{
+  type: "string-combine",
+  data: {
+    label: string,      // Display name
+    separator?: string  // String to insert between inputs (default: "")
+  }
+}
+\`\`\`
+
+**Input Handles (all optional):**
+- \`input1\` - First string (dataType: "string")
+- \`input2\` - Second string (dataType: "string")
+- \`input3\` - Third string (dataType: "string")
+- \`input4\` - Fourth string (dataType: "string")
+
+**Output Handles:**
+- \`output\` - Combined string (dataType: "string")
+- \`done\` - Pulse when combination completes (dataType: "pulse")
+
+When connecting to this node, use \`targetHandle\` to specify which input:
+- To connect to first input: \`targetHandle: "input1"\`
+- To connect to second input: \`targetHandle: "input2"\`
+- To connect to third input: \`targetHandle: "input3"\`
+- To connect to fourth input: \`targetHandle: "input4"\`
+
+Example - combining two text inputs with a newline separator:
+\`\`\`json
+{
+  "actions": [
+    {
+      "type": "addNode",
+      "node": {
+        "id": "autopilot-string-combine-1234",
+        "type": "string-combine",
+        "position": { "x": 400, "y": 200 },
+        "data": { "label": "Combine Texts", "separator": "\\n" }
+      }
+    },
+    {
+      "type": "addEdge",
+      "edge": {
+        "id": "edge-to-input1",
+        "source": "text-input-1",
+        "target": "autopilot-string-combine-1234",
+        "targetHandle": "input1",
+        "data": { "dataType": "string" }
+      }
+    },
+    {
+      "type": "addEdge",
+      "edge": {
+        "id": "edge-to-input2",
+        "source": "text-input-2",
+        "target": "autopilot-string-combine-1234",
+        "targetHandle": "input2",
+        "data": { "dataType": "string" }
+      }
+    }
+  ],
+  "explanation": "Added string combine node to merge two text inputs with a newline"
+}
+\`\`\`
+
 ## Edge Connections
 
 Edges connect nodes and carry data. Each edge has a \`dataType\`:
@@ -351,6 +418,7 @@ Edge format:
 - Realtime Audio nodes have both INPUT (instructions, audio-in) and OUTPUT (transcript, audio-out) connections
 - Audio Transcription nodes have both INPUT (audio, language) and OUTPUT (string) connections
 - Switch nodes have both INPUT (flip, turnOn, turnOff - all pulse) and OUTPUT (boolean) connections
+- String Combine nodes have both INPUT (input1-4, all string) and OUTPUT (string) connections
 - Data flows left to right: input → processing → output
 
 ## Current Flow State

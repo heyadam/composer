@@ -1,6 +1,8 @@
-# Step 7: Documentation
+# Step 8: Documentation
 
 Add user-facing documentation for your node to the Nextra docs site.
+
+> **Tip**: For detailed guidance on Nextra docs, MDX syntax, and common issues, invoke the `/docs` skill which covers the full documentation system.
 
 ## When to Write Documentation
 
@@ -201,3 +203,13 @@ If a port isn't connected, you can enter text directly in the node:
 
 Responses stream in real-time. Connected Preview Output nodes show the response as it generates.
 ```
+
+## See Also
+
+For more detailed documentation guidance, invoke the `/docs` skill:
+
+| Guide | Covers |
+|-------|--------|
+| `PAGES.md` | Creating and organizing doc pages, navigation setup |
+| `MDX.md` | MDX syntax, components, and conventions |
+| `ISSUES.md` | Common errors (hydration, build failures) and fixes |

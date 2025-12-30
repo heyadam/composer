@@ -58,6 +58,14 @@ All node components are in `components/Flow/nodes/` with editable labels.
 - Audio input/output ports
 - Auto-starts session when flow executes if output is connected
 
+## Utility Nodes
+
+**StringCombineNode** (type: `string-combine`): Combines up to 4 string inputs into one output:
+- Four string input ports (input1, input2, input3, input4)
+- Configurable separator (default: none)
+- Outputs combined string on "output" port
+- Has "done" pulse output for execution chaining
+
 ## Annotation Nodes
 
 **CommentNode** (type: `comment`): Resizable comment boxes for annotating flows:

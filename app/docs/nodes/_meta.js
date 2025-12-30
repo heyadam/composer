@@ -17,6 +17,11 @@ export default {
   "react-component": "React Component",
   "audio-transcription": "Audio Transcription",
   "realtime-conversation": "Realtime Conversation",
+  "-- Utility Nodes": {
+    type: "separator",
+    title: "Utility Nodes",
+  },
+  "string-combine": "String Combine",
   "-- Annotation": {
     type: "separator",
     title: "Annotation",

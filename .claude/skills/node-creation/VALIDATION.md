@@ -1,4 +1,4 @@
-# Step 6: Validation Checklist
+# Step 7: Validation Checklist
 
 Complete validation before considering the node done.
 
@@ -7,6 +7,7 @@ Complete validation before considering the node done.
 - [ ] `npm run lint` passes without errors
 - [ ] `npm run build` completes successfully
 - [ ] `npm test` passes (all tests)
+- [ ] Update `lib/execution/__tests__/executor-integration.test.ts` with new node type
 
 ## Unit Testing (Optional)
 

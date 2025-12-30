@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { nodeDefinitions, type NodeType } from "@/types/flow";
-import { Keyboard, Square, MessageSquare, ImageIcon, Upload, Sparkles, MessageSquarePlus, Code, Mic, AudioWaveform, FileAudio, ToggleLeft } from "lucide-react";
+import { Keyboard, Square, MessageSquare, ImageIcon, Upload, Sparkles, MessageSquarePlus, Code, Mic, AudioWaveform, FileAudio, ToggleLeft, Combine } from "lucide-react";
 
 const iconMap: Record<NodeType, typeof Keyboard> = {
   "text-input": Keyboard,
@@ -17,6 +17,7 @@ const iconMap: Record<NodeType, typeof Keyboard> = {
   "realtime-conversation": Mic,
   "audio-transcription": FileAudio,
   "switch": ToggleLeft,
+  "string-combine": Combine,
 };
 
 interface NodeToolbarProps {

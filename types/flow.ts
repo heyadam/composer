@@ -244,6 +244,12 @@ export interface SwitchNodeData extends Record<string, unknown>, ExecutionData {
   isOn: boolean;  // Persisted state (on/off)
 }
 
+// String combine node data
+export interface StringCombineNodeData extends Record<string, unknown>, ExecutionData {
+  label: string;
+  separator?: string;  // Separator between strings (default: empty string)
+}
+
 // Union type for all node data
 export type AgentNodeData =
   | InputNodeData
@@ -257,10 +263,11 @@ export type AgentNodeData =
   | ReactNodeData
   | RealtimeNodeData
   | AudioTranscriptionNodeData
-  | SwitchNodeData;
+  | SwitchNodeData
+  | StringCombineNodeData;
 
 // Custom node types
-export type NodeType = "text-input" | "preview-output" | "text-generation" | "image-generation" | "image-input" | "audio-input" | "ai-logic" | "comment" | "react-component" | "realtime-conversation" | "audio-transcription" | "switch";
+export type NodeType = "text-input" | "preview-output" | "text-generation" | "image-generation" | "image-input" | "audio-input" | "ai-logic" | "comment" | "react-component" | "realtime-conversation" | "audio-transcription" | "switch" | "string-combine";
 
 // Typed nodes
 export type InputNode = Node<InputNodeData, "text-input">;
@@ -275,6 +282,7 @@ export type ReactNode = Node<ReactNodeData, "react-component">;
 export type RealtimeNode = Node<RealtimeNodeData, "realtime-conversation">;
 export type AudioTranscriptionNode = Node<AudioTranscriptionNodeData, "audio-transcription">;
 export type SwitchNode = Node<SwitchNodeData, "switch">;
+export type StringCombineNode = Node<StringCombineNodeData, "string-combine">;
 
 export type AgentNode =
   | InputNode
@@ -288,7 +296,8 @@ export type AgentNode =
   | ReactNode
   | RealtimeNode
   | AudioTranscriptionNode
-  | SwitchNode;
+  | SwitchNode
+  | StringCombineNode;
 
 // Edge type
 export type AgentEdge = Edge;
@@ -367,6 +376,12 @@ export const nodeDefinitions: NodeDefinition[] = [
     label: "Switch",
     description: "Toggle on/off state",
     color: "bg-orange-500/10 text-orange-700 dark:text-orange-300",
+  },
+  {
+    type: "string-combine",
+    label: "String Combine",
+    description: "Combine multiple strings into one",
+    color: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
   },
 ];
 
@@ -472,6 +487,18 @@ export const NODE_PORT_SCHEMAS: Record<NodeType, NodePortSchema> = {
     ],
     outputs: [
       { id: "output", label: "On/Off", dataType: "boolean" },
+    ],
+  },
+  "string-combine": {
+    inputs: [
+      { id: "input1", label: "input 1", dataType: "string", required: false },
+      { id: "input2", label: "input 2", dataType: "string", required: false },
+      { id: "input3", label: "input 3", dataType: "string", required: false },
+      { id: "input4", label: "input 4", dataType: "string", required: false },
+    ],
+    outputs: [
+      { id: "output", label: "combined", dataType: "string" },
+      { id: "done", label: "Done", dataType: "pulse" },
     ],
   },
 };

@@ -13,11 +13,12 @@ This skill guides you through creating new nodes for the Composer visual workflo
 |------|-------|----------------|
 | 1 | [TYPES.md](TYPES.md) | Define node data interface and port schema in `types/flow.ts` |
 | 2 | [COMPONENT.md](COMPONENT.md) | Create React component with NodeFrame wrapper |
-| 3 | [EXECUTION.md](EXECUTION.md) | Add execution logic to `lib/execution/engine.ts` |
+| 3 | [EXECUTION.md](EXECUTION.md) | Add execution logic via executor file |
 | 4 | [AUTOPILOT.md](AUTOPILOT.md) | Integrate with Autopilot system |
-| 5 | [SIDEBAR.md](SIDEBAR.md) | Register in sidebar and set defaults |
-| 6 | [VALIDATION.md](VALIDATION.md) | Test and validate the implementation |
-| 7 | [DOCUMENTATION.md](DOCUMENTATION.md) | Write user-facing docs for the Nextra docs site |
+| 5 | [SIDEBAR.md](SIDEBAR.md) | Register in UI components and set defaults |
+| 6 | [RULES.md](RULES.md) | Update Claude rules project documentation |
+| 7 | [VALIDATION.md](VALIDATION.md) | Test and validate the implementation |
+| 8 | [DOCUMENTATION.md](DOCUMENTATION.md) | Write user-facing docs for the Nextra docs site |
 
 ## Quick Reference
 
@@ -41,10 +42,18 @@ This skill guides you through creating new nodes for the Composer visual workflo
 | 3 | `lib/execution/executors/index.ts` | Register executor |
 | 4 | `lib/autopilot/config.ts` | Valid types |
 | 4 | `lib/autopilot/system-prompt.ts` | LLM docs |
-| 5 | `components/Flow/NodeSidebar.tsx` | Icon |
+| 5 | `components/Flow/NodeSidebar.tsx` | Icon mapping |
+| 5 | `components/Flow/NodeToolbar.tsx` | Icon mapping |
+| 5 | `components/Flow/CommandPalette.tsx` | Icon mapping, category |
+| 5 | `components/Flow/AutopilotSidebar/ChangesPreview.tsx` | Icon mapping, label |
 | 5 | `components/Flow/AgentFlow.tsx` | Defaults |
-| 7 | `app/docs/nodes/your-node-type/page.mdx` | User docs |
-| 7 | `app/docs/nodes/_meta.js` | Navigation |
+| 6 | `CLAUDE.md` | Node count, types summary |
+| 6 | `.claude/rules/nodes.md` | Node documentation |
+| 6 | `.claude/rules/execution.md` | Executor table |
+| 6 | `.claude/rules/types.md` | Data interface, type lists |
+| 7 | `lib/execution/__tests__/executor-integration.test.ts` | Add to expected types |
+| 8 | `app/docs/nodes/your-node-type/page.mdx` | User docs |
+| 8 | `app/docs/nodes/_meta.js` | Navigation |
 
 ### Shared Hooks
 

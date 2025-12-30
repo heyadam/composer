@@ -1,0 +1,68 @@
+# String Combine
+
+Combine multiple text inputs into a single output.
+
+## Overview
+
+The String Combine node joins up to 4 string inputs into one output string. You can configure a separator to insert between each input.
+
+## Ports
+
+| Port | Type | Direction | Description |
+|------|------|-----------|-------------|
+| Input 1 | String (cyan) | In | First string to combine |
+| Input 2 | String (cyan) | In | Second string to combine |
+| Input 3 | String (cyan) | In | Third string to combine |
+| Input 4 | String (cyan) | In | Fourth string to combine |
+| Combined | String (cyan) | Out | The combined result |
+| Done | Pulse (orange) | Out | Fires when combination completes |
+
+## Settings
+
+| Setting | Description |
+|---------|-------------|
+| Separator | Text inserted between each input (default: none) |
+
+## How It Works
+
+1. Connect string outputs from other nodes to the input ports
+2. Set a separator if desired (e.g., newline, comma, space)
+3. Run the flow
+4. The node outputs all connected inputs joined together
+
+Only connected inputs are included in the output. Empty inputs are skipped.
+
+## Use Cases
+
+- **Build prompts** - Combine user input with context from multiple sources
+- **Create documents** - Join sections with newline separators
+- **Format lists** - Combine items with comma or bullet separators
+- **Chain outputs** - Merge results from parallel processing branches
+
+## Examples
+
+### Combining with Newlines
+
+Set separator to `\n` to join inputs on separate lines:
+
+```
+Input 1: "Hello"
+Input 2: "World"
+Separator: "\n"
+Output: "Hello\nWorld"
+```
+
+### Building a Prompt
+
+Connect multiple Text Input nodes to build a complex prompt:
+
+- Input 1: User question
+- Input 2: Context from a previous AI response
+- Input 3: Additional instructions
+- Separator: `\n\n`
+
+## Tips
+
+- Use with parallel branches to collect and merge multiple AI outputs
+- Connect to a Text Generation node to process the combined result
+- Leave inputs unconnected if you don't need all 4

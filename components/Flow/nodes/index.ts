@@ -11,6 +11,7 @@ import { ReactNode } from "./ReactNode";
 import { RealtimeNode } from "./RealtimeNode";
 import { AudioTranscriptionNode } from "./AudioTranscriptionNode";
 import { SwitchNode } from "./SwitchNode";
+import { StringCombineNode } from "./StringCombineNode";
 
 export const nodeTypes: NodeTypes = {
   "text-input": InputNode,
@@ -25,6 +26,7 @@ export const nodeTypes: NodeTypes = {
   "realtime-conversation": RealtimeNode,
   "audio-transcription": AudioTranscriptionNode,
   "switch": SwitchNode,
+  "string-combine": StringCombineNode,
 };
 
-export { InputNode, OutputNode, PromptNode, ImageNode, ImageInputNode, AudioInputNode, MagicNode, CommentNode, ReactNode, RealtimeNode, AudioTranscriptionNode, SwitchNode };
+export { InputNode, OutputNode, PromptNode, ImageNode, ImageInputNode, AudioInputNode, MagicNode, CommentNode, ReactNode, RealtimeNode, AudioTranscriptionNode, SwitchNode, StringCombineNode };

@@ -14,7 +14,7 @@ Flow types in `types/flow.ts` define node data interfaces with execution state t
 - `rose` = boolean
 - `orange` = pulse
 
-**Pulse Ports**: Processing nodes (`text-generation`, `image-generation`, `ai-logic`, `react-component`, `audio-transcription`) have a `done` output port that fires a pulse when execution completes. Pulses are momentary signals that are "on" for a single execution cycle, then return to "off".
+**Pulse Ports**: Processing nodes (`text-generation`, `image-generation`, `ai-logic`, `react-component`, `audio-transcription`, `string-combine`) have a `done` output port that fires a pulse when execution completes. Pulses are momentary signals that are "on" for a single execution cycle, then return to "off".
 
 ## Node Data Interfaces
 
@@ -58,6 +58,10 @@ Interface for audio streaming between nodes:
 - `streamId`: Reference ID to MediaStream in global audio registry
 - `buffer`, `mimeType`, `sampleRate`: For buffer-based audio transfer
 
+### StringCombineNodeData
+
+- `separator`: String to insert between inputs (default: empty string)
+
 ## Node Type Constants
 
 Valid node types for flow operations:
@@ -67,6 +71,7 @@ Valid node types for flow operations:
 - `text-generation`
 - `image-generation`
 - `ai-logic`
+- `string-combine`
 - `preview-output`
 - `react-component`
 - `comment`

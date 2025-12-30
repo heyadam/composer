@@ -21,6 +21,7 @@ import {
   AudioWaveform,
   FileAudio,
   ToggleLeft,
+  Combine,
   ChevronDown,
   CheckCircle2,
   AlertTriangle,
@@ -50,6 +51,7 @@ const iconMap: Record<NodeType, typeof Keyboard> = {
   "realtime-conversation": Mic,
   "audio-transcription": FileAudio,
   "switch": ToggleLeft,
+  "string-combine": Combine,
 };
 
 const nodeTypeLabels: Record<NodeType, string> = {
@@ -65,6 +67,7 @@ const nodeTypeLabels: Record<NodeType, string> = {
   "realtime-conversation": "Realtime Audio",
   "audio-transcription": "Transcribe",
   "switch": "Switch",
+  "string-combine": "String Combine",
 };
 
 const dataTypeColors: Record<

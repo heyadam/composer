@@ -84,7 +84,7 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 | Topic | Rule File | Key Components |
 |-------|-----------|----------------|
 | Core architecture | `architecture.md` | Flow editor, providers, edges, sidebars |
-| Node types | `nodes.md` | All 11 node types and their features |
+| Node types | `nodes.md` | All 12 node types and their features |
 | Execution | `execution.md` | Engine, API routes, execution hooks, caching |
 | Autopilot | `autopilot.md` | AI chat interface, flow generation |
 | Collaboration | `collaboration.md` | Live sharing, cursors, owner-funded execution |
@@ -103,6 +103,7 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 - `text-generation`: LLM prompt execution (multi-provider)
 - `image-generation`: AI image generation
 - `ai-logic`: Custom code transformation
+- `string-combine`: Combine up to 4 strings with separator
 - `react-component`: AI-generated React components
 - `audio-transcription`: Speech-to-text (OpenAI transcription)
 - `realtime-conversation`: Real-time voice conversation (OpenAI Realtime API)

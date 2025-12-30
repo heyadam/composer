@@ -22,6 +22,7 @@ describe("executor integration", () => {
     "realtime-conversation",
     "comment",
     "switch",
+    "string-combine",
   ];
 
   it("has all expected executors registered", () => {
