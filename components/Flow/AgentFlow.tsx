@@ -323,7 +323,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
 
     if (isCollaborating && liveId && shareToken) {
       return {
-        flowId: undefined,
+        flowId: collaborationMode?.initialFlow?.flow.id,
         liveId,
         shareToken,
         useOwnerKeys: collaborationMode?.initialFlow?.flow.use_owner_keys ?? false,

@@ -18,6 +18,7 @@ import {
   Globe,
   Key,
   Users,
+  Terminal,
 } from "lucide-react";
 import { getUserKeysStatus, updatePublishSettings } from "@/lib/flows/api";
 
@@ -51,6 +52,7 @@ export function LiveSettingsPopover({
   onOpenChange,
 }: LiveSettingsPopoverProps) {
   const [copied, setCopied] = useState(false);
+  const [copiedToken, setCopiedToken] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Owner-funded execution state
@@ -61,6 +63,7 @@ export function LiveSettingsPopover({
 
   // Use new /f/ URL format
   const shareUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/f/${liveId}/${shareToken}`;
+  const mcpUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/api/mcp`;
 
   // Fetch owner key status
   useEffect(() => {
@@ -88,6 +91,12 @@ export function LiveSettingsPopover({
     await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyToken = async () => {
+    await navigator.clipboard.writeText(shareToken);
+    setCopiedToken(true);
+    setTimeout(() => setCopiedToken(false), 2000);
   };
 
   const handleOpenInNewTab = () => {
@@ -223,6 +232,49 @@ export function LiveSettingsPopover({
                   </p>
                 )}
               </div>
+
+              {/* MCP Integration - only show when owner-funded is enabled */}
+              {useOwnerKeys && (
+                <div className="space-y-2 pt-2 border-t border-neutral-700">
+                  <Label className="text-xs font-medium flex items-center gap-1.5">
+                    <Terminal className="h-3 w-3" />
+                    MCP Integration
+                  </Label>
+                  <p className="text-[10px] text-neutral-400">
+                    Run this flow from Claude Code or other MCP clients
+                  </p>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <Label className="text-[10px] text-neutral-500 w-12 shrink-0">URL</Label>
+                      <Input
+                        readOnly
+                        value={mcpUrl}
+                        className="h-6 bg-neutral-800 border-neutral-600 text-neutral-300 font-mono text-[10px] px-2"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="text-[10px] text-neutral-500 w-12 shrink-0">Token</Label>
+                      <Input
+                        readOnly
+                        value={shareToken}
+                        className="h-6 bg-neutral-800 border-neutral-600 text-neutral-300 font-mono text-[10px] px-2"
+                      />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleCopyToken}
+                        className="h-6 w-6 shrink-0 bg-neutral-800 border-neutral-600 hover:bg-neutral-700"
+                      >
+                        {copiedToken ? (
+                          <Check className="h-2.5 w-2.5 text-green-500" />
+                        ) : (
+                          <Copy className="h-2.5 w-2.5" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
 

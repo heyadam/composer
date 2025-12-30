@@ -88,6 +88,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           live_id: candidateLiveId,
           share_token: candidateShareToken,
           use_owner_keys: true, // Enable owner-funded execution by default
+          allow_public_execute: true, // Enable MCP execution (linked to owner keys)
           updated_at: new Date().toISOString(),
         })
         .eq("id", id)
@@ -226,6 +227,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     };
     if (typeof useOwnerKeys === "boolean") {
       updates.use_owner_keys = useOwnerKeys;
+      // Auto-link: MCP execution requires owner-funded execution
+      // When owner keys are enabled, also enable public/MCP execution
+      updates.allow_public_execute = useOwnerKeys;
     }
     if (typeof allowPublicExecute === "boolean") {
       updates.allow_public_execute = allowPublicExecute;
