@@ -43,7 +43,6 @@ export function PortRow({ nodeId, input, output }: PortRowProps) {
             className={cn(
               "port-handle",
               `port-${input.colorClass}`,
-              inputHighlight && "!scale-110",
               !input.isConnected && !inputHighlight && "!opacity-35"
             )}
             style={{ left: -20, top: "50%", transform: "translateY(-50%)" }}
@@ -72,7 +71,6 @@ export function PortRow({ nodeId, input, output }: PortRowProps) {
             className={cn(
               "port-handle",
               `port-${output.colorClass}`,
-              outputHighlight && "!scale-110",
               !output.isConnected && !outputHighlight && "!opacity-35"
             )}
             style={{ right: -20, top: "50%", transform: "translateY(-50%)" }}

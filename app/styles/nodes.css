@@ -212,21 +212,26 @@
    Port Handles & Labels
    ============================================ */
 .port-handle {
-  width: 10px !important;
-  height: 10px !important;
+  width: 14px !important;
+  height: 14px !important;
   border-radius: 50% !important;
-  border: 2px solid rgba(17, 17, 17, 0.9) !important;
+  border: 2.5px solid rgba(17, 17, 17, 0.9) !important;
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.08),
     0 1px 3px rgba(0, 0, 0, 0.2) !important;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: width 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              height 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              margin 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .port-handle:hover {
-  transform: scale(1.15) !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin: -2px !important;
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.15),
-    0 0 8px currentColor,
+    0 0 10px currentColor,
     0 2px 4px rgba(0, 0, 0, 0.2) !important;
 }
 

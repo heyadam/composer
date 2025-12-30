@@ -40,7 +40,6 @@ export function InputWithHandle({
             className={cn(
               "port-handle",
               `port-${colorClass}`,
-              highlight && "!scale-110",
               !isConnected && !highlight && "!opacity-35"
             )}
             style={{ left: -20, top: "50%", transform: "translateY(-50%)" }}
