@@ -253,6 +253,61 @@ When connecting to this node, use \`targetHandle\` to specify the input:
 - To connect audio: \`targetHandle: "audio"\`
 - To connect language hint: \`targetHandle: "language"\`
 
+### 11. switch (Switch)
+Toggleable boolean state node inspired by Origami's Switch patch. Remembers its on/off state across executions. Can be controlled manually or via pulse inputs from upstream nodes.
+**Default: isOn=false**
+\`\`\`typescript
+{
+  type: "switch",
+  data: {
+    label: string,    // Display name
+    isOn?: boolean    // Initial state (default: false)
+  }
+}
+\`\`\`
+
+**Input Handles (all pulse inputs):**
+- \`flip\` - Toggles the state: on→off or off→on (dataType: "pulse")
+- \`turnOn\` - Sets state to on, no effect if already on (dataType: "pulse")
+- \`turnOff\` - Sets state to off, no effect if already off (dataType: "pulse")
+
+**Output Handles:**
+- \`output\` - Current boolean state: "true" or "false" (dataType: "boolean")
+
+When connecting to this node, use \`targetHandle\` to specify which pulse input:
+- To flip (toggle): \`targetHandle: "flip"\`
+- To turn on: \`targetHandle: "turnOn"\`
+- To turn off: \`targetHandle: "turnOff"\`
+
+Example - connecting a text-generation's done pulse to flip a switch:
+\`\`\`json
+{
+  "actions": [
+    {
+      "type": "addNode",
+      "node": {
+        "id": "autopilot-switch-1234",
+        "type": "switch",
+        "position": { "x": 700, "y": 200 },
+        "data": { "label": "Toggle", "isOn": false }
+      }
+    },
+    {
+      "type": "addEdge",
+      "edge": {
+        "id": "edge-done-to-flip",
+        "source": "text-gen-node",
+        "sourceHandle": "done",
+        "target": "autopilot-switch-1234",
+        "targetHandle": "flip",
+        "data": { "dataType": "pulse" }
+      }
+    }
+  ],
+  "explanation": "Added a switch that toggles whenever the text generation completes"
+}
+\`\`\`
+
 ## Edge Connections
 
 Edges connect nodes and carry data. Each edge has a \`dataType\`:
@@ -292,6 +347,7 @@ Edge format:
 - React Component nodes have both INPUT and OUTPUT connections (output is response dataType)
 - Realtime Audio nodes have both INPUT (instructions, audio-in) and OUTPUT (transcript, audio-out) connections
 - Audio Transcription nodes have both INPUT (audio, language) and OUTPUT (string) connections
+- Switch nodes have both INPUT (flip, turnOn, turnOff - all pulse) and OUTPUT (boolean) connections
 - Data flows left to right: input → processing → output
 
 ## Current Flow State

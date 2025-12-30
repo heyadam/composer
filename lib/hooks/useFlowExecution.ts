@@ -205,6 +205,8 @@ export function useFlowExecution({
                   ...(state.codeOutput !== undefined && { codeOutput: state.codeOutput }),
                   // Cache indicator
                   ...(state.fromCache !== undefined && { fromCache: state.fromCache }),
+                  // Switch node state persistence
+                  ...(state.switchState !== undefined && { isOn: state.switchState }),
                 },
               }
             : node

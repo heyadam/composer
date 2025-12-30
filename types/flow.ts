@@ -237,6 +237,12 @@ export interface AudioTranscriptionNodeData extends Record<string, unknown>, Exe
   cacheable?: boolean;
 }
 
+// Switch node data (Origami-style toggle)
+export interface SwitchNodeData extends Record<string, unknown>, ExecutionData {
+  label: string;
+  isOn: boolean;  // Persisted state (on/off)
+}
+
 // Union type for all node data
 export type AgentNodeData =
   | InputNodeData
@@ -249,10 +255,11 @@ export type AgentNodeData =
   | CommentNodeData
   | ReactNodeData
   | RealtimeNodeData
-  | AudioTranscriptionNodeData;
+  | AudioTranscriptionNodeData
+  | SwitchNodeData;
 
 // Custom node types
-export type NodeType = "text-input" | "preview-output" | "text-generation" | "image-generation" | "image-input" | "audio-input" | "ai-logic" | "comment" | "react-component" | "realtime-conversation" | "audio-transcription";
+export type NodeType = "text-input" | "preview-output" | "text-generation" | "image-generation" | "image-input" | "audio-input" | "ai-logic" | "comment" | "react-component" | "realtime-conversation" | "audio-transcription" | "switch";
 
 // Typed nodes
 export type InputNode = Node<InputNodeData, "text-input">;
@@ -266,6 +273,7 @@ export type CommentNode = Node<CommentNodeData, "comment">;
 export type ReactNode = Node<ReactNodeData, "react-component">;
 export type RealtimeNode = Node<RealtimeNodeData, "realtime-conversation">;
 export type AudioTranscriptionNode = Node<AudioTranscriptionNodeData, "audio-transcription">;
+export type SwitchNode = Node<SwitchNodeData, "switch">;
 
 export type AgentNode =
   | InputNode
@@ -278,7 +286,8 @@ export type AgentNode =
   | CommentNode
   | ReactNode
   | RealtimeNode
-  | AudioTranscriptionNode;
+  | AudioTranscriptionNode
+  | SwitchNode;
 
 // Edge type
 export type AgentEdge = Edge;
@@ -351,6 +360,12 @@ export const nodeDefinitions: NodeDefinition[] = [
     label: "Transcribe",
     description: "Convert audio to text",
     color: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+  },
+  {
+    type: "switch",
+    label: "Switch",
+    description: "Toggle on/off state",
+    color: "bg-orange-500/10 text-orange-700 dark:text-orange-300",
   },
 ];
 
@@ -445,6 +460,16 @@ export const NODE_PORT_SCHEMAS: Record<NodeType, NodePortSchema> = {
     outputs: [
       { id: "output", label: "string", dataType: "string" },
       { id: "done", label: "Done", dataType: "pulse" },
+    ],
+  },
+  "switch": {
+    inputs: [
+      { id: "flip", label: "Flip", dataType: "pulse", required: false },
+      { id: "turnOn", label: "Turn On", dataType: "pulse", required: false },
+      { id: "turnOff", label: "Turn Off", dataType: "pulse", required: false },
+    ],
+    outputs: [
+      { id: "output", label: "On/Off", dataType: "boolean" },
     ],
   },
 };

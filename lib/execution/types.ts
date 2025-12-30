@@ -60,6 +60,8 @@ export interface NodeExecutionState {
   codeOutput?: string;
   /** True if this result came from cache (not freshly executed) */
   fromCache?: boolean;
+  /** Switch node: updated state after execution */
+  switchState?: boolean;
 }
 
 export type ExecutionState = Record<string, NodeExecutionState>;

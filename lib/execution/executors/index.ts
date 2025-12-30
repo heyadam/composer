@@ -19,6 +19,7 @@ import { reactComponentExecutor } from "./react-component";
 import { audioTranscriptionExecutor } from "./audio-transcription";
 import { realtimeConversationExecutor } from "./realtime-conversation";
 import { commentExecutor } from "./comment";
+import { switchExecutor } from "./switch";
 
 // Register all executors
 registerExecutor(textInputExecutor);
@@ -32,6 +33,7 @@ registerExecutor(reactComponentExecutor);
 registerExecutor(audioTranscriptionExecutor);
 registerExecutor(realtimeConversationExecutor);
 registerExecutor(commentExecutor);
+registerExecutor(switchExecutor);
 
 // Re-export types for convenience
 export type { NodeExecutor, ExecutionContext, ExecuteNodeResult } from "./types";
@@ -49,3 +51,4 @@ export { reactComponentExecutor } from "./react-component";
 export { audioTranscriptionExecutor } from "./audio-transcription";
 export { realtimeConversationExecutor } from "./realtime-conversation";
 export { commentExecutor } from "./comment";
+export { switchExecutor } from "./switch";
