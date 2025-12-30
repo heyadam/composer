@@ -44,6 +44,39 @@ function getExtension(mimeType: string): string {
 }
 
 /**
+ * Sanitize filename for Content-Disposition header.
+ * Removes control characters, quotes, and encodes for RFC 5987.
+ */
+function sanitizeFilename(name: string): string {
+  // Remove control characters and problematic characters
+  const sanitized = name
+    .replace(/[\x00-\x1f\x7f]/g, "") // Control characters
+    .replace(/["\\/]/g, "_")          // Quotes and slashes
+    .replace(/\s+/g, "_")             // Whitespace to underscores
+    .slice(0, 100);                   // Limit length
+
+  // Check if ASCII-only (can use simple format)
+  if (/^[\x20-\x7e]+$/.test(sanitized)) {
+    return `filename="${sanitized}"`;
+  }
+
+  // Use RFC 5987 encoding for non-ASCII
+  const encoded = encodeURIComponent(sanitized).replace(/['()]/g, escape);
+  return `filename*=UTF-8''${encoded}`;
+}
+
+/**
+ * Validate base64 string format.
+ * Returns true if the string appears to be valid base64.
+ */
+function isValidBase64(str: string): boolean {
+  // Check for valid base64 characters and proper padding
+  if (str.length === 0) return false;
+  if (str.length % 4 !== 0) return false;
+  return /^[A-Za-z0-9+/]*={0,2}$/.test(str);
+}
+
+/**
  * GET /api/mcp/outputs/:jobId/:outputKey
  *
  * Fetches a single output from a completed job.
@@ -115,20 +148,36 @@ export async function GET(
     "text/plain"
   );
 
-  // Generate filename
+  // Generate sanitized filename (prevents header injection)
   const extension = getExtension(contentType);
-  const filename = `${decodedKey}.${extension}`;
+  const contentDisposition = `inline; ${sanitizeFilename(`${decodedKey}.${extension}`)}`;
 
   // For binary types (image, audio), decode from base64
   if (output.type === "image" || output.type === "audio") {
+    // Validate base64 format before decoding
+    if (!isValidBase64(output.value)) {
+      return NextResponse.json(
+        { error: "Invalid output data format" },
+        { status: 500 }
+      );
+    }
+
     const buffer = Buffer.from(output.value, "base64");
+
+    // Verify decoded buffer is not empty
+    if (buffer.length === 0) {
+      return NextResponse.json(
+        { error: "Output data is empty" },
+        { status: 500 }
+      );
+    }
 
     return new NextResponse(buffer, {
       status: 200,
       headers: {
         "Content-Type": contentType,
         "Content-Length": buffer.length.toString(),
-        "Content-Disposition": `inline; filename="${filename}"`,
+        "Content-Disposition": contentDisposition,
         "Cache-Control": "public, max-age=3600", // Cache for 1 hour (job TTL)
       },
     });
@@ -140,7 +189,7 @@ export async function GET(
     headers: {
       "Content-Type": contentType,
       "Content-Length": Buffer.byteLength(output.value, "utf-8").toString(),
-      "Content-Disposition": `inline; filename="${filename}"`,
+      "Content-Disposition": contentDisposition,
       "Cache-Control": "public, max-age=3600",
     },
   });
