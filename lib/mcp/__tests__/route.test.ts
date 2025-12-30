@@ -193,7 +193,7 @@ describe("MCP Route", () => {
           job_id: "job_abc123def456ghij",
           status: "completed",
           created_at: "2024-01-01T00:00:00Z",
-          outputs: { result: "Done" },
+          outputs: { result: { type: "text", value: "Done" } },
         });
 
         const request = createRequest({
@@ -219,7 +219,7 @@ describe("MCP Route", () => {
           job_id: "job_abc123def456ghij",
           status: "completed",
           created_at: "2024-01-01T00:00:00Z",
-          outputs: { result: "Done" },
+          outputs: { result: { type: "text", value: "Done" } },
         });
 
         const request = createRequest({

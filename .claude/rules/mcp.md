@@ -28,6 +28,8 @@ Composer exposes an MCP server at `/api/mcp` that allows external tools (Claude 
 
 **Types** (`lib/mcp/types.ts`): TypeScript interfaces for jobs, flow info, and results.
 
+**Output Parser** (`lib/mcp/output-parser.ts`): Transforms raw execution outputs to structured format with explicit type information.
+
 ## MCP Tools
 
 | Tool | Description |
@@ -35,6 +37,43 @@ Composer exposes an MCP server at `/api/mcp` that allows external tools (Claude 
 | `get_flow_info` | Returns flow name, description, owner-funded status, input nodes, output nodes |
 | `run_flow` | Creates job, validates rate limits, starts background execution |
 | `get_run_status` | Returns job status, timestamps, outputs/errors when complete |
+
+## Structured Output Format
+
+Outputs are returned as structured objects with explicit type information:
+
+```typescript
+interface StructuredOutput {
+  type: "text" | "image" | "audio" | "code";
+  value: string;       // text content or base64-encoded binary
+  mimeType?: string;   // for image/audio (e.g., "image/png", "audio/webm")
+}
+```
+
+**Example response from `get_run_status`:**
+```json
+{
+  "job_id": "job_abc123...",
+  "status": "completed",
+  "outputs": {
+    "My Image": {
+      "type": "image",
+      "value": "iVBORw0KGgo...",
+      "mimeType": "image/png"
+    },
+    "Text Result": {
+      "type": "text",
+      "value": "Hello world"
+    }
+  }
+}
+```
+
+**Output Types:**
+- `text`: Plain text output
+- `image`: Base64-encoded image (PNG, JPEG, WebP, GIF)
+- `audio`: Base64-encoded audio (WebM, MP4)
+- `code`: Generated React component code (`mimeType: "text/jsx"`)
 
 ## Security & Rate Limiting
 
@@ -49,7 +88,7 @@ Composer exposes an MCP server at `/api/mcp` that allows external tools (Claude 
 
 **Execution Limits**:
 - Timeout: 5 minutes
-- Max output size: 1MB
+- Max output size: 5MB (supports larger images)
 
 **Owner-Funded Execution**: Required for MCP execution. Flow owner's API keys are decrypted server-side using `ENCRYPTION_KEY` env var.
 
@@ -106,5 +145,6 @@ Required for MCP execution:
 Unit tests in `lib/mcp/__tests__/`:
 - `route.test.ts`: API route JSON-RPC protocol tests
 - `tools.test.ts`: Tool implementation tests
+- `output-parser.test.ts`: Structured output transformation tests
 
 Run with `npm test`.

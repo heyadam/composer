@@ -11,6 +11,37 @@
 export type JobStatus = "pending" | "running" | "completed" | "failed";
 
 /**
+ * Structured output types for MCP responses
+ */
+export type StructuredOutputType = "text" | "image" | "audio" | "code";
+
+/**
+ * Structured output from flow execution.
+ * Replaces raw string outputs with typed objects for better consumer handling.
+ */
+export interface StructuredOutput {
+  /** The type of output data */
+  type: StructuredOutputType;
+  /** The output value - text content or base64-encoded binary data */
+  value: string;
+  /** MIME type for binary data (e.g., "image/png", "audio/webm"). Defaults applied for image/audio. */
+  mimeType?: string;
+}
+
+/**
+ * Type guard to check if an object is a StructuredOutput
+ */
+export function isStructuredOutput(obj: unknown): obj is StructuredOutput {
+  if (!obj || typeof obj !== "object") return false;
+  const o = obj as Record<string, unknown>;
+  return (
+    typeof o.type === "string" &&
+    ["text", "image", "audio", "code"].includes(o.type) &&
+    typeof o.value === "string"
+  );
+}
+
+/**
  * In-memory job record
  */
 export interface FlowJob {
@@ -21,7 +52,7 @@ export interface FlowJob {
   createdAt: Date;
   startedAt?: Date;
   completedAt?: Date;
-  outputs?: Record<string, string>;
+  outputs?: Record<string, StructuredOutput>;
   errors?: Record<string, string>;
 }
 
@@ -62,6 +93,6 @@ export interface RunStatusResult {
   created_at: string;
   started_at?: string;
   completed_at?: string;
-  outputs?: Record<string, string>;
+  outputs?: Record<string, StructuredOutput>;
   errors?: Record<string, string>;
 }

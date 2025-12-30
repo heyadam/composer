@@ -12,6 +12,7 @@ import { decryptKeys } from "@/lib/encryption";
 import { recordToNode, recordToEdge } from "@/lib/flows/transform";
 import { executeFlowServer } from "@/lib/execution/server-execute";
 import { jobStore } from "./job-store";
+import { transformOutputs } from "./output-parser";
 import type { FlowNodeRecord, FlowEdgeRecord } from "@/lib/flows/types";
 import type { FlowInfo, FlowJob, RunFlowResult, RunStatusResult } from "./types";
 import type { Node } from "@xyflow/react";
@@ -42,8 +43,8 @@ type InputNodeType = (typeof INPUT_NODE_TYPES)[number];
 const EXECUTION_LIMITS = {
   /** Maximum execution time in milliseconds (5 minutes) */
   TIMEOUT_MS: 5 * 60 * 1000,
-  /** Maximum output size in bytes (1MB) */
-  MAX_OUTPUT_SIZE: 1_000_000,
+  /** Maximum output size in bytes (5MB) - supports larger images */
+  MAX_OUTPUT_SIZE: 5_000_000,
 } as const;
 
 // ============================================================================
@@ -457,14 +458,19 @@ async function executeJobAsync(job: FlowJob): Promise<void> {
 
   // Update job with results
   const errors = result.errors || {};
-  const outputs = result.outputs || {};
+  const rawOutputs = result.outputs || {};
   const hasErrors = Object.keys(errors).length > 0;
 
-  // Check output size
-  const outputSize = JSON.stringify(outputs).length;
+  // Transform raw string outputs to structured format with explicit types
+  const structuredOutputs = transformOutputs(rawOutputs);
+
+  // Check output size (now 5MB to support larger images)
+  const outputSize = JSON.stringify(structuredOutputs).length;
   if (outputSize > EXECUTION_LIMITS.MAX_OUTPUT_SIZE) {
+    const sizeInMB = (outputSize / 1024 / 1024).toFixed(1);
+    const maxInMB = (EXECUTION_LIMITS.MAX_OUTPUT_SIZE / 1024 / 1024).toFixed(0);
     await jobStore.fail(job.id, {
-      _error: `Output size (${Math.round(outputSize / 1024)}KB) exceeds maximum allowed (${Math.round(EXECUTION_LIMITS.MAX_OUTPUT_SIZE / 1024)}KB)`,
+      _error: `Output size (${sizeInMB}MB) exceeds maximum allowed (${maxInMB}MB)`,
     });
     return;
   }
@@ -473,7 +479,7 @@ async function executeJobAsync(job: FlowJob): Promise<void> {
     await jobStore.fail(job.id, errors);
   } else {
     try {
-      await jobStore.complete(job.id, outputs);
+      await jobStore.complete(job.id, structuredOutputs);
     } catch (completeError) {
       // If we can't mark as complete, mark as failed instead
       console.error("Failed to complete job, marking as failed:", completeError);

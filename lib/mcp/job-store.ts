@@ -6,21 +6,48 @@
  */
 
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import type { FlowJob, JobStatus } from "./types";
+import { parseRawOutput } from "./output-parser";
+import type { FlowJob, JobStatus, StructuredOutput } from "./types";
+import { isStructuredOutput } from "./types";
 
 /**
  * Database record shape for mcp_jobs table
+ * Note: outputs can be either legacy string format or new StructuredOutput format
  */
 interface McpJobRecord {
   id: string;
   share_token: string;
   status: JobStatus;
   inputs: Record<string, string>;
-  outputs: Record<string, string> | null;
+  outputs: Record<string, unknown> | null;
   errors: Record<string, string> | null;
   created_at: string;
   started_at: string | null;
   completed_at: string | null;
+}
+
+/**
+ * Normalize outputs from database to StructuredOutput format.
+ * Handles both legacy string format and new structured format for backward compatibility.
+ */
+function normalizeOutputs(
+  outputs: Record<string, unknown> | null
+): Record<string, StructuredOutput> | undefined {
+  if (!outputs) return undefined;
+
+  return Object.fromEntries(
+    Object.entries(outputs).map(([key, value]) => {
+      if (typeof value === "string") {
+        // Legacy format: raw string, parse it
+        return [key, parseRawOutput(value)];
+      } else if (isStructuredOutput(value)) {
+        // New format: already structured
+        return [key, value];
+      }
+      // Unknown format: convert to text
+      return [key, { type: "text" as const, value: String(value) }];
+    })
+  );
 }
 
 /**
@@ -32,7 +59,7 @@ function recordToJob(record: McpJobRecord): FlowJob {
     shareToken: record.share_token,
     status: record.status,
     inputs: record.inputs,
-    outputs: record.outputs ?? undefined,
+    outputs: normalizeOutputs(record.outputs),
     errors: record.errors ?? undefined,
     createdAt: new Date(record.created_at),
     startedAt: record.started_at ? new Date(record.started_at) : undefined,
@@ -89,10 +116,10 @@ class JobStore {
   }
 
   /**
-   * Mark job as completed with outputs
+   * Mark job as completed with structured outputs
    * Throws if the update fails to avoid silent failures
    */
-  async complete(jobId: string, outputs: Record<string, string>): Promise<void> {
+  async complete(jobId: string, outputs: Record<string, StructuredOutput>): Promise<void> {
     const supabase = createServiceRoleClient();
 
     const { error } = await supabase.rpc("complete_mcp_job", {

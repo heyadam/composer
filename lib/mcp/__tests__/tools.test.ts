@@ -250,7 +250,7 @@ describe("MCP Tools", () => {
         shareToken: "abc123DEF456",
         status: "completed" as const,
         inputs: {},
-        outputs: { result: "Hello world" },
+        outputs: { result: { type: "text" as const, value: "Hello world" } },
         createdAt: new Date("2024-01-01T00:00:00Z"),
         startedAt: new Date("2024-01-01T00:00:01Z"),
         completedAt: new Date("2024-01-01T00:00:05Z"),
@@ -266,7 +266,7 @@ describe("MCP Tools", () => {
         created_at: "2024-01-01T00:00:00.000Z",
         started_at: "2024-01-01T00:00:01.000Z",
         completed_at: "2024-01-01T00:00:05.000Z",
-        outputs: { result: "Hello world" },
+        outputs: { result: { type: "text", value: "Hello world" } },
         errors: undefined,
       });
     });
@@ -285,7 +285,7 @@ describe("MCP Tools", () => {
         shareToken: "abc123DEF456",
         status: "completed" as const,
         inputs: {},
-        outputs: { result: "Hello world" },
+        outputs: { result: { type: "text" as const, value: "Hello world" } },
         createdAt: new Date("2024-01-01T00:00:00Z"),
       };
 
@@ -301,7 +301,7 @@ describe("MCP Tools", () => {
         shareToken: "abc123DEF456",
         status: "completed" as const,
         inputs: {},
-        outputs: { result: "Hello world" },
+        outputs: { result: { type: "text" as const, value: "Hello world" } },
         createdAt: new Date("2024-01-01T00:00:00Z"),
       };
 
