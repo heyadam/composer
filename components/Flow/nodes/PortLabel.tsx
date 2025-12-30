@@ -10,60 +10,49 @@ export type PortColorClass = "cyan" | "purple" | "amber" | "emerald" | "rose" | 
 interface PortRowProps {
   nodeId: string;
   input?: {
-    id?: string;        // Handle ID for React Flow
+    id?: string;
     label: string;
     colorClass: PortColorClass;
-    required?: boolean; // Defaults to true
-    isConnected?: boolean; // Whether the input handle is connected
+    required?: boolean;
+    isConnected?: boolean;
   };
   output?: {
-    id?: string;        // Handle ID for React Flow
+    id?: string;
     label: string;
     colorClass: PortColorClass;
-    isConnected?: boolean; // Whether the output handle is connected
+    isConnected?: boolean;
   };
 }
 
 export function PortRow({ nodeId, input, output }: PortRowProps) {
   const { isConnecting, connectingFromNodeId } = useConnectionState();
 
-  // Color mappings
-  const colorMap: Record<string, { dot: string; hoverDot: string }> = {
-    cyan: { dot: "!bg-cyan-400", hoverDot: "hover:!bg-cyan-400" },
-    purple: { dot: "!bg-purple-400", hoverDot: "hover:!bg-purple-400" },
-    amber: { dot: "!bg-amber-400", hoverDot: "hover:!bg-amber-400" },
-    emerald: { dot: "!bg-emerald-400", hoverDot: "hover:!bg-emerald-400" },
-    rose: { dot: "!bg-rose-400", hoverDot: "hover:!bg-rose-400" },       // boolean
-    orange: { dot: "!bg-orange-400", hoverDot: "hover:!bg-orange-400" }, // pulse
-  };
-
   const inputHighlight = isConnecting;
   const outputHighlight = connectingFromNodeId === nodeId;
   const isOptional = input?.required === false;
 
   return (
-    <div className="relative flex items-center justify-between py-1.5 px-3">
-      {/* Input side (left) */}
+    <div className="relative flex items-center justify-between py-1 px-2">
+      {/* Input side */}
       {input ? (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Handle
             type="target"
             position={Position.Left}
             id={input.id}
             className={cn(
-              "!w-3.5 !h-3.5 !border-2 !border-background !shadow-sm transition-all duration-200",
-              inputHighlight
-                ? `${colorMap[input.colorClass].dot} !scale-110`
-                : input.isConnected
-                ? "!bg-white hover:!scale-110"
-                : "!bg-gray-500 hover:!scale-110"
+              "port-handle",
+              `port-${input.colorClass}`,
+              inputHighlight && "!scale-110",
+              !input.isConnected && !inputHighlight && "!opacity-35"
             )}
+            style={{ left: -20, top: "50%", transform: "translateY(-50%)" }}
           />
           <span
             className={cn(
-              "text-xs font-medium text-muted-foreground transition-all duration-200",
-              inputHighlight && "text-foreground",
-              isOptional && "opacity-60"
+              "port-label transition-all duration-200",
+              inputHighlight && "!opacity-100 !text-white/80",
+              isOptional && "opacity-35"
             )}
           >
             {input.label}
@@ -73,26 +62,25 @@ export function PortRow({ nodeId, input, output }: PortRowProps) {
         <div />
       )}
 
-      {/* Output side (right) */}
+      {/* Output side */}
       {output ? (
-        <div className="flex items-center gap-2 flex-row-reverse">
+        <div className="flex items-center gap-1.5 flex-row-reverse">
           <Handle
             type="source"
             position={Position.Right}
             id={output.id}
             className={cn(
-              "!w-3.5 !h-3.5 !border-2 !border-background !shadow-sm transition-all duration-200",
-              outputHighlight
-                ? `${colorMap[output.colorClass].dot} !scale-110`
-                : output.isConnected
-                ? "!bg-white hover:!scale-110"
-                : "!bg-gray-500 hover:!scale-110"
+              "port-handle",
+              `port-${output.colorClass}`,
+              outputHighlight && "!scale-110",
+              !output.isConnected && !outputHighlight && "!opacity-35"
             )}
+            style={{ right: -20, top: "50%", transform: "translateY(-50%)" }}
           />
           <span
             className={cn(
-              "text-xs font-medium text-muted-foreground transition-all duration-200",
-              outputHighlight && "text-foreground"
+              "port-label transition-all duration-200",
+              outputHighlight && "!opacity-100 !text-white/80"
             )}
           >
             {output.label}
@@ -125,7 +113,7 @@ export function PortList({ nodeId, inputs = [], outputs = [] }: PortListProps) {
   const rowCount = Math.max(inputs.length, outputs.length, 1);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col divide-y divide-white/[0.03]">
       {Array.from({ length: rowCount }).map((_, index) => (
         <PortRow
           key={index}

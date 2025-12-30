@@ -1,37 +1,31 @@
 "use client";
 
-import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
+import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import type { InputNodeData } from "@/types/flow";
-import { Keyboard } from "lucide-react";
+import { Type } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
-import { cn } from "@/lib/utils";
+import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 
 type InputNodeType = Node<InputNodeData, "text-input">;
 
 export function InputNode({ id, data }: NodeProps<InputNodeType>) {
   const { updateNodeData } = useReactFlow();
-  const edges = useEdges();
-
-  // Check if output is connected (handle undefined when default handle is used)
-  const isOutputConnected = edges.some(
-    (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
-  );
+  const { isOutputConnected } = useEdgeConnections(id);
 
   return (
     <NodeFrame
       title={data.label}
       onTitleChange={(label) => updateNodeData(id, { label })}
-      icon={<Keyboard className="h-4 w-4" />}
-      iconClassName="bg-purple-500/10 text-purple-600 dark:text-purple-300"
-      accentBorderClassName="border-purple-500"
+      icon={<Type />}
+      accentColor="violet"
       status={data.executionStatus}
       fromCache={data.fromCache}
       className="w-[280px]"
       ports={
         <PortRow
           nodeId={id}
-          output={{ id: "output", label: "String", colorClass: "cyan", isConnected: isOutputConnected }}
+          output={{ id: "output", label: "String", colorClass: "cyan", isConnected: isOutputConnected("output", true) }}
         />
       }
     >
@@ -39,10 +33,7 @@ export function InputNode({ id, data }: NodeProps<InputNodeType>) {
         value={data.inputValue || ""}
         onChange={(e) => updateNodeData(id, { inputValue: e.target.value })}
         placeholder="Enter text..."
-        className={cn(
-          "nodrag w-full min-h-[84px] resize-y rounded-md border border-input bg-background/60 dark:bg-muted/40 px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
-          "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-        )}
+        className="nodrag node-input min-h-[84px] resize-y"
       />
     </NodeFrame>
   );

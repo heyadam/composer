@@ -7,6 +7,7 @@ import { Mic, Square, Loader2 } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
 import { InputWithHandle } from "./InputWithHandle";
+import { NodeFooter } from "./NodeFooter";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useRealtimeSession } from "@/lib/hooks/useRealtimeSession";
+import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 
 const VOICES = ["marin", "cedar", "alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"] as const;
 
@@ -42,28 +44,12 @@ function formatTranscript(entries: RealtimeTranscriptEntry[]): string {
 
 export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
   const { updateNodeData, getEdges } = useReactFlow();
-  const edges = useEdges();
+  const edges = useEdges(); // Still needed for getConnectedAudioStreamId
+  const { isInputConnected, isOutputConnected } = useEdgeConnections(id);
   const [isPttHeld, setIsPttHeld] = useState(false);
 
-  // Check connection states
-  const isInstructionsConnected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "instructions"
-  );
-  const isAudioInConnected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "audio-in"
-  );
-  const isTranscriptConnected = edges.some(
-    (edge) => edge.source === id && edge.sourceHandle === "transcript"
-  );
-  const isAudioOutConnected = edges.some(
-    (edge) => edge.source === id && edge.sourceHandle === "audio-out"
-  );
-  const isDoneConnected = edges.some(
-    (edge) => edge.source === id && edge.sourceHandle === "done"
-  );
-
   // Check if any output is connected (for auto-start behavior)
-  const hasOutputConnection = isTranscriptConnected || isAudioOutConnected;
+  const hasOutputConnection = isOutputConnected("transcript") || isOutputConnected("audio-out");
 
   // Push transcript to connected nodes in real-time
   const pushTranscriptToConnectedNodes = useCallback((entries: RealtimeTranscriptEntry[]) => {
@@ -94,7 +80,7 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
     sendEvent,
   } = useRealtimeSession({
     nodeId: id,
-    audioInStreamId: isAudioInConnected ? getConnectedAudioStreamId(edges, id) : undefined,
+    audioInStreamId: isInputConnected("audio-in") ? getConnectedAudioStreamId(edges, id) : undefined,
     onTranscriptUpdate: (entries) => {
       updateNodeData(id, { transcript: entries });
       // Push to connected nodes in real-time
@@ -143,51 +129,40 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
     <NodeFrame
       title={data.label}
       onTitleChange={(label) => updateNodeData(id, { label })}
-      icon={<Mic className="h-4 w-4" />}
-      iconClassName="bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"
-      accentBorderClassName="border-emerald-500"
+      icon={<Mic />}
+      accentColor="teal"
       status={data.executionStatus}
       className="w-[360px]"
       ports={
         <>
           <PortRow
             nodeId={id}
-            output={{ id: "transcript", label: "Transcript", colorClass: "cyan", isConnected: isTranscriptConnected }}
+            output={{ id: "transcript", label: "Transcript", colorClass: "cyan", isConnected: isOutputConnected("transcript") }}
           />
           <PortRow
             nodeId={id}
-            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isDoneConnected }}
+            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isOutputConnected("done") }}
           />
         </>
       }
-      footer={
-        (data.executionError || errorMessage) ? (
-          <p className="text-xs text-destructive whitespace-pre-wrap line-clamp-4">
-            {data.executionError || errorMessage}
-          </p>
-        ) : null
-      }
+      footer={<NodeFooter error={data.executionError || errorMessage || undefined} />}
     >
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* System instructions (can be connected or inline) */}
         <InputWithHandle
           id="instructions"
           label="System Instructions"
           colorClass="cyan"
-          isConnected={isInstructionsConnected}
+          isConnected={isInputConnected("instructions")}
         >
           <textarea
-            value={isInstructionsConnected ? "" : (data.instructions ?? "")}
+            value={isInputConnected("instructions") ? "" : (data.instructions ?? "")}
             onChange={(e) => updateNodeData(id, { instructions: e.target.value })}
-            placeholder={isInstructionsConnected ? "Connected" : "You are a helpful assistant..."}
-            disabled={isInstructionsConnected}
+            placeholder={isInputConnected("instructions") ? "Connected" : "You are a helpful assistant..."}
+            disabled={isInputConnected("instructions")}
             className={cn(
-              "nodrag w-full min-h-[60px] resize-y rounded-md border border-input px-3 py-2 text-sm",
-              "shadow-xs transition-[color,box-shadow] outline-none",
-              "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-              isInstructionsConnected
-                ? "bg-muted/50 dark:bg-muted/20 cursor-not-allowed"
-                : "bg-background/60 dark:bg-muted/40"
+              "nodrag node-input min-h-[60px] resize-y",
+              isInputConnected("instructions") && "node-input:disabled"
             )}
           />
         </InputWithHandle>
@@ -198,12 +173,12 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
             value={data.voice}
             onValueChange={(v) => updateNodeData(id, { voice: v })}
           >
-            <SelectTrigger className="flex-1 nodrag">
+            <SelectTrigger className="flex-1 nodrag h-8 text-xs">
               <SelectValue placeholder="Voice" />
             </SelectTrigger>
             <SelectContent>
               {VOICES.map((v) => (
-                <SelectItem key={v} value={v}>{v}</SelectItem>
+                <SelectItem key={v} value={v} className="text-xs">{v}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -212,13 +187,13 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
             value={data.vadMode}
             onValueChange={(v) => updateNodeData(id, { vadMode: v })}
           >
-            <SelectTrigger className="flex-1 nodrag">
+            <SelectTrigger className="flex-1 nodrag h-8 text-xs">
               <SelectValue placeholder="VAD" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="semantic_vad">Semantic VAD</SelectItem>
-              <SelectItem value="server_vad">Server VAD</SelectItem>
-              <SelectItem value="disabled">Manual (PTT)</SelectItem>
+              <SelectItem value="semantic_vad" className="text-xs">Semantic VAD</SelectItem>
+              <SelectItem value="server_vad" className="text-xs">Server VAD</SelectItem>
+              <SelectItem value="disabled" className="text-xs">Manual (PTT)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -226,33 +201,33 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
         {/* Session controls */}
         <div className="flex items-center gap-2">
           {status === "disconnected" ? (
-            <Button onClick={handleStartSession} className="flex-1 nodrag">
-              <Mic className="w-4 h-4 mr-2" />
+            <Button onClick={handleStartSession} size="sm" className="flex-1 nodrag h-8">
+              <Mic className="w-3.5 h-3.5 mr-1.5" />
               Start Session
             </Button>
           ) : status === "connecting" ? (
-            <Button disabled className="flex-1 nodrag">
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            <Button disabled size="sm" className="flex-1 nodrag h-8">
+              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
               Connecting...
             </Button>
           ) : (
-            <Button variant="destructive" onClick={disconnect} className="flex-1 nodrag">
-              <Square className="w-4 h-4 mr-2" />
+            <Button variant="destructive" onClick={disconnect} size="sm" className="flex-1 nodrag h-8">
+              <Square className="w-3.5 h-3.5 mr-1.5" />
               End Session
             </Button>
           )}
 
           {/* Status indicator - only show when active */}
           {status !== "disconnected" && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <div className={cn(
-                "w-2 h-2 rounded-full",
-                status === "connected" && "bg-green-500 animate-pulse",
-                status === "connecting" && "bg-yellow-500 animate-pulse",
-                status === "error" && "bg-red-500"
+                "w-1.5 h-1.5 rounded-full",
+                status === "connected" && "bg-emerald-400 animate-pulse",
+                status === "connecting" && "bg-amber-400 animate-pulse",
+                status === "error" && "bg-rose-400"
               )} />
               {status === "connected" && (
-                <span className="text-xs text-muted-foreground">
+                <span className="text-[11px] text-white/50">
                   {Math.floor(elapsedSeconds / 60)}:{String(elapsedSeconds % 60).padStart(2, "0")}
                 </span>
               )}
@@ -264,7 +239,8 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
         {status === "connected" && data.vadMode === "disabled" && (
           <Button
             variant="outline"
-            className="w-full nodrag"
+            size="sm"
+            className="w-full nodrag h-8"
             onMouseDown={() => {
               setIsPttHeld(true);
               sendEvent({ type: "input_audio_buffer.clear" });
@@ -285,23 +261,23 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
               }
             }}
           >
-            <Mic className="w-4 h-4 mr-2" />
+            <Mic className="w-3.5 h-3.5 mr-1.5" />
             Hold to Talk
           </Button>
         )}
 
         {/* Transcript display */}
         {transcript && transcript.length > 0 && (
-          <div className="max-h-48 overflow-y-auto space-y-2 p-2 bg-muted/30 rounded-md">
+          <div className="max-h-40 overflow-y-auto space-y-1.5 p-2 bg-white/[0.02] rounded-lg border border-white/[0.03]">
             {transcript.map((entry) => (
               <div
                 key={entry.id}
                 className={cn(
-                  "text-sm p-2 rounded",
-                  entry.role === "user" ? "bg-blue-500/10" : "bg-emerald-500/10"
+                  "text-[12px] p-2 rounded-md",
+                  entry.role === "user" ? "bg-blue-500/10 text-white/70" : "bg-emerald-500/10 text-white/70"
                 )}
               >
-                <span className="font-medium">
+                <span className="font-medium text-white/80">
                   {entry.role === "user" ? "You" : "AI"}:
                 </span>{" "}
                 {entry.text}

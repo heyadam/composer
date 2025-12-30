@@ -3,13 +3,22 @@
 import { useState, type ReactNode } from "react";
 import type { ExecutionStatus } from "@/lib/execution/types";
 import { cn } from "@/lib/utils";
-import { NodeStatusBadge } from "./NodeStatusBadge";
+import { NodeStatusIndicator } from "./NodeStatusBadge";
+
+export type NodeAccentColor =
+  | "violet"   // text-input
+  | "fuchsia"  // image-input
+  | "cyan"     // text-generation
+  | "rose"     // image-generation
+  | "amber"    // ai-logic
+  | "emerald"  // preview-output
+  | "blue"     // react-component
+  | "teal";    // audio
 
 export function NodeFrame({
   title,
   icon,
-  iconClassName,
-  accentBorderClassName,
+  accentColor = "cyan",
   status,
   fromCache,
   ports,
@@ -20,8 +29,7 @@ export function NodeFrame({
 }: {
   title: string;
   icon: ReactNode;
-  iconClassName: string;
-  accentBorderClassName: string;
+  accentColor?: NodeAccentColor;
   status?: ExecutionStatus;
   fromCache?: boolean;
   ports?: ReactNode;
@@ -32,78 +40,79 @@ export function NodeFrame({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(title);
-  const statusClasses =
+
+  const statusClass =
     status === "running"
-      ? "ring-2 ring-primary/20"
+      ? "node-running"
       : status === "success"
-        ? "ring-2 ring-gray-400/30"
+        ? "node-success"
         : status === "error"
-          ? "ring-2 ring-destructive/25"
+          ? "node-error"
           : "";
 
   return (
     <div
       className={cn(
-        "relative rounded-xl border bg-card shadow-lg overflow-visible",
-        accentBorderClassName,
-        statusClasses,
+        "node-frame",
+        `node-accent-${accentColor}`,
+        statusClass,
         className
       )}
     >
-      <div className="flex items-center justify-between gap-2 px-3 py-2 border-b bg-muted/20">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className={cn("size-7 rounded-md grid place-items-center", iconClassName)}>
-            {icon}
-          </div>
-          <div className="min-w-0">
-            {isEditing ? (
-              <input
-                autoFocus
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                onBlur={() => {
+      {/* Header */}
+      <div className="node-header">
+        <div className="node-icon">{icon}</div>
+        <div className="flex-1 min-w-0">
+          {isEditing ? (
+            <input
+              autoFocus
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={() => {
+                onTitleChange?.(editValue);
+                setIsEditing(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
                   onTitleChange?.(editValue);
                   setIsEditing(false);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    onTitleChange?.(editValue);
-                    setIsEditing(false);
-                  }
-                  if (e.key === "Escape") {
-                    setEditValue(title);
-                    setIsEditing(false);
-                  }
-                }}
-                className="nodrag text-sm font-medium bg-transparent border-none outline-none w-full"
-              />
-            ) : (
-              <div
-                onClick={() => {
-                  if (onTitleChange) {
-                    setEditValue(title);
-                    setIsEditing(true);
-                  }
-                }}
-                className={cn(
-                  "text-sm font-medium truncate",
-                  onTitleChange && "cursor-text hover:bg-muted/50 rounded px-1 -mx-1"
-                )}
-              >
-                {title}
-              </div>
-            )}
-          </div>
+                }
+                if (e.key === "Escape") {
+                  setEditValue(title);
+                  setIsEditing(false);
+                }
+              }}
+              className="nodrag node-title w-full bg-transparent border-none outline-none"
+            />
+          ) : (
+            <div
+              onClick={() => {
+                if (onTitleChange) {
+                  setEditValue(title);
+                  setIsEditing(true);
+                }
+              }}
+              className={cn(
+                "node-title truncate",
+                onTitleChange && "cursor-text hover:opacity-80"
+              )}
+            >
+              {title}
+            </div>
+          )}
         </div>
-        <NodeStatusBadge status={status} fromCache={fromCache} className="ml-2" />
+
+        <NodeStatusIndicator status={status} fromCache={fromCache} />
       </div>
 
-      {ports ? <div className="border-b">{ports}</div> : null}
+      {/* Port section */}
+      {ports ? <div className="node-ports">{ports}</div> : null}
 
-      {children ? <div className="px-3 py-2">{children}</div> : null}
+      {/* Body content */}
+      {children ? <div className="node-body">{children}</div> : null}
 
-      {footer ? <div className="px-3 py-2 border-t bg-muted/10">{footer}</div> : null}
+      {/* Footer */}
+      {footer ? <div className="node-footer">{footer}</div> : null}
     </div>
   );
 }
-

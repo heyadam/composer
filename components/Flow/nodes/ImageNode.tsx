@@ -1,15 +1,19 @@
 "use client";
 
-import { useRef } from "react";
-import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
+import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import type { ImageNodeData } from "@/types/flow";
-import { ImageIcon, Upload, X } from "lucide-react";
+import { Sparkles, Upload } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
 import { InputWithHandle } from "./InputWithHandle";
+import { NodeFooter } from "./NodeFooter";
 import { ProviderModelSelector } from "./ProviderModelSelector";
 import { ConfigSelect } from "./ConfigSelect";
+import { CacheToggle } from "./CacheToggle";
+import { ImageClearButton } from "./ImageClearButton";
 import { cn } from "@/lib/utils";
+import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
+import { useImageFileInput } from "@/lib/hooks/useImageFileInput";
 import {
   IMAGE_PROVIDERS,
   DEFAULT_IMAGE_PROVIDER,
@@ -21,51 +25,17 @@ import {
   PARTIAL_IMAGES_OPTIONS,
   type ImageProviderId,
 } from "@/lib/providers";
-import { parseImageOutput, getImageDataUrl, stringifyImageOutput } from "@/lib/image-utils";
+import { parseImageOutput, getImageDataUrl } from "@/lib/image-utils";
 
 type ImageNodeType = Node<ImageNodeData, "image-generation">;
 
 export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
   const { updateNodeData } = useReactFlow();
-  const edges = useEdges();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Check if inputs/output are connected
-  const isImageConnected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "image"
-  );
-  const isPromptConnected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "prompt"
-  );
-  const isOutputConnected = edges.some(
-    (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
-  );
-  const isDoneConnected = edges.some(
-    (edge) => edge.source === id && edge.sourceHandle === "done"
-  );
-
-  // File upload handling for inline image input
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = (reader.result as string).split(",")[1];
-      const imageData = stringifyImageOutput({
-        type: "image",
-        value: base64,
-        mimeType: file.type || "image/png",
-      });
-      updateNodeData(id, { imageInput: imageData });
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
-  };
-
-  const handleClearImage = () => {
-    updateNodeData(id, { imageInput: undefined });
-  };
+  const { isInputConnected, isOutputConnected } = useEdgeConnections(id);
+  const { fileInputRef, handleFileChange, handleClear, triggerFileSelect } = useImageFileInput({
+    nodeId: id,
+    dataKey: "imageInput",
+  });
 
   const uploadedImageData = data.imageInput ? parseImageOutput(data.imageInput) : null;
 
@@ -73,54 +43,12 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
   const currentModel = data.model || DEFAULT_IMAGE_MODEL;
   const currentModelConfig = IMAGE_PROVIDERS[currentProvider].models.find((m) => m.value === currentModel);
 
-  const renderFooter = () => {
-    if (data.executionError) {
-      return (
-        <p className="text-xs text-destructive whitespace-pre-wrap line-clamp-4">
-          {data.executionError}
-        </p>
-      );
-    }
-
-    if (data.executionOutput) {
-      const imageData = parseImageOutput(data.executionOutput);
-      if (imageData) {
-        return (
-          <div
-            className="w-full rounded overflow-hidden bg-muted/20"
-            style={{ minHeight: "80px" }}
-          >
-            <img
-              src={getImageDataUrl(imageData)}
-              alt="Generated"
-              style={{
-                width: "100%",
-                height: "auto",
-                maxHeight: "120px",
-                objectFit: "cover",
-                display: "block"
-              }}
-            />
-          </div>
-        );
-      }
-      return (
-        <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4">
-          {data.executionOutput}
-        </p>
-      );
-    }
-
-    return null;
-  };
-
   return (
     <NodeFrame
       title={data.label}
       onTitleChange={(label) => updateNodeData(id, { label })}
-      icon={<ImageIcon className="h-4 w-4" />}
-      iconClassName="bg-gray-500/10 text-gray-600 dark:text-gray-300"
-      accentBorderClassName=""
+      icon={<Sparkles />}
+      accentColor="rose"
       status={data.executionStatus}
       fromCache={data.fromCache}
       className="w-[280px]"
@@ -128,18 +56,17 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
         <>
           <PortRow
             nodeId={id}
-            output={{ id: "output", label: "Image", colorClass: "purple", isConnected: isOutputConnected }}
+            output={{ id: "output", label: "Image", colorClass: "purple", isConnected: isOutputConnected("output", true) }}
           />
           <PortRow
             nodeId={id}
-            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isDoneConnected }}
+            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isOutputConnected("done") }}
           />
         </>
       }
-      footer={renderFooter()}
+      footer={<NodeFooter error={data.executionError} imageOutput={data.executionOutput} />}
     >
-      <div className="space-y-2">
-        {/* Hidden file input for image upload */}
+      <div className="space-y-3">
         <input
           ref={fileInputRef}
           type="file"
@@ -153,18 +80,16 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
           id="prompt"
           label="Image Prompt"
           colorClass="cyan"
-          isConnected={isPromptConnected}
+          isConnected={isInputConnected("prompt")}
         >
           <textarea
-            value={isPromptConnected ? "" : (typeof data.prompt === "string" ? data.prompt : "")}
+            value={isInputConnected("prompt") ? "" : (typeof data.prompt === "string" ? data.prompt : "")}
             onChange={(e) => updateNodeData(id, { prompt: e.target.value })}
-            placeholder={isPromptConnected ? "Connected" : "Describe the image..."}
-            disabled={isPromptConnected}
+            placeholder={isInputConnected("prompt") ? "Connected" : "Describe the image..."}
+            disabled={isInputConnected("prompt")}
             className={cn(
-              "nodrag w-full min-h-[60px] resize-y rounded-md border border-input px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
-              isPromptConnected
-                ? "bg-muted/50 dark:bg-muted/20 cursor-not-allowed placeholder:italic placeholder:text-muted-foreground"
-                : "bg-background/60 dark:bg-muted/40 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              "nodrag node-input min-h-[60px] resize-y",
+              isInputConnected("prompt") && "node-input:disabled"
             )}
           />
         </InputWithHandle>
@@ -175,10 +100,10 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
           label="Base Image"
           colorClass="purple"
           required={false}
-          isConnected={isImageConnected}
+          isConnected={isInputConnected("image")}
         >
-          {isImageConnected ? (
-            <div className="text-xs text-muted-foreground italic px-3 py-2 border border-dashed border-input rounded-md bg-muted/20">
+          {isInputConnected("image") ? (
+            <div className="node-input min-h-[50px] flex items-center justify-center text-white/40 italic text-sm">
               Connected
             </div>
           ) : uploadedImageData ? (
@@ -186,99 +111,79 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
               <img
                 src={getImageDataUrl(uploadedImageData)}
                 alt="Base"
-                className="w-full max-h-[80px] object-contain rounded-md border border-input bg-background/60"
+                className="w-full max-h-[80px] object-contain rounded-lg border border-white/10 bg-black/30"
               />
-              <button
-                onClick={handleClearImage}
-                className={cn(
-                  "nodrag absolute top-1 right-1 p-1 rounded-full",
-                  "bg-black/60 hover:bg-black/80 text-white",
-                  "opacity-0 group-hover:opacity-100 transition-opacity"
-                )}
-              >
-                <X className="h-3 w-3" />
-              </button>
+              <ImageClearButton onClear={handleClear} />
             </div>
           ) : (
             <button
-              onClick={() => fileInputRef.current?.click()}
-              className={cn(
-                "nodrag w-full min-h-[50px] flex flex-col items-center justify-center gap-1",
-                "rounded-md border border-dashed border-input bg-background/60 dark:bg-muted/40",
-                "text-muted-foreground text-xs",
-                "hover:border-ring hover:bg-muted/50 transition-colors cursor-pointer"
-              )}
+              onClick={triggerFileSelect}
+              className="nodrag node-upload-zone min-h-[50px]"
             >
               <Upload className="h-4 w-4" />
-              <span>Upload image</span>
+              <span className="text-[10px] font-medium uppercase tracking-wider">Upload</span>
             </button>
           )}
         </InputWithHandle>
 
-        <ProviderModelSelector
-          providers={IMAGE_PROVIDERS}
-          currentProvider={currentProvider}
-          currentModel={currentModel}
-          onProviderChange={(provider, model, label) => {
-            updateNodeData(id, { provider, model, label });
-          }}
-          onModelChange={(model, label) => {
-            updateNodeData(id, { model, label });
-          }}
-        />
+        <div className="space-y-2.5 pt-2 border-t border-white/[0.06]">
+          <ProviderModelSelector
+            providers={IMAGE_PROVIDERS}
+            currentProvider={currentProvider}
+            currentModel={currentModel}
+            onProviderChange={(provider, model, label) => {
+              updateNodeData(id, { provider, model, label });
+            }}
+            onModelChange={(model, label) => {
+              updateNodeData(id, { model, label });
+            }}
+          />
 
-        {/* OpenAI-specific options */}
-        {currentProvider === "openai" && (
-          <>
-            <ConfigSelect
-              label="Format"
-              value={data.outputFormat || "webp"}
-              options={OUTPUT_FORMAT_OPTIONS}
-              onChange={(outputFormat) => updateNodeData(id, { outputFormat })}
-            />
-            <ConfigSelect
-              label="Size"
-              value={data.size || "1024x1024"}
-              options={SIZE_OPTIONS}
-              onChange={(size) => updateNodeData(id, { size })}
-            />
-            <ConfigSelect
-              label="Quality"
-              value={data.quality || "low"}
-              options={QUALITY_OPTIONS}
-              onChange={(quality) => updateNodeData(id, { quality })}
-            />
-            {currentModelConfig?.supportsPartialImages && (
+          {/* OpenAI-specific options */}
+          {currentProvider === "openai" && (
+            <>
               <ConfigSelect
-                label="Partials"
-                value={String(data.partialImages ?? 3)}
-                options={PARTIAL_IMAGES_OPTIONS}
-                onChange={(val) => updateNodeData(id, { partialImages: Number(val) })}
+                label="Format"
+                value={data.outputFormat || "webp"}
+                options={OUTPUT_FORMAT_OPTIONS}
+                onChange={(outputFormat) => updateNodeData(id, { outputFormat })}
               />
-            )}
-          </>
-        )}
+              <ConfigSelect
+                label="Size"
+                value={data.size || "1024x1024"}
+                options={SIZE_OPTIONS}
+                onChange={(size) => updateNodeData(id, { size })}
+              />
+              <ConfigSelect
+                label="Quality"
+                value={data.quality || "low"}
+                options={QUALITY_OPTIONS}
+                onChange={(quality) => updateNodeData(id, { quality })}
+              />
+              {currentModelConfig?.supportsPartialImages && (
+                <ConfigSelect
+                  label="Partials"
+                  value={String(data.partialImages ?? 3)}
+                  options={PARTIAL_IMAGES_OPTIONS}
+                  onChange={(val) => updateNodeData(id, { partialImages: Number(val) })}
+                />
+              )}
+            </>
+          )}
 
-        {/* Google-specific options */}
-        {currentProvider === "google" && (
-          <ConfigSelect
-            label="Aspect"
-            value={data.aspectRatio || "1:1"}
-            options={ASPECT_RATIO_OPTIONS}
-            onChange={(aspectRatio) => updateNodeData(id, { aspectRatio })}
-          />
-        )}
+          {/* Google-specific options */}
+          {currentProvider === "google" && (
+            <ConfigSelect
+              label="Aspect"
+              value={data.aspectRatio || "1:1"}
+              options={ASPECT_RATIO_OPTIONS}
+              onChange={(aspectRatio) => updateNodeData(id, { aspectRatio })}
+            />
+          )}
 
-        {/* Cache toggle */}
-        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none nodrag pt-2 border-t">
-          <input
-            type="checkbox"
-            checked={data.cacheable ?? false}
-            onChange={(e) => updateNodeData(id, { cacheable: e.target.checked })}
-            className="rounded border-input h-3.5 w-3.5 accent-primary"
-          />
-          <span>Cache output</span>
-        </label>
+          {/* Cache toggle */}
+          <CacheToggle nodeId={id} checked={data.cacheable ?? false} className="pt-1" />
+        </div>
       </div>
     </NodeFrame>
   );
