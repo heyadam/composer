@@ -84,7 +84,7 @@ export function SwitchNode({ id, data }: NodeProps<SwitchNodeType>) {
 
       {/* Helper text when pulse inputs connected or executing */}
       {!canManualToggle && !isExecuting && (
-        <p className="text-[11px] text-white/35 text-center mt-1.5">
+        <p className="text-[11px] text-white/50 text-center mt-1.5">
           Controlled by pulse inputs
         </p>
       )}

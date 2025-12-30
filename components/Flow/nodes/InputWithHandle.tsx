@@ -49,7 +49,7 @@ export function InputWithHandle({
             htmlFor={id}
             className={cn(
               "port-label cursor-pointer transition-all duration-200",
-              highlight && "!opacity-100 !text-white/80",
+              highlight && "!opacity-100 !text-white/90",
               !required && "opacity-35"
             )}
           >

@@ -20,7 +20,7 @@ export function ImageClearButton({ onClear, className }: ImageClearButtonProps) 
       onClick={onClear}
       className={cn(
         "nodrag absolute top-1.5 right-1.5 p-1 rounded-md",
-        "bg-black/70 hover:bg-black/90 text-white/80 hover:text-white",
+        "bg-black/70 hover:bg-black/90 text-white/90 hover:text-white",
         "opacity-0 group-hover:opacity-100 transition-all duration-200",
         "border border-white/10",
         className

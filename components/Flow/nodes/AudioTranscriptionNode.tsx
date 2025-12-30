@@ -61,7 +61,7 @@ export function AudioTranscriptionNode({ id, data }: NodeProps<AudioTranscriptio
         {/* Language input (when not connected) */}
         {!isInputConnected("language") && (
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-medium text-white/40">
+            <label className="text-[11px] font-medium text-white/55">
               Language (optional)
             </label>
             <Input

@@ -227,7 +227,7 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
                 status === "error" && "bg-rose-400"
               )} />
               {status === "connected" && (
-                <span className="text-[11px] text-white/50">
+                <span className="text-[11px] text-white/65">
                   {Math.floor(elapsedSeconds / 60)}:{String(elapsedSeconds % 60).padStart(2, "0")}
                 </span>
               )}
@@ -274,10 +274,10 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
                 key={entry.id}
                 className={cn(
                   "text-[12px] p-2 rounded-md",
-                  entry.role === "user" ? "bg-blue-500/10 text-white/70" : "bg-emerald-500/10 text-white/70"
+                  entry.role === "user" ? "bg-blue-500/10 text-white/85" : "bg-emerald-500/10 text-white/85"
                 )}
               >
-                <span className="font-medium text-white/80">
+                <span className="font-medium text-white/90">
                   {entry.role === "user" ? "You" : "AI"}:
                 </span>{" "}
                 {entry.text}

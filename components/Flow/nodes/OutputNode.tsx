@@ -29,7 +29,7 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
     return (
       <div className="space-y-2">
         {data.stringOutput && (
-          <p className="text-xs text-white/60 whitespace-pre-wrap line-clamp-4">
+          <p className="text-xs text-white/75 whitespace-pre-wrap line-clamp-4">
             {data.stringOutput}
           </p>
         )}
@@ -52,7 +52,7 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
         )}
 
         {data.codeOutput && (
-          <p className="text-xs text-white/50">
+          <p className="text-xs text-white/65">
             Code preview available in sidebar
           </p>
         )}

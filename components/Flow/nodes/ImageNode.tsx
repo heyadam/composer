@@ -103,7 +103,7 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
           isConnected={isInputConnected("image")}
         >
           {isInputConnected("image") ? (
-            <div className="node-input min-h-[50px] flex items-center justify-center text-white/40 italic text-sm">
+            <div className="node-input min-h-[50px] flex items-center justify-center text-white/55 italic text-sm">
               Connected
             </div>
           ) : uploadedImageData ? (

@@ -366,18 +366,18 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
                 </span>
-                <span className="text-[11px] text-white/50">
+                <span className="text-[11px] text-white/65">
                   {formatAudioDuration(duration)}
                 </span>
               </div>
             </>
           ) : hasRecording ? (
-            <div className="flex items-center justify-center h-full gap-2 text-[12px] text-white/50">
+            <div className="flex items-center justify-center h-full gap-2 text-[12px] text-white/65">
               <div className="w-2 h-2 rounded-full bg-emerald-400" />
               <span>Ready • {formatAudioDuration(duration)}</span>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-full text-[12px] text-white/35">
+            <div className="flex items-center justify-center h-full text-[12px] text-white/50">
               Press to record
             </div>
           )}
@@ -403,7 +403,7 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
                 onClick={startRecording}
                 className={cn(
                   "nodrag flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg",
-                  "bg-white/[0.08] hover:bg-white/[0.12] text-white/80 text-[12px] font-medium",
+                  "bg-white/[0.08] hover:bg-white/[0.12] text-white/90 text-[12px] font-medium",
                   "border border-white/[0.08] transition-colors"
                 )}
               >
@@ -416,7 +416,7 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
                   className={cn(
                     "nodrag px-3 py-2 rounded-lg text-[12px]",
                     "border border-white/[0.06] bg-transparent hover:bg-white/[0.04]",
-                    "text-white/50 transition-colors"
+                    "text-white/65 transition-colors"
                   )}
                 >
                   Clear

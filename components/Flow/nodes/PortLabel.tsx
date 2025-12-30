@@ -51,7 +51,7 @@ export function PortRow({ nodeId, input, output }: PortRowProps) {
           <span
             className={cn(
               "port-label transition-all duration-200",
-              inputHighlight && "!opacity-100 !text-white/80",
+              inputHighlight && "!opacity-100 !text-white/90",
               isOptional && "opacity-35"
             )}
           >
@@ -80,7 +80,7 @@ export function PortRow({ nodeId, input, output }: PortRowProps) {
           <span
             className={cn(
               "port-label transition-all duration-200",
-              outputHighlight && "!opacity-100 !text-white/80"
+              outputHighlight && "!opacity-100 !text-white/90"
             )}
           >
             {output.label}

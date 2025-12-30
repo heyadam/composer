@@ -23,7 +23,7 @@ export function CacheToggle({ nodeId, checked, className }: CacheToggleProps) {
     <label
       className={cn(
         "flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider",
-        "text-white/40 cursor-pointer select-none nodrag",
+        "text-white/55 cursor-pointer select-none nodrag",
         className
       )}
     >

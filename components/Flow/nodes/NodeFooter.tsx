@@ -86,7 +86,7 @@ export function NodeFooter({
   if (!hasOutput) {
     if (emptyMessage) {
       return (
-        <p className="text-xs text-white/40 italic">
+        <p className="text-xs text-white/55 italic">
           {emptyMessage}
         </p>
       );
@@ -116,7 +116,7 @@ export function NodeFooter({
 
       {output && (
         <p
-          className="text-xs text-white/60 whitespace-pre-wrap"
+          className="text-xs text-white/75 whitespace-pre-wrap"
           style={{
             display: "-webkit-box",
             WebkitLineClamp: maxLines,

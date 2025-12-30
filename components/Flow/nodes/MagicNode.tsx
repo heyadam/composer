@@ -177,7 +177,7 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
         {/* Collapsible code view */}
         {!isInputConnected("transform") && hasCode && !hasError && (
           <Collapsible open={data.codeExpanded} onOpenChange={toggleCodeView}>
-            <CollapsibleTrigger className="nodrag flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-white/50 hover:text-white/80 w-full transition-colors">
+            <CollapsibleTrigger className="nodrag flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-white/65 hover:text-white/90 w-full transition-colors">
               {data.codeExpanded ? (
                 <ChevronDown className="h-3.5 w-3.5" />
               ) : (
@@ -187,10 +187,10 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-2 space-y-2">
               {data.codeExplanation && (
-                <p className="text-xs text-white/50">{data.codeExplanation}</p>
+                <p className="text-xs text-white/65">{data.codeExplanation}</p>
               )}
               <pre className="nodrag text-xs font-mono bg-black/40 rounded-lg p-2.5 whitespace-pre-wrap break-words max-h-[120px] overflow-auto border border-white/[0.06]">
-                <code className="text-white/70">{data.generatedCode}</code>
+                <code className="text-white/85">{data.generatedCode}</code>
               </pre>
             </CollapsibleContent>
           </Collapsible>
@@ -199,7 +199,7 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
         {/* Collapsible eval results */}
         {!isInputConnected("transform") && hasCode && !hasError && data.evalResults && (
           <Collapsible open={data.evalExpanded} onOpenChange={toggleEvalView}>
-            <CollapsibleTrigger className="nodrag flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-white/50 hover:text-white/80 w-full transition-colors">
+            <CollapsibleTrigger className="nodrag flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-white/65 hover:text-white/90 w-full transition-colors">
               {data.evalExpanded ? (
                 <ChevronDown className="h-3.5 w-3.5" />
               ) : (
@@ -241,14 +241,14 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
                           <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0 mt-0.5" />
                         )}
                         <div className="min-w-0 overflow-hidden">
-                          <span className="text-white/50">
+                          <span className="text-white/65">
                             ({formatValue(tc.input1)}, {formatValue(tc.input2)})
                           </span>
-                          <span className="text-white/30"> → </span>
+                          <span className="text-white/45"> → </span>
                           {tc.error ? (
                             <span className="text-rose-400">{tc.error}</span>
                           ) : (
-                            <span className="text-white/80">{formatValue(tc.result)}</span>
+                            <span className="text-white/90">{formatValue(tc.result)}</span>
                           )}
                         </div>
                       </div>
@@ -262,7 +262,7 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
 
         {/* Info when connected */}
         {isInputConnected("transform") && (
-          <p className="text-xs text-white/40 italic">
+          <p className="text-xs text-white/55 italic">
             Code will be generated at runtime from connected input.
           </p>
         )}

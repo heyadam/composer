@@ -117,7 +117,7 @@ export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
 
           {/* Style Preset */}
           <div className="flex items-center justify-between gap-2">
-            <div className="text-[11px] font-medium text-white/40">Style</div>
+            <div className="text-[11px] font-medium text-white/55">Style</div>
             <Select
               value={currentStylePreset}
               onValueChange={(value: ReactStylePreset) => updateNodeData(id, { stylePreset: value })}
