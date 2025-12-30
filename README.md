@@ -64,6 +64,10 @@ A visual workflow builder for creating AI agent pipelines using drag-and-drop no
 - **Debug View**: Detailed request/response inspection in sidebar
   - Collapsible sections for prompts, responses, and raw data
   - Copy-to-clipboard for debugging
+- **MCP Server**: Model Context Protocol integration for AI tools
+  - Run flows programmatically from Claude Code, Cursor, or other MCP clients
+  - Async execution with polling for results
+  - Rate-limited owner-funded execution
 
 ### Supported Models
 
@@ -152,6 +156,57 @@ Open [http://localhost:3000](http://localhost:3000) to use the workflow builder.
 5. Collaborators see your cursor and edits in real-time
 6. "New Flow" opens in a new tab when collaborating (to stay in session)
 7. Click Unpublish to revoke access (auto-unpublishes when you leave)
+
+### MCP Server Integration
+
+Composer exposes an MCP (Model Context Protocol) server that allows AI tools like Claude Code or Cursor to run your flows programmatically.
+
+**Prerequisites:**
+1. Publish your flow (click the Live button)
+2. Enable "Owner-Funded Execution" in share settings
+3. Store your API keys server-side (Settings → API Keys → Store Keys)
+
+**Tools available:**
+- `get_flow_info` - Discover flow inputs and outputs
+- `run_flow` - Execute a flow asynchronously
+- `get_run_status` - Poll for execution results
+
+**Claude Code Configuration:**
+
+Add to your `~/.claude/claude_mcp_settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "composer": {
+      "type": "http",
+      "url": "https://composer.design/api/mcp"
+    }
+  }
+}
+```
+
+For local development:
+
+```json
+{
+  "mcpServers": {
+    "composer-local": {
+      "type": "http",
+      "url": "http://localhost:3000/api/mcp"
+    }
+  }
+}
+```
+
+**Example usage in Claude Code:**
+
+```
+Use the composer MCP to run the flow with token "abc123xyz456"
+with input "Write a haiku about coding"
+```
+
+**Rate limits:** 10 runs/minute, 100 runs/day per flow. Jobs expire after 1 hour.
 
 ## Tech Stack
 
