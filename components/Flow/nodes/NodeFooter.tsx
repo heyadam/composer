@@ -69,15 +69,17 @@ export function NodeFooter({
   // Error takes priority
   if (error) {
     return (
-      <p className="text-xs text-rose-400 whitespace-pre-wrap line-clamp-4">
-        {error}
-      </p>
+      <div className="node-footer-content">
+        <p className="text-xs text-rose-400 whitespace-pre-wrap line-clamp-4">
+          {error}
+        </p>
+      </div>
     );
   }
 
   // Custom children override standard rendering
   if (children) {
-    return <>{children}</>;
+    return <div className="node-footer-content">{children}</div>;
   }
 
   // Check if there's any output to display
@@ -86,17 +88,20 @@ export function NodeFooter({
   if (!hasOutput) {
     if (emptyMessage) {
       return (
-        <p className="text-xs text-white/55 italic">
-          {emptyMessage}
-        </p>
+        <div className="node-footer-content">
+          <p className="text-xs text-white/55 italic">
+            {emptyMessage}
+          </p>
+        </div>
       );
     }
+    // No content - return null so no background appears
     return null;
   }
 
-  // Render the output(s)
+  // Render the output(s) with background
   return (
-    <div className="space-y-2">
+    <div className="node-footer-content space-y-2">
       {reasoning && <ThinkingSummary reasoning={reasoning} />}
 
       {imageOutput && (() => {
