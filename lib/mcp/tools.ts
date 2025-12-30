@@ -14,34 +14,170 @@ import { executeFlowServer } from "@/lib/execution/server-execute";
 import { jobStore } from "./job-store";
 import type { FlowNodeRecord, FlowEdgeRecord } from "@/lib/flows/types";
 import type { FlowInfo, FlowJob, RunFlowResult, RunStatusResult } from "./types";
+import type { Node } from "@xyflow/react";
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const RATE_LIMITS = {
+  /** Maximum executions per minute per share token */
+  PER_MINUTE: 10,
+  /** Maximum executions per day per flow */
+  PER_DAY: 100,
+} as const;
+
+const INPUT_LIMITS = {
+  /** Maximum length for a single input value */
+  MAX_VALUE_LENGTH: 100_000, // 100KB
+  /** Maximum number of input keys */
+  MAX_INPUT_COUNT: 50,
+  /** Maximum length for input key names */
+  MAX_KEY_LENGTH: 256,
+} as const;
+
+const INPUT_NODE_TYPES = ["text-input", "image-input", "audio-input"] as const;
+type InputNodeType = (typeof INPUT_NODE_TYPES)[number];
+
+const EXECUTION_LIMITS = {
+  /** Maximum execution time in milliseconds (5 minutes) */
+  TIMEOUT_MS: 5 * 60 * 1000,
+  /** Maximum output size in bytes (1MB) */
+  MAX_OUTPUT_SIZE: 1_000_000,
+} as const;
+
+// ============================================================================
+// Validation Helpers
+// ============================================================================
+
+/**
+ * Validate flow data structure from RPC response
+ */
+interface ValidatedFlowData {
+  flow: {
+    name?: string;
+    description?: string;
+    use_owner_keys?: boolean;
+  };
+  nodes: FlowNodeRecord[];
+  edges: FlowEdgeRecord[];
+}
+
+function validateFlowData(data: unknown): ValidatedFlowData {
+  if (!data || typeof data !== "object") {
+    throw new Error("Invalid flow data: expected object");
+  }
+
+  const flowData = data as Record<string, unknown>;
+
+  // Validate nodes array
+  const nodes = flowData.nodes;
+  if (!Array.isArray(nodes)) {
+    throw new Error("Invalid flow data: nodes must be an array");
+  }
+
+  // Validate edges array
+  const edges = flowData.edges;
+  if (!Array.isArray(edges)) {
+    throw new Error("Invalid flow data: edges must be an array");
+  }
+
+  // Validate flow object exists
+  const flow = flowData.flow;
+  if (flow !== null && flow !== undefined && typeof flow !== "object") {
+    throw new Error("Invalid flow data: flow must be an object");
+  }
+
+  return {
+    flow: (flow as ValidatedFlowData["flow"]) || {},
+    nodes: nodes as FlowNodeRecord[],
+    edges: edges as FlowEdgeRecord[],
+  };
+}
 
 /**
  * Validate share token format
  */
-function validateToken(token: string): void {
-  if (!token || !/^[a-zA-Z0-9]{12}$/.test(token)) {
+function validateToken(token: unknown): asserts token is string {
+  if (typeof token !== "string") {
+    throw new Error("Token must be a string");
+  }
+  if (!/^[a-zA-Z0-9]{12}$/.test(token)) {
     throw new Error("Invalid token format. Expected 12 alphanumeric characters.");
   }
 }
 
 /**
- * Generate a unique job ID
+ * Validate job ID format
  */
-function generateJobId(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let id = "job_";
-  for (let i = 0; i < 12; i++) {
-    id += chars[Math.floor(Math.random() * chars.length)];
+function validateJobId(jobId: unknown): asserts jobId is string {
+  if (typeof jobId !== "string") {
+    throw new Error("Job ID must be a string");
   }
-  return id;
+  if (!/^job_[a-zA-Z0-9]{16}$/.test(jobId)) {
+    throw new Error("Invalid job ID format");
+  }
 }
+
+/**
+ * Validate and sanitize inputs object
+ */
+function validateInputs(inputs: unknown): Record<string, string> {
+  if (inputs === undefined || inputs === null) {
+    return {};
+  }
+
+  if (typeof inputs !== "object" || Array.isArray(inputs)) {
+    throw new Error("Inputs must be an object");
+  }
+
+  const result: Record<string, string> = {};
+  const entries = Object.entries(inputs as Record<string, unknown>);
+
+  if (entries.length > INPUT_LIMITS.MAX_INPUT_COUNT) {
+    throw new Error(`Too many inputs. Maximum ${INPUT_LIMITS.MAX_INPUT_COUNT} allowed.`);
+  }
+
+  for (const [key, value] of entries) {
+    // Validate key length (keys from Object.entries are always strings)
+    if (key.length > INPUT_LIMITS.MAX_KEY_LENGTH) {
+      throw new Error(`Input key too long: "${key.slice(0, 50)}..." (max ${INPUT_LIMITS.MAX_KEY_LENGTH} chars)`);
+    }
+
+    // Validate value
+    if (typeof value !== "string") {
+      throw new Error(`Input value for "${key}" must be a string`);
+    }
+
+    if (value.length > INPUT_LIMITS.MAX_VALUE_LENGTH) {
+      throw new Error(
+        `Input value for "${key}" exceeds maximum length of ${INPUT_LIMITS.MAX_VALUE_LENGTH} characters`
+      );
+    }
+
+    result[key] = value;
+  }
+
+  return result;
+}
+
+/**
+ * Type guard for input node types
+ */
+function isInputNodeType(type: string | undefined): type is InputNodeType {
+  return INPUT_NODE_TYPES.includes(type as InputNodeType);
+}
+
+// ============================================================================
+// Tool Implementations
+// ============================================================================
 
 /**
  * get_flow_info tool
  *
  * Returns metadata about a flow including its input/output nodes
  */
-export async function getFlowInfo(token: string): Promise<FlowInfo> {
+export async function getFlowInfo(token: unknown): Promise<FlowInfo> {
   validateToken(token);
 
   const supabase = createServiceRoleClient();
@@ -57,17 +193,16 @@ export async function getFlowInfo(token: string): Promise<FlowInfo> {
   const nodeRecords = (data.nodes || []) as FlowNodeRecord[];
   const nodes = nodeRecords.map(recordToNode);
 
-  // Extract input nodes (text-input, image-input, audio-input)
-  const inputTypes = ["text-input", "image-input", "audio-input"];
+  // Extract input nodes with type guard
   const inputs = nodes
-    .filter((n) => inputTypes.includes(n.type || ""))
+    .filter((n): n is Node & { type: InputNodeType } => isInputNodeType(n.type))
     .map((n) => ({
       id: n.id,
       label: (n.data?.label as string) || n.id,
-      type: n.type as "text-input" | "image-input" | "audio-input",
+      type: n.type,
     }));
 
-  // Extract output nodes (preview-output)
+  // Extract output nodes
   const outputs = nodes
     .filter((n) => n.type === "preview-output")
     .map((n) => ({
@@ -85,23 +220,35 @@ export async function getFlowInfo(token: string): Promise<FlowInfo> {
 }
 
 /**
+ * Result from runFlow including background execution promise
+ */
+export interface RunFlowInternalResult {
+  response: RunFlowResult;
+  /** Promise for background execution - use with Next.js after() */
+  executionPromise: Promise<void>;
+}
+
+/**
  * run_flow tool
  *
- * Starts async execution and returns a job ID for polling
+ * Starts async execution and returns a job ID for polling.
+ * Returns both the response and the execution promise for use with after().
  */
 export async function runFlow(
-  token: string,
-  inputs?: Record<string, string>
-): Promise<RunFlowResult> {
+  token: unknown,
+  inputs?: unknown
+): Promise<RunFlowInternalResult> {
+  // Validate inputs
   validateToken(token);
+  const validatedInputs = validateInputs(inputs);
 
   const supabase = createServiceRoleClient();
 
-  // Check minute-level rate limit (10 requests/minute)
+  // Check minute-level rate limit
   const { data: minuteLimit, error: minuteError } = await supabase
     .rpc("check_minute_rate_limit", {
       p_share_token: token,
-      p_limit: 10,
+      p_limit: RATE_LIMITS.PER_MINUTE,
     })
     .single<{ allowed: boolean; current_count: number; reset_at: string }>();
 
@@ -117,12 +264,12 @@ export async function runFlow(
     throw new Error(`Rate limit exceeded. Try again in ${retryAfter} seconds.`);
   }
 
-  // Check daily execution quota (100 runs/day)
+  // Check daily execution quota
   const { data: quotaResult, error: quotaError } = await supabase.rpc(
     "execute_live_flow_check",
     {
       p_share_token: token,
-      p_daily_limit: 100,
+      p_daily_limit: RATE_LIMITS.PER_DAY,
     }
   );
 
@@ -135,52 +282,61 @@ export async function runFlow(
     throw new Error(quotaResult?.reason || "Daily execution quota exceeded.");
   }
 
-  // Log execution for rate limiting
+  // Create job first (before logging) so rate limit isn't consumed if job creation fails
+  const job = await jobStore.create(token, validatedInputs);
+
+  // Log execution for rate limiting (after job created successfully)
   const { error: logError } = await supabase.rpc("log_execution", {
     p_share_token: token,
   });
   if (logError) {
-    console.error("Failed to log execution:", logError);
-    // Non-critical, continue
+    // Log but don't fail - job is already created, rate limiting may be slightly off
+    console.warn("Failed to log execution (non-critical):", logError.message);
   }
 
-  // Create job
-  const jobId = generateJobId();
-  const job: FlowJob = {
-    id: jobId,
-    shareToken: token,
-    status: "pending",
-    inputs: inputs || {},
-    createdAt: new Date(),
-  };
-  jobStore.create(job);
-
-  // Start async execution (don't await)
-  executeJobAsync(job).catch((err) => {
-    console.error(`Job ${jobId} execution failed:`, err);
-    // Only update if job still exists (wasn't evicted from store)
-    if (jobStore.get(jobId)) {
-      jobStore.fail(jobId, { _error: err.message || "Unknown error" });
-    }
+  // Create execution promise (caller should use after() to keep function alive)
+  const executionPromise = executeJobAsync(job).catch(async (err) => {
+    console.error(`Job ${job.id} execution failed:`, err);
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    await jobStore.fail(job.id, { _error: errorMessage || "Unknown error" });
   });
 
   return {
-    job_id: jobId,
-    status: "pending",
-    message: `Job ${jobId} created. Use get_run_status to check progress.`,
-    quota_remaining: quotaResult.remaining,
+    response: {
+      job_id: job.id,
+      status: job.status,
+      message: `Job ${job.id} created. Use get_run_status to check progress.`,
+      quota_remaining: quotaResult.remaining,
+    },
+    executionPromise,
   };
 }
 
 /**
  * get_run_status tool
  *
- * Returns the status and results of a job
+ * Returns the status and results of a job.
+ * Optionally verifies share_token ownership for security.
  */
-export async function getRunStatus(jobId: string): Promise<RunStatusResult> {
-  const job = jobStore.get(jobId);
+export async function getRunStatus(
+  jobId: unknown,
+  shareToken?: unknown
+): Promise<RunStatusResult> {
+  validateJobId(jobId);
+
+  // Validate share_token if provided
+  if (shareToken !== undefined) {
+    validateToken(shareToken);
+  }
+
+  const job = await jobStore.get(jobId);
 
   if (!job) {
+    throw new Error(`Job not found: ${jobId}. Jobs expire after 1 hour.`);
+  }
+
+  // Verify ownership if share_token provided
+  if (shareToken !== undefined && job.shareToken !== shareToken) {
     throw new Error(`Job not found: ${jobId}. Jobs expire after 1 hour.`);
   }
 
@@ -195,25 +351,50 @@ export async function getRunStatus(jobId: string): Promise<RunStatusResult> {
   };
 }
 
+// ============================================================================
+// Internal Helpers
+// ============================================================================
+
+/**
+ * Execute a promise with timeout
+ */
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  message: string
+): Promise<T> {
+  let timeoutId: NodeJS.Timeout;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timeoutId!);
+  }
+}
+
 /**
  * Execute job in background
  */
 async function executeJobAsync(job: FlowJob): Promise<void> {
   const supabase = createServiceRoleClient();
 
-  jobStore.setStatus(job.id, "running");
-
   // Get flow data
-  const { data: flowData, error: flowError } = await supabase.rpc("get_live_flow", {
+  const { data: rawFlowData, error: flowError } = await supabase.rpc("get_live_flow", {
     p_share_token: job.shareToken,
   });
 
-  if (flowError || !flowData) {
+  if (flowError || !rawFlowData) {
     throw new Error("Failed to load flow");
   }
 
+  // Validate flow data structure
+  const flowData = validateFlowData(rawFlowData);
+
   // Check if owner-funded execution is enabled
-  if (!flowData.flow?.use_owner_keys) {
+  if (!flowData.flow.use_owner_keys) {
     throw new Error(
       "This flow requires owner-funded execution to be enabled. " +
         "The flow owner must enable 'Use Owner Keys' in the share settings."
@@ -242,13 +423,13 @@ async function executeJobAsync(job: FlowJob): Promise<void> {
   const apiKeys = decryptKeys(encryptedKeys, encryptionKey);
 
   // Convert DB records to React Flow format
-  const nodeRecords = (flowData.nodes || []) as FlowNodeRecord[];
-  const edgeRecords = (flowData.edges || []) as FlowEdgeRecord[];
-  const nodes = nodeRecords.map(recordToNode);
-  const edges = edgeRecords.map(recordToEdge);
+  const nodes = flowData.nodes.map(recordToNode);
+  const edges = flowData.edges.map(recordToEdge);
 
   // Build input overrides map
   // Inputs can be specified by node label or node ID
+  // NOTE: Only text-input nodes are currently supported for MCP input overrides.
+  // Image and audio inputs require the flow to have pre-configured data.
   const inputOverrides: Record<string, string> = {};
   for (const node of nodes) {
     if (node.type === "text-input") {
@@ -262,20 +443,45 @@ async function executeJobAsync(job: FlowJob): Promise<void> {
     }
   }
 
-  // Execute flow
-  const result = await executeFlowServer(
-    nodes,
-    edges,
-    apiKeys,
-    Object.keys(inputOverrides).length > 0 ? inputOverrides : undefined
+  // Execute flow with timeout
+  const result = await withTimeout(
+    executeFlowServer(
+      nodes,
+      edges,
+      apiKeys,
+      Object.keys(inputOverrides).length > 0 ? inputOverrides : undefined
+    ),
+    EXECUTION_LIMITS.TIMEOUT_MS,
+    `Execution timed out after ${EXECUTION_LIMITS.TIMEOUT_MS / 1000} seconds`
   );
 
   // Update job with results
-  const hasErrors = Object.keys(result.errors).length > 0;
+  const errors = result.errors || {};
+  const outputs = result.outputs || {};
+  const hasErrors = Object.keys(errors).length > 0;
+
+  // Check output size
+  const outputSize = JSON.stringify(outputs).length;
+  if (outputSize > EXECUTION_LIMITS.MAX_OUTPUT_SIZE) {
+    await jobStore.fail(job.id, {
+      _error: `Output size (${Math.round(outputSize / 1024)}KB) exceeds maximum allowed (${Math.round(EXECUTION_LIMITS.MAX_OUTPUT_SIZE / 1024)}KB)`,
+    });
+    return;
+  }
 
   if (hasErrors) {
-    jobStore.fail(job.id, result.errors);
+    await jobStore.fail(job.id, errors);
   } else {
-    jobStore.complete(job.id, result.outputs);
+    try {
+      await jobStore.complete(job.id, outputs);
+    } catch (completeError) {
+      // If we can't mark as complete, mark as failed instead
+      console.error("Failed to complete job, marking as failed:", completeError);
+      await jobStore.fail(job.id, {
+        _error: `Execution succeeded but failed to save results: ${
+          completeError instanceof Error ? completeError.message : "Unknown error"
+        }`,
+      });
+    }
   }
 }

@@ -1,135 +1,144 @@
 /**
- * In-Memory Job Store
+ * Supabase-backed Job Store
  *
- * Manages async flow execution jobs with bounded memory usage
- * and automatic cleanup of expired jobs.
+ * Manages async flow execution jobs with database persistence
+ * for serverless compatibility (works reliably on Vercel).
  */
 
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import type { FlowJob, JobStatus } from "./types";
 
-const MAX_JOBS = 1000;
-const JOB_TTL_MS = 60 * 60 * 1000; // 1 hour
-const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+/**
+ * Database record shape for mcp_jobs table
+ */
+interface McpJobRecord {
+  id: string;
+  share_token: string;
+  status: JobStatus;
+  inputs: Record<string, string>;
+  outputs: Record<string, string> | null;
+  errors: Record<string, string> | null;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
 
+/**
+ * Convert database record to FlowJob
+ */
+function recordToJob(record: McpJobRecord): FlowJob {
+  return {
+    id: record.id,
+    shareToken: record.share_token,
+    status: record.status,
+    inputs: record.inputs,
+    outputs: record.outputs ?? undefined,
+    errors: record.errors ?? undefined,
+    createdAt: new Date(record.created_at),
+    startedAt: record.started_at ? new Date(record.started_at) : undefined,
+    completedAt: record.completed_at ? new Date(record.completed_at) : undefined,
+  };
+}
+
+/**
+ * Supabase-backed job store for serverless environments
+ */
 class JobStore {
-  private jobs: Map<string, FlowJob> = new Map();
-  private cleanupTimer: ReturnType<typeof setInterval> | null = null;
-
-  constructor() {
-    // Start cleanup timer (only in Node.js environment)
-    if (typeof setInterval !== "undefined") {
-      this.cleanupTimer = setInterval(() => this.cleanup(), CLEANUP_INTERVAL_MS);
-      // Allow Node.js to exit even if timer is running
-      if (this.cleanupTimer.unref) {
-        this.cleanupTimer.unref();
-      }
-    }
-  }
-
   /**
-   * Create a new job
+   * Create a new job with status 'running' (avoids race condition)
+   * Uses crypto.randomUUID() for collision-free IDs
    */
-  create(job: FlowJob): void {
-    // Evict oldest job if at capacity (LRU)
-    if (this.jobs.size >= MAX_JOBS) {
-      const oldestKey = this.jobs.keys().next().value;
-      if (oldestKey) {
-        this.jobs.delete(oldestKey);
-      }
+  async create(shareToken: string, inputs: Record<string, string>): Promise<FlowJob> {
+    const jobId = `job_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`;
+    const supabase = createServiceRoleClient();
+
+    const { data, error } = await supabase
+      .rpc("create_mcp_job", {
+        p_job_id: jobId,
+        p_share_token: shareToken,
+        p_inputs: inputs,
+      })
+      .single<McpJobRecord>();
+
+    if (error || !data) {
+      throw new Error(`Failed to create job: ${error?.message || "Unknown error"}`);
     }
-    this.jobs.set(job.id, job);
+
+    return recordToJob(data);
   }
 
   /**
    * Get a job by ID
    */
-  get(jobId: string): FlowJob | undefined {
-    return this.jobs.get(jobId);
-  }
+  async get(jobId: string): Promise<FlowJob | null> {
+    const supabase = createServiceRoleClient();
 
-  /**
-   * Update a job's fields
-   */
-  update(jobId: string, updates: Partial<FlowJob>): void {
-    const job = this.jobs.get(jobId);
-    if (job) {
-      Object.assign(job, updates);
-    }
-  }
+    const { data, error } = await supabase
+      .rpc("get_mcp_job", { p_job_id: jobId })
+      .single<McpJobRecord>();
 
-  /**
-   * Update job status
-   */
-  setStatus(jobId: string, status: JobStatus): void {
-    const job = this.jobs.get(jobId);
-    if (job) {
-      job.status = status;
-      if (status === "running") {
-        job.startedAt = new Date();
-      } else if (status === "completed" || status === "failed") {
-        job.completedAt = new Date();
+    if (error) {
+      // PGRST116 = no rows returned (not found)
+      if (error.code === "PGRST116") {
+        return null;
       }
+      throw new Error(`Failed to get job: ${error.message}`);
     }
+
+    return data ? recordToJob(data) : null;
   }
 
   /**
    * Mark job as completed with outputs
+   * Throws if the update fails to avoid silent failures
    */
-  complete(jobId: string, outputs: Record<string, string>): void {
-    const job = this.jobs.get(jobId);
-    if (job) {
-      job.status = "completed";
-      job.outputs = outputs;
-      job.completedAt = new Date();
+  async complete(jobId: string, outputs: Record<string, string>): Promise<void> {
+    const supabase = createServiceRoleClient();
+
+    const { error } = await supabase.rpc("complete_mcp_job", {
+      p_job_id: jobId,
+      p_outputs: outputs,
+    });
+
+    if (error) {
+      // Throw to surface the error - don't leave job stuck in running state
+      throw new Error(`Failed to complete job ${jobId}: ${error.message}`);
     }
   }
 
   /**
    * Mark job as failed with errors
+   * Logs but doesn't throw - we don't want to mask the original error
    */
-  fail(jobId: string, errors: Record<string, string>): void {
-    const job = this.jobs.get(jobId);
-    if (job) {
-      job.status = "failed";
-      job.errors = errors;
-      job.completedAt = new Date();
+  async fail(jobId: string, errors: Record<string, string>): Promise<void> {
+    const supabase = createServiceRoleClient();
+
+    const { error } = await supabase.rpc("fail_mcp_job", {
+      p_job_id: jobId,
+      p_errors: errors,
+    });
+
+    if (error) {
+      // Log but don't throw - failing to record failure shouldn't mask original error
+      // The job will be stuck in "running" but that's better than losing the error info
+      console.error(`Failed to mark job ${jobId} as failed:`, error);
     }
   }
 
   /**
-   * Delete a job
+   * Cleanup expired jobs (called periodically or via cron)
    */
-  delete(jobId: string): void {
-    this.jobs.delete(jobId);
-  }
+  async cleanup(): Promise<number> {
+    const supabase = createServiceRoleClient();
 
-  /**
-   * Cleanup expired jobs
-   */
-  private cleanup(): void {
-    const now = Date.now();
-    for (const [id, job] of this.jobs.entries()) {
-      const age = now - job.createdAt.getTime();
-      if (age > JOB_TTL_MS) {
-        this.jobs.delete(id);
-      }
-    }
-  }
+    const { data, error } = await supabase.rpc("cleanup_mcp_jobs").single<number>();
 
-  /**
-   * Get store stats (for debugging)
-   */
-  stats(): { total: number; byStatus: Record<JobStatus, number> } {
-    const byStatus: Record<JobStatus, number> = {
-      pending: 0,
-      running: 0,
-      completed: 0,
-      failed: 0,
-    };
-    for (const job of this.jobs.values()) {
-      byStatus[job.status]++;
+    if (error) {
+      console.error("Failed to cleanup jobs:", error);
+      return 0;
     }
-    return { total: this.jobs.size, byStatus };
+
+    return data ?? 0;
   }
 }
 

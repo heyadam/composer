@@ -11,11 +11,33 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
+import { z } from "zod";
 import { getFlowInfo, runFlow, getRunStatus } from "@/lib/mcp/tools";
 
-/**
- * MCP Tool definitions
- */
+// ============================================================================
+// Zod Schemas for Runtime Validation
+// ============================================================================
+
+const JsonRpcRequestSchema = z.object({
+  jsonrpc: z.literal("2.0"),
+  id: z.union([z.string(), z.number(), z.null()]),
+  method: z.string(),
+  params: z.record(z.string(), z.unknown()).optional().default({}),
+});
+
+const ToolCallParamsSchema = z.object({
+  name: z.string(),
+  arguments: z.record(z.string(), z.unknown()).optional().default({}),
+});
+
+// Type for validated request
+type JsonRpcRequest = z.infer<typeof JsonRpcRequestSchema>;
+
+// ============================================================================
+// Tool Definitions
+// ============================================================================
+
 const TOOLS = [
   {
     name: "get_flow_info",
@@ -38,7 +60,8 @@ const TOOLS = [
     description:
       "Execute a Composer flow asynchronously with optional input values. " +
       "Returns a job_id that you can poll with get_run_status. " +
-      "Requires owner-funded execution to be enabled on the flow.",
+      "Requires owner-funded execution to be enabled on the flow. " +
+      "Note: Only text-input nodes can receive values; image/audio inputs use pre-configured data.",
     inputSchema: {
       type: "object",
       properties: {
@@ -49,7 +72,7 @@ const TOOLS = [
         inputs: {
           type: "object",
           description:
-            "Map of input node labels to values. " +
+            "Map of text-input node labels to string values. " +
             "Use get_flow_info to discover available inputs.",
           additionalProperties: { type: "string" },
         },
@@ -69,14 +92,24 @@ const TOOLS = [
           type: "string",
           description: "Job ID returned from run_flow",
         },
+        token: {
+          type: "string",
+          description:
+            "Optional: Share token for ownership verification. " +
+            "Recommended for security.",
+        },
       },
       required: ["job_id"],
     },
   },
 ];
 
+// ============================================================================
+// Request Handlers
+// ============================================================================
+
 /**
- * Handle JSON-RPC request
+ * Handle JSON-RPC request with validated params
  */
 async function handleJsonRpcRequest(
   method: string,
@@ -99,28 +132,33 @@ async function handleJsonRpcRequest(
       return { tools: TOOLS };
 
     case "tools/call": {
-      const { name, arguments: args } = params as {
-        name: string;
-        arguments: Record<string, unknown>;
-      };
+      // Validate tool call params
+      const parseResult = ToolCallParamsSchema.safeParse(params);
+      if (!parseResult.success) {
+        const firstIssue = parseResult.error.issues[0];
+        throw new Error(`Invalid tool call params: ${firstIssue?.message || "validation failed"}`);
+      }
+
+      const { name, arguments: args } = parseResult.data;
 
       try {
         let result: unknown;
 
         switch (name) {
           case "get_flow_info":
-            result = await getFlowInfo(args.token as string);
+            result = await getFlowInfo(args.token);
             break;
 
-          case "run_flow":
-            result = await runFlow(
-              args.token as string,
-              args.inputs as Record<string, string> | undefined
-            );
+          case "run_flow": {
+            const { response, executionPromise } = await runFlow(args.token, args.inputs);
+            // Use after() to keep function alive for background execution
+            after(executionPromise);
+            result = response;
             break;
+          }
 
           case "get_run_status":
-            result = await getRunStatus(args.job_id as string);
+            result = await getRunStatus(args.job_id, args.token);
             break;
 
           default:
@@ -158,6 +196,21 @@ async function handleJsonRpcRequest(
 }
 
 /**
+ * Build JSON-RPC error response
+ */
+function buildErrorResponse(
+  id: string | number | null,
+  code: number,
+  message: string
+) {
+  return {
+    jsonrpc: "2.0",
+    id,
+    error: { code, message },
+  };
+}
+
+/**
  * POST /api/mcp
  *
  * Handle MCP JSON-RPC requests
@@ -172,22 +225,29 @@ export async function POST(request: NextRequest) {
     const responses: unknown[] = [];
 
     for (const req of requests) {
-      const { jsonrpc, id, method, params = {} } = req;
+      // Validate JSON-RPC request structure
+      const parseResult = JsonRpcRequestSchema.safeParse(req);
 
-      if (jsonrpc !== "2.0") {
-        responses.push({
-          jsonrpc: "2.0",
-          id,
-          error: {
-            code: -32600,
-            message: "Invalid Request: jsonrpc must be '2.0'",
-          },
-        });
+      if (!parseResult.success) {
+        const id = typeof req === "object" && req !== null ? req.id ?? null : null;
+        const firstIssue = parseResult.error.issues[0];
+        responses.push(
+          buildErrorResponse(
+            id,
+            -32600,
+            `Invalid Request: ${firstIssue?.message || "validation failed"}`
+          )
+        );
         continue;
       }
 
+      const validatedReq: JsonRpcRequest = parseResult.data;
+
       try {
-        const result = await handleJsonRpcRequest(method, params);
+        const result = await handleJsonRpcRequest(
+          validatedReq.method,
+          validatedReq.params
+        );
 
         // Notifications don't get responses
         if (result === null) {
@@ -196,18 +256,17 @@ export async function POST(request: NextRequest) {
 
         responses.push({
           jsonrpc: "2.0",
-          id,
+          id: validatedReq.id,
           result,
         });
       } catch (error) {
-        responses.push({
-          jsonrpc: "2.0",
-          id,
-          error: {
-            code: -32603,
-            message: error instanceof Error ? error.message : "Internal error",
-          },
-        });
+        responses.push(
+          buildErrorResponse(
+            validatedReq.id,
+            -32603,
+            error instanceof Error ? error.message : "Internal error"
+          )
+        );
       }
     }
 
@@ -223,14 +282,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("MCP request error:", error);
     return NextResponse.json(
-      {
-        jsonrpc: "2.0",
-        id: null,
-        error: {
-          code: -32700,
-          message: "Parse error",
-        },
-      },
+      buildErrorResponse(null, -32700, "Parse error"),
       { status: 400 }
     );
   }
