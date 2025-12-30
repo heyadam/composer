@@ -13,6 +13,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
 import { z } from "zod";
+
+// Allow up to 5 minutes for flow execution (matches EXECUTION_LIMITS.TIMEOUT_MS)
+export const maxDuration = 300;
 import { getFlowInfo, runFlow, getRunStatus } from "@/lib/mcp/tools";
 
 // ============================================================================
