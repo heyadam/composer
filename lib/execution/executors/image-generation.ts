@@ -25,6 +25,8 @@ export const imageGenerationExecutor: NodeExecutor = {
 
     const prompt = typeof node.data?.prompt === "string" ? node.data.prompt : "";
     const promptInput = inputs["prompt"] || "";
+    // Get style from connected input or node data
+    const style = inputs["style"] || (typeof node.data?.style === "string" ? node.data.style : "");
     // Get source image from connected input or inline upload
     const imageInput = inputs["image"] || (node.data.imageInput as string) || "";
     const provider = (node.data.provider as string) || "openai";
@@ -40,6 +42,7 @@ export const imageGenerationExecutor: NodeExecutor = {
     const baseFields = {
       type: "image-generation" as const,
       prompt,
+      style,
       provider,
       model,
       outputFormat,
@@ -58,7 +61,7 @@ export const imageGenerationExecutor: NodeExecutor = {
       {
         provider,
         model,
-        imagePrompt: prompt + (promptInput ? ` | Input: ${promptInput}` : ""),
+        imagePrompt: prompt + (promptInput ? ` | Input: ${promptInput}` : "") + (style ? ` | Style: ${style}` : ""),
         hasSourceImage: !!imageInput,
         size,
         quality,

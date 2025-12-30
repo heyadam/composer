@@ -69,7 +69,8 @@ AI image generation node. Takes text input and optionally a base image to genera
   type: "image-generation",
   data: {
     label: string,
-    prompt?: string,                        // Additional instructions
+    prompt?: string,                        // Image subject/description
+    style?: string,                         // Style instructions (e.g., "anime style", "oil painting")
     provider?: "openai" | "google",
     model?: string,                         // Model ID (see below)
     aspectRatio?: string                    // For Google: "1:1", "16:9", etc.
@@ -78,12 +79,14 @@ AI image generation node. Takes text input and optionally a base image to genera
 \`\`\`
 
 **Input Handles:**
-- \`prompt\` - Text instructions for image generation (dataType: "string")
+- \`prompt\` - Image subject/description (dataType: "string")
+- \`style\` - Style instructions like "anime style", "photorealistic", "watercolor" (dataType: "string")
 - \`image\` - Base image for image-to-image transformation (dataType: "image")
 
 When connecting to this node, use \`targetHandle\` to specify which input:
-- To connect text to the prompt: \`targetHandle: "prompt"\`
-- To connect an image to the base image: \`targetHandle: "image"\`
+- To connect the subject/description: \`targetHandle: "prompt"\`
+- To connect style instructions: \`targetHandle: "style"\`
+- To connect an image for editing: \`targetHandle: "image"\`
 
 **Available Image Generation Models (ONLY use these exact IDs):**
 ${formatModelList(VALID_IMAGE_MODELS)}
@@ -453,7 +456,7 @@ Example - inserting a "Translator" between "Input" and "Output":
 }
 \`\`\`
 
-Example - connecting an image-input to an image-generation node's base image:
+Example - connecting an image-input to an image-generation node with style:
 \`\`\`json
 {
   "actions": [
@@ -473,8 +476,8 @@ Example - connecting an image-input to an image-generation node's base image:
         "type": "image-generation",
         "position": { "x": 400, "y": 150 },
         "data": {
-          "label": "Transform Image",
-          "prompt": "Transform into watercolor style",
+          "label": "Watercolor Transform",
+          "style": "watercolor painting style",
           "provider": "google",
           "model": "gemini-2.5-flash-image"
         }
@@ -491,7 +494,7 @@ Example - connecting an image-input to an image-generation node's base image:
       }
     }
   ],
-  "explanation": "Connected image upload to the base image input for transformation"
+  "explanation": "Connected image upload to the base image input with watercolor style"
 }
 \`\`\`
 

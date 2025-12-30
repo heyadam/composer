@@ -94,6 +94,26 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
           />
         </InputWithHandle>
 
+        {/* Style Input */}
+        <InputWithHandle
+          id="style"
+          label="Style"
+          colorClass="cyan"
+          required={false}
+          isConnected={isInputConnected("style")}
+        >
+          <textarea
+            value={isInputConnected("style") ? "" : (typeof data.style === "string" ? data.style : "")}
+            onChange={(e) => updateNodeData(id, { style: e.target.value })}
+            placeholder={isInputConnected("style") ? "Connected" : "e.g., anime style, oil painting..."}
+            disabled={isInputConnected("style")}
+            className={cn(
+              "nodrag node-input min-h-[40px] resize-y",
+              isInputConnected("style") && "node-input:disabled"
+            )}
+          />
+        </InputWithHandle>
+
         {/* Source Image Input */}
         <InputWithHandle
           id="image"

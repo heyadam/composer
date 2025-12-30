@@ -101,7 +101,8 @@ export interface PromptNodeData extends Record<string, unknown>, ExecutionData {
 
 export interface ImageNodeData extends Record<string, unknown>, ExecutionData {
   label: string;
-  prompt?: string; // Optional additional instructions
+  prompt?: string; // Image description (used when prompt input not connected)
+  style?: string; // Style instructions (used when style input not connected)
   imageInput?: string; // Inline uploaded image for editing (runtime only, not persisted)
   provider?: string;
   model?: string;
@@ -408,8 +409,9 @@ export const NODE_PORT_SCHEMAS: Record<NodeType, NodePortSchema> = {
   },
   "image-generation": {
     inputs: [
-      { id: "image", label: "image", dataType: "image", required: false },
       { id: "prompt", label: "prompt", dataType: "string", required: false },
+      { id: "style", label: "style", dataType: "string", required: false },
+      { id: "image", label: "image", dataType: "image", required: false },
     ],
     outputs: [
       { id: "output", label: "image", dataType: "image" },

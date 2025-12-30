@@ -25,7 +25,10 @@ All node components are in `components/Flow/nodes/` with editable labels.
 - Auto-switches to vision-capable model when image is added
 - Default: Google `gemini-3-flash-preview`
 
-**ImageNode** (type: `image-generation`): AI image generation:
+**ImageNode** (type: `image-generation`): AI image generation with three inputs:
+- Prompt input - the subject/description of what to generate
+- Style input - style instructions (e.g., "anime style", "oil painting")
+- Image input - optional base image for image-to-image transformation
 - OpenAI with streaming partial images
 - Google Gemini
 - Default: Google `gemini-2.5-flash-image` with 1:1 aspect ratio

@@ -316,12 +316,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (type === "image-generation") {
-      const { prompt, provider, model, outputFormat, size, quality, partialImages, aspectRatio, input, imageInput } = body;
+      const { prompt, style, provider, model, outputFormat, size, quality, partialImages, aspectRatio, input, imageInput } = body;
 
-      // Combine optional prompt template with input
-      const fullPrompt = prompt
-        ? `${prompt}\n\nUser request: ${input}`
-        : input;
+      // Combine prompt components: style + subject (from input or prompt field)
+      const subject = input || prompt || "";
+      const fullPrompt = style
+        ? `${style}\n\nSubject: ${subject}`
+        : subject;
 
       // Check if we have a source image for image-to-image editing
       const isImageEdit = !!imageInput;

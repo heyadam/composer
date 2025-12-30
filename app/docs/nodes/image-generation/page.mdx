@@ -10,7 +10,9 @@ The Image Generation node creates images from text prompts using OpenAI DALL-E o
 
 | Port | Type | Direction | Description |
 |------|------|-----------|-------------|
-| Prompt | String (cyan) | In | Image description |
+| Prompt | String (cyan) | In | Image subject/description |
+| Style | String (cyan) | In | Style instructions (e.g., "anime style", "oil painting") |
+| Base Image | Image (purple) | In | Optional source image for image-to-image transformation |
 | Output | Image (purple) | Out | Generated image |
 | Done | Pulse (orange) | Out | Fires when generation completes |
 
@@ -46,6 +48,7 @@ OpenAI models support streaming partial images, showing progress as the image ge
 
 ## Tips
 
-- Be specific in your prompts for better results
-- Include style descriptions (photorealistic, illustration, etc.)
-- Specify composition, lighting, and mood
+- Use the **Prompt** input for the subject (what to generate)
+- Use the **Style** input for artistic style (anime, oil painting, photorealistic, etc.)
+- Specify composition, lighting, and mood in either input
+- Connect a Text Input to Style for reusable style presets across multiple images
