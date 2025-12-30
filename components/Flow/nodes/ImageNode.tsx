@@ -1,15 +1,18 @@
 "use client";
 
-import { useRef } from "react";
-import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
+import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import type { ImageNodeData } from "@/types/flow";
-import { Sparkles, Upload, X } from "lucide-react";
+import { Sparkles, Upload } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
 import { InputWithHandle } from "./InputWithHandle";
 import { ProviderModelSelector } from "./ProviderModelSelector";
 import { ConfigSelect } from "./ConfigSelect";
+import { CacheToggle } from "./CacheToggle";
+import { ImageClearButton } from "./ImageClearButton";
 import { cn } from "@/lib/utils";
+import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
+import { useImageFileInput } from "@/lib/hooks/useImageFileInput";
 import {
   IMAGE_PROVIDERS,
   DEFAULT_IMAGE_PROVIDER,
@@ -21,49 +24,17 @@ import {
   PARTIAL_IMAGES_OPTIONS,
   type ImageProviderId,
 } from "@/lib/providers";
-import { parseImageOutput, getImageDataUrl, stringifyImageOutput } from "@/lib/image-utils";
+import { parseImageOutput, getImageDataUrl } from "@/lib/image-utils";
 
 type ImageNodeType = Node<ImageNodeData, "image-generation">;
 
 export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
   const { updateNodeData } = useReactFlow();
-  const edges = useEdges();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const isImageConnected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "image"
-  );
-  const isPromptConnected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "prompt"
-  );
-  const isOutputConnected = edges.some(
-    (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
-  );
-  const isDoneConnected = edges.some(
-    (edge) => edge.source === id && edge.sourceHandle === "done"
-  );
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = (reader.result as string).split(",")[1];
-      const imageData = stringifyImageOutput({
-        type: "image",
-        value: base64,
-        mimeType: file.type || "image/png",
-      });
-      updateNodeData(id, { imageInput: imageData });
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
-  };
-
-  const handleClearImage = () => {
-    updateNodeData(id, { imageInput: undefined });
-  };
+  const { isInputConnected, isOutputConnected } = useEdgeConnections(id);
+  const { fileInputRef, handleFileChange, handleClear, triggerFileSelect } = useImageFileInput({
+    nodeId: id,
+    dataKey: "imageInput",
+  });
 
   const uploadedImageData = data.imageInput ? parseImageOutput(data.imageInput) : null;
 
@@ -125,11 +96,11 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
         <>
           <PortRow
             nodeId={id}
-            output={{ id: "output", label: "Image", colorClass: "purple", isConnected: isOutputConnected }}
+            output={{ id: "output", label: "Image", colorClass: "purple", isConnected: isOutputConnected("output", true) }}
           />
           <PortRow
             nodeId={id}
-            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isDoneConnected }}
+            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isOutputConnected("done") }}
           />
         </>
       }
@@ -149,16 +120,16 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
           id="prompt"
           label="Image Prompt"
           colorClass="cyan"
-          isConnected={isPromptConnected}
+          isConnected={isInputConnected("prompt")}
         >
           <textarea
-            value={isPromptConnected ? "" : (typeof data.prompt === "string" ? data.prompt : "")}
+            value={isInputConnected("prompt") ? "" : (typeof data.prompt === "string" ? data.prompt : "")}
             onChange={(e) => updateNodeData(id, { prompt: e.target.value })}
-            placeholder={isPromptConnected ? "Connected" : "Describe the image..."}
-            disabled={isPromptConnected}
+            placeholder={isInputConnected("prompt") ? "Connected" : "Describe the image..."}
+            disabled={isInputConnected("prompt")}
             className={cn(
               "nodrag node-input min-h-[60px] resize-y",
-              isPromptConnected && "node-input:disabled"
+              isInputConnected("prompt") && "node-input:disabled"
             )}
           />
         </InputWithHandle>
@@ -169,9 +140,9 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
           label="Base Image"
           colorClass="purple"
           required={false}
-          isConnected={isImageConnected}
+          isConnected={isInputConnected("image")}
         >
-          {isImageConnected ? (
+          {isInputConnected("image") ? (
             <div className="node-input min-h-[50px] flex items-center justify-center text-white/40 italic text-sm">
               Connected
             </div>
@@ -182,21 +153,11 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
                 alt="Base"
                 className="w-full max-h-[80px] object-contain rounded-lg border border-white/10 bg-black/30"
               />
-              <button
-                onClick={handleClearImage}
-                className={cn(
-                  "nodrag absolute top-1.5 right-1.5 p-1 rounded-md",
-                  "bg-black/70 hover:bg-black/90 text-white/80 hover:text-white",
-                  "opacity-0 group-hover:opacity-100 transition-all duration-200",
-                  "border border-white/10"
-                )}
-              >
-                <X className="h-3 w-3" />
-              </button>
+              <ImageClearButton onClear={handleClear} />
             </div>
           ) : (
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={triggerFileSelect}
               className="nodrag node-upload-zone min-h-[50px]"
             >
               <Upload className="h-4 w-4" />
@@ -261,15 +222,7 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
           )}
 
           {/* Cache toggle */}
-          <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider text-white/40 cursor-pointer select-none nodrag pt-1">
-            <input
-              type="checkbox"
-              checked={data.cacheable ?? false}
-              onChange={(e) => updateNodeData(id, { cacheable: e.target.checked })}
-              className="node-checkbox"
-            />
-            <span>Cache output</span>
-          </label>
+          <CacheToggle nodeId={id} checked={data.cacheable ?? false} className="pt-1" />
         </div>
       </div>
     </NodeFrame>

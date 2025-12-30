@@ -1,48 +1,29 @@
 "use client";
 
-import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
+import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import type { OutputNodeData } from "@/types/flow";
 import { Eye } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortList } from "./PortLabel";
+import { NodeFooter } from "./NodeFooter";
 import { parseImageOutput, getImageDataUrl } from "@/lib/image-utils";
 import { AudioPreview } from "@/components/Flow/ResponsesSidebar/AudioPreview";
+import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 
 type OutputNodeType = Node<OutputNodeData, "preview-output">;
 
 export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
   const { updateNodeData } = useReactFlow();
-  const edges = useEdges();
-
-  const isStringConnected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "string"
-  );
-  const isImageConnected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "image"
-  );
-  const isAudioConnected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "audio"
-  );
-  const isCodeConnected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "code"
-  );
+  const { isInputConnected } = useEdgeConnections(id);
 
   const renderFooter = () => {
     if (data.executionError) {
-      return (
-        <p className="text-xs text-rose-400 whitespace-pre-wrap line-clamp-4">
-          {data.executionError}
-        </p>
-      );
+      return <NodeFooter error={data.executionError} />;
     }
 
     const hasOutput = data.stringOutput || data.imageOutput || data.audioOutput || data.codeOutput;
     if (!hasOutput) {
-      return (
-        <p className="text-xs text-white/40 italic">
-          Output appears here
-        </p>
-      );
+      return <NodeFooter emptyMessage="Output appears here" />;
     }
 
     return (
@@ -91,10 +72,10 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
         <PortList
           nodeId={id}
           inputs={[
-            { id: "string", label: "String", colorClass: "cyan", isConnected: isStringConnected },
-            { id: "image", label: "Image", colorClass: "purple", isConnected: isImageConnected },
-            { id: "audio", label: "Audio", colorClass: "emerald", isConnected: isAudioConnected },
-            { id: "code", label: "Code", colorClass: "amber", isConnected: isCodeConnected },
+            { id: "string", label: "String", colorClass: "cyan", isConnected: isInputConnected("string") },
+            { id: "image", label: "Image", colorClass: "purple", isConnected: isInputConnected("image") },
+            { id: "audio", label: "Audio", colorClass: "emerald", isConnected: isInputConnected("audio") },
+            { id: "code", label: "Code", colorClass: "amber", isConnected: isInputConnected("code") },
           ]}
         />
       }

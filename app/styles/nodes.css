@@ -72,6 +72,14 @@
   --node-blue: 160 190 246;     /* Periwinkle - react component */
   --node-teal: 142 246 228;     /* Electric mint - audio */
 
+  /* Port Colors - "Luminous Precision" palette (data type indicators) */
+  --port-cyan: 142 200 246;     /* Soft azure - string/text */
+  --port-purple: 201 184 250;   /* Lavender bloom - image */
+  --port-amber: 246 217 142;    /* Champagne gold - response */
+  --port-emerald: 142 246 228;  /* Electric mint - audio */
+  --port-rose: 246 168 184;     /* Soft coral - boolean */
+  --port-orange: 246 200 142;   /* Apricot signal - pulse */
+
   /* Comment Theme Colors */
   --node-comment-gray: 161 161 170;
   --node-comment-blue: 96 165 250;
@@ -218,30 +226,30 @@
     0 2px 4px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Port colors - "Luminous Precision" palette */
+/* Port colors - use CSS variables from :root */
 .port-cyan {
-  background-color: #8EC8F6 !important; /* Soft azure - string/text */
-  color: #8EC8F6;
+  background-color: rgb(var(--port-cyan)) !important;
+  color: rgb(var(--port-cyan));
 }
 .port-purple {
-  background-color: #C9B8FA !important; /* Lavender bloom - image */
-  color: #C9B8FA;
+  background-color: rgb(var(--port-purple)) !important;
+  color: rgb(var(--port-purple));
 }
 .port-amber {
-  background-color: #F6D98E !important; /* Champagne gold - response */
-  color: #F6D98E;
+  background-color: rgb(var(--port-amber)) !important;
+  color: rgb(var(--port-amber));
 }
 .port-emerald {
-  background-color: #8EF6E4 !important; /* Electric mint - audio */
-  color: #8EF6E4;
+  background-color: rgb(var(--port-emerald)) !important;
+  color: rgb(var(--port-emerald));
 }
 .port-rose {
-  background-color: #F6A8B8 !important; /* Soft coral - boolean */
-  color: #F6A8B8;
+  background-color: rgb(var(--port-rose)) !important;
+  color: rgb(var(--port-rose));
 }
 .port-orange {
-  background-color: #F6C88E !important; /* Apricot signal - pulse */
-  color: #F6C88E;
+  background-color: rgb(var(--port-orange)) !important;
+  color: rgb(var(--port-orange));
 }
 
 .port-label {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
+import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import type { AudioInputNodeData } from "@/types/flow";
 import { Mic, Square } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
@@ -9,12 +9,13 @@ import { PortRow } from "./PortLabel";
 import { cn } from "@/lib/utils";
 import { formatAudioDuration } from "@/lib/audio-utils";
 import { pendingInputRegistry } from "@/lib/execution/pending-input-registry";
+import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 
 type AudioInputNodeType = Node<AudioInputNodeData, "audio-input">;
 
 export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
   const { updateNodeData } = useReactFlow();
-  const edges = useEdges();
+  const { isOutputConnected } = useEdgeConnections(id);
 
   // Local state for recording UI
   const [isRecording, setIsRecording] = useState(false);
@@ -41,13 +42,6 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
     audioMimeType: string;
     recordingDuration: number;
   } | null>(null);
-
-  const isOutputConnected = edges.some(
-    (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
-  );
-  const isDoneConnected = edges.some(
-    (edge) => edge.source === id && edge.sourceHandle === "done"
-  );
 
   const hasRecording = !!data.audioBuffer && !isRecording;
 
@@ -340,11 +334,11 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
         <>
           <PortRow
             nodeId={id}
-            output={{ id: "output", label: "Audio", colorClass: "emerald", isConnected: isOutputConnected }}
+            output={{ id: "output", label: "Audio", colorClass: "emerald", isConnected: isOutputConnected("output", true) }}
           />
           <PortRow
             nodeId={id}
-            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isDoneConnected }}
+            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isOutputConnected("done") }}
           />
         </>
       }

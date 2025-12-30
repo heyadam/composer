@@ -7,6 +7,7 @@ import { Mic, Square, Loader2 } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
 import { InputWithHandle } from "./InputWithHandle";
+import { NodeFooter } from "./NodeFooter";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useRealtimeSession } from "@/lib/hooks/useRealtimeSession";
+import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 
 const VOICES = ["marin", "cedar", "alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"] as const;
 
@@ -42,28 +44,12 @@ function formatTranscript(entries: RealtimeTranscriptEntry[]): string {
 
 export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
   const { updateNodeData, getEdges } = useReactFlow();
-  const edges = useEdges();
+  const edges = useEdges(); // Still needed for getConnectedAudioStreamId
+  const { isInputConnected, isOutputConnected } = useEdgeConnections(id);
   const [isPttHeld, setIsPttHeld] = useState(false);
 
-  // Check connection states
-  const isInstructionsConnected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "instructions"
-  );
-  const isAudioInConnected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "audio-in"
-  );
-  const isTranscriptConnected = edges.some(
-    (edge) => edge.source === id && edge.sourceHandle === "transcript"
-  );
-  const isAudioOutConnected = edges.some(
-    (edge) => edge.source === id && edge.sourceHandle === "audio-out"
-  );
-  const isDoneConnected = edges.some(
-    (edge) => edge.source === id && edge.sourceHandle === "done"
-  );
-
   // Check if any output is connected (for auto-start behavior)
-  const hasOutputConnection = isTranscriptConnected || isAudioOutConnected;
+  const hasOutputConnection = isOutputConnected("transcript") || isOutputConnected("audio-out");
 
   // Push transcript to connected nodes in real-time
   const pushTranscriptToConnectedNodes = useCallback((entries: RealtimeTranscriptEntry[]) => {
@@ -94,7 +80,7 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
     sendEvent,
   } = useRealtimeSession({
     nodeId: id,
-    audioInStreamId: isAudioInConnected ? getConnectedAudioStreamId(edges, id) : undefined,
+    audioInStreamId: isInputConnected("audio-in") ? getConnectedAudioStreamId(edges, id) : undefined,
     onTranscriptUpdate: (entries) => {
       updateNodeData(id, { transcript: entries });
       // Push to connected nodes in real-time
@@ -151,21 +137,15 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
         <>
           <PortRow
             nodeId={id}
-            output={{ id: "transcript", label: "Transcript", colorClass: "cyan", isConnected: isTranscriptConnected }}
+            output={{ id: "transcript", label: "Transcript", colorClass: "cyan", isConnected: isOutputConnected("transcript") }}
           />
           <PortRow
             nodeId={id}
-            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isDoneConnected }}
+            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isOutputConnected("done") }}
           />
         </>
       }
-      footer={
-        (data.executionError || errorMessage) ? (
-          <p className="text-xs text-destructive whitespace-pre-wrap line-clamp-4">
-            {data.executionError || errorMessage}
-          </p>
-        ) : null
-      }
+      footer={<NodeFooter error={data.executionError || errorMessage || undefined} />}
     >
       <div className="space-y-3">
         {/* System instructions (can be connected or inline) */}
@@ -173,16 +153,16 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
           id="instructions"
           label="System Instructions"
           colorClass="cyan"
-          isConnected={isInstructionsConnected}
+          isConnected={isInputConnected("instructions")}
         >
           <textarea
-            value={isInstructionsConnected ? "" : (data.instructions ?? "")}
+            value={isInputConnected("instructions") ? "" : (data.instructions ?? "")}
             onChange={(e) => updateNodeData(id, { instructions: e.target.value })}
-            placeholder={isInstructionsConnected ? "Connected" : "You are a helpful assistant..."}
-            disabled={isInstructionsConnected}
+            placeholder={isInputConnected("instructions") ? "Connected" : "You are a helpful assistant..."}
+            disabled={isInputConnected("instructions")}
             className={cn(
               "nodrag node-input min-h-[60px] resize-y",
-              isInstructionsConnected && "node-input:disabled"
+              isInputConnected("instructions") && "node-input:disabled"
             )}
           />
         </InputWithHandle>

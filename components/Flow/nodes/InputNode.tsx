@@ -1,20 +1,17 @@
 "use client";
 
-import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
+import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import type { InputNodeData } from "@/types/flow";
 import { Type } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
+import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 
 type InputNodeType = Node<InputNodeData, "text-input">;
 
 export function InputNode({ id, data }: NodeProps<InputNodeType>) {
   const { updateNodeData } = useReactFlow();
-  const edges = useEdges();
-
-  const isOutputConnected = edges.some(
-    (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
-  );
+  const { isOutputConnected } = useEdgeConnections(id);
 
   return (
     <NodeFrame
@@ -28,7 +25,7 @@ export function InputNode({ id, data }: NodeProps<InputNodeType>) {
       ports={
         <PortRow
           nodeId={id}
-          output={{ id: "output", label: "String", colorClass: "cyan", isConnected: isOutputConnected }}
+          output={{ id: "output", label: "String", colorClass: "cyan", isConnected: isOutputConnected("output", true) }}
         />
       }
     >

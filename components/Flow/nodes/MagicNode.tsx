@@ -1,40 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
+import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import type { MagicNodeData } from "@/types/flow";
 import { Wand2, ChevronDown, ChevronRight, RefreshCw, AlertCircle, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
 import { InputWithHandle } from "./InputWithHandle";
+import { CacheToggle } from "./CacheToggle";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { useApiKeys } from "@/lib/api-keys";
+import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 
 type MagicNodeType = Node<MagicNodeData, "ai-logic">;
 
 export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
   const { updateNodeData } = useReactFlow();
-  const edges = useEdges();
+  const { isInputConnected, isOutputConnected } = useEdgeConnections(id);
   const { keys: apiKeys } = useApiKeys();
   const [isGenerating, setIsGenerating] = useState(false);
-
-  const isTransformConnected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "transform"
-  );
-  const isInput1Connected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "input1"
-  );
-  const isInput2Connected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "input2"
-  );
-  const isOutputConnected = edges.some(
-    (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
-  );
-  const isDoneConnected = edges.some(
-    (edge) => edge.source === id && edge.sourceHandle === "done"
-  );
 
   const hasCode = Boolean(data.generatedCode);
   const hasError = Boolean(data.generationError);
@@ -108,16 +94,16 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
         <>
           <PortRow
             nodeId={id}
-            input={{ id: "input1", label: "Input 1", colorClass: "cyan", required: false, isConnected: isInput1Connected }}
+            input={{ id: "input1", label: "Input 1", colorClass: "cyan", required: false, isConnected: isInputConnected("input1") }}
           />
           <PortRow
             nodeId={id}
-            input={{ id: "input2", label: "Input 2", colorClass: "cyan", required: false, isConnected: isInput2Connected }}
-            output={{ id: "output", label: "String", colorClass: "cyan", isConnected: isOutputConnected }}
+            input={{ id: "input2", label: "Input 2", colorClass: "cyan", required: false, isConnected: isInputConnected("input2") }}
+            output={{ id: "output", label: "String", colorClass: "cyan", isConnected: isOutputConnected("output", true) }}
           />
           <PortRow
             nodeId={id}
-            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isDoneConnected }}
+            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isOutputConnected("done") }}
           />
         </>
       }
@@ -140,22 +126,22 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
           label="Logic to Generate"
           colorClass="cyan"
           required={false}
-          isConnected={isTransformConnected}
+          isConnected={isInputConnected("transform")}
         >
           <textarea
-            value={isTransformConnected ? "" : (data.transformPrompt ?? "")}
+            value={isInputConnected("transform") ? "" : (data.transformPrompt ?? "")}
             onChange={(e) => updateNodeData(id, { transformPrompt: e.target.value })}
-            placeholder={isTransformConnected ? "Connected" : "Describe logic to generate via Claude..."}
-            disabled={isTransformConnected}
+            placeholder={isInputConnected("transform") ? "Connected" : "Describe logic to generate via Claude..."}
+            disabled={isInputConnected("transform")}
             className={cn(
               "nodrag node-input min-h-[60px] resize-y",
-              isTransformConnected && "node-input:disabled"
+              isInputConnected("transform") && "node-input:disabled"
             )}
           />
         </InputWithHandle>
 
         {/* Generate button */}
-        {!isTransformConnected && (
+        {!isInputConnected("transform") && (
           <Button
             size="sm"
             variant={hasError ? "destructive" : hasCode ? "outline" : "default"}
@@ -191,14 +177,14 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
         )}
 
         {/* Error display */}
-        {!isTransformConnected && hasError && data.generationError && (
+        {!isInputConnected("transform") && hasError && data.generationError && (
           <div className="rounded-lg bg-rose-500/10 border border-rose-500/30 p-2.5">
             <p className="text-xs text-rose-400">{data.generationError}</p>
           </div>
         )}
 
         {/* Collapsible code view */}
-        {!isTransformConnected && hasCode && !hasError && (
+        {!isInputConnected("transform") && hasCode && !hasError && (
           <Collapsible open={data.codeExpanded} onOpenChange={toggleCodeView}>
             <CollapsibleTrigger className="nodrag flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-white/50 hover:text-white/80 w-full transition-colors">
               {data.codeExpanded ? (
@@ -220,7 +206,7 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
         )}
 
         {/* Collapsible eval results */}
-        {!isTransformConnected && hasCode && !hasError && data.evalResults && (
+        {!isInputConnected("transform") && hasCode && !hasError && data.evalResults && (
           <Collapsible open={data.evalExpanded} onOpenChange={toggleEvalView}>
             <CollapsibleTrigger className="nodrag flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-white/50 hover:text-white/80 w-full transition-colors">
               {data.evalExpanded ? (
@@ -284,22 +270,14 @@ export function MagicNode({ id, data }: NodeProps<MagicNodeType>) {
         )}
 
         {/* Info when connected */}
-        {isTransformConnected && (
+        {isInputConnected("transform") && (
           <p className="text-xs text-white/40 italic">
             Code will be generated at runtime from connected input.
           </p>
         )}
 
         {/* Cache toggle */}
-        <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider text-white/40 cursor-pointer select-none nodrag pt-2 border-t border-white/[0.06]">
-          <input
-            type="checkbox"
-            checked={data.cacheable ?? false}
-            onChange={(e) => updateNodeData(id, { cacheable: e.target.checked })}
-            className="node-checkbox"
-          />
-          <span>Cache output</span>
-        </label>
+        <CacheToggle nodeId={id} checked={data.cacheable ?? false} className="pt-2 border-t border-white/[0.06]" />
       </div>
     </NodeFrame>
   );

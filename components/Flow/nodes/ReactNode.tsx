@@ -1,14 +1,17 @@
 "use client";
 
-import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
+import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import type { ReactNodeData, ReactStylePreset } from "@/types/flow";
 import { Code } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
 import { InputWithHandle } from "./InputWithHandle";
+import { NodeFooter } from "./NodeFooter";
+import { CacheToggle } from "./CacheToggle";
 import { ProviderModelSelector } from "./ProviderModelSelector";
 import { cn } from "@/lib/utils";
 import { PROVIDERS, DEFAULT_REACT_PROVIDER, DEFAULT_REACT_MODEL, type ProviderId } from "@/lib/providers";
+import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 import {
   Select,
   SelectContent,
@@ -28,21 +31,7 @@ const STYLE_PRESETS: { value: ReactStylePreset; label: string }[] = [
 
 export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
   const { updateNodeData } = useReactFlow();
-  const edges = useEdges();
-
-  // Check which input handles are connected
-  const isPromptConnected = edges.some(
-    (edge) => edge.target === id && (edge.targetHandle === "prompt" || !edge.targetHandle)
-  );
-  const isSystemConnected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "system"
-  );
-  const isOutputConnected = edges.some(
-    (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
-  );
-  const isDoneConnected = edges.some(
-    (edge) => edge.source === id && edge.sourceHandle === "done"
-  );
+  const { isInputConnected, isOutputConnected } = useEdgeConnections(id);
 
   const currentProvider = (data.provider || DEFAULT_REACT_PROVIDER) as ProviderId;
   const currentModel = data.model || DEFAULT_REACT_MODEL;
@@ -61,25 +50,15 @@ export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
         <>
           <PortRow
             nodeId={id}
-            output={{ id: "output", label: "Code", colorClass: "amber", isConnected: isOutputConnected }}
+            output={{ id: "output", label: "Code", colorClass: "amber", isConnected: isOutputConnected("output", true) }}
           />
           <PortRow
             nodeId={id}
-            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isDoneConnected }}
+            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isOutputConnected("done") }}
           />
         </>
       }
-      footer={
-        data.executionError ? (
-          <p className="text-xs text-destructive whitespace-pre-wrap line-clamp-4">
-            {data.executionError}
-          </p>
-        ) : data.executionOutput ? (
-          <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4">
-            Component generated
-          </p>
-        ) : null
-      }
+      footer={<NodeFooter error={data.executionError} output={data.executionOutput ? "Component generated" : undefined} />}
     >
       <div className="space-y-3">
         {/* Component Description Input */}
@@ -87,16 +66,16 @@ export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
           id="prompt"
           label="Component Description"
           colorClass="cyan"
-          isConnected={isPromptConnected}
+          isConnected={isInputConnected("prompt", true)}
         >
           <textarea
-            value={isPromptConnected ? "" : (data.userPrompt ?? "")}
+            value={isInputConnected("prompt", true) ? "" : (data.userPrompt ?? "")}
             onChange={(e) => updateNodeData(id, { userPrompt: e.target.value })}
-            placeholder={isPromptConnected ? "Connected" : "Describe the component..."}
-            disabled={isPromptConnected}
+            placeholder={isInputConnected("prompt", true) ? "Connected" : "Describe the component..."}
+            disabled={isInputConnected("prompt", true)}
             className={cn(
               "nodrag node-input min-h-[60px] resize-y",
-              isPromptConnected && "node-input:disabled"
+              isInputConnected("prompt", true) && "node-input:disabled"
             )}
           />
         </InputWithHandle>
@@ -107,16 +86,16 @@ export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
           label="Additional Instructions"
           colorClass="cyan"
           required={false}
-          isConnected={isSystemConnected}
+          isConnected={isInputConnected("system")}
         >
           <textarea
-            value={isSystemConnected ? "" : (data.systemPrompt ?? "")}
+            value={isInputConnected("system") ? "" : (data.systemPrompt ?? "")}
             onChange={(e) => updateNodeData(id, { systemPrompt: e.target.value })}
-            placeholder={isSystemConnected ? "Connected" : "Style preferences, constraints..."}
-            disabled={isSystemConnected}
+            placeholder={isInputConnected("system") ? "Connected" : "Style preferences, constraints..."}
+            disabled={isInputConnected("system")}
             className={cn(
               "nodrag node-input min-h-[40px] resize-y",
-              isSystemConnected && "node-input:disabled"
+              isInputConnected("system") && "node-input:disabled"
             )}
           />
         </InputWithHandle>
@@ -157,15 +136,7 @@ export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
           </div>
 
           {/* Cache toggle */}
-          <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider text-white/40 cursor-pointer select-none nodrag pt-1">
-            <input
-              type="checkbox"
-              checked={data.cacheable ?? false}
-              onChange={(e) => updateNodeData(id, { cacheable: e.target.checked })}
-              className="node-checkbox"
-            />
-            <span>Cache output</span>
-          </label>
+          <CacheToggle nodeId={id} checked={data.cacheable ?? false} className="pt-1" />
         </div>
       </div>
     </NodeFrame>
