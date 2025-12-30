@@ -245,11 +245,10 @@ export async function POST(request: NextRequest) {
     const isBatch = Array.isArray(body);
     const requests = isBatch ? body : [body];
 
-    // SSE streaming disabled for now - causes context bloat in Cursor
-    // Cursor sends Accept: text/event-stream but can't handle large streaming responses,
-    // which fills context and causes the LLM to lose track of the conversation.
-    // Polling mode (run_flow -> get_run_status) works reliably with small responses.
-    const acceptsSSE = false; // request.headers.get("Accept")?.includes("text/event-stream");
+    // SSE streaming with resource links - outputs are returned as fetchable URLs
+    // instead of inline base64, keeping the response small and preventing context bloat.
+    // Resource links point to /api/mcp/outputs/:jobId/:key for full data retrieval.
+    const acceptsSSE = request.headers.get("Accept")?.includes("text/event-stream");
 
     // For single run_flow requests with SSE accept header, return streaming response
     if (!isBatch && acceptsSSE && requests.length === 1) {

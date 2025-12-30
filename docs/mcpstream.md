@@ -117,11 +117,11 @@ Update `getRunStatus()` to also use ResourceLinks:
 
 ## Migration Path
 
-1. ✅ Phase 0 (Current): SSE disabled, inline summaries for polling
-2. Phase 1: Add output storage API
-3. Phase 2: Implement resource link format
-4. Phase 3: Re-enable SSE with resource links
-5. Phase 4: Update polling to use resource links
+1. ✅ Phase 0: SSE disabled, inline summaries for polling
+2. ✅ Phase 1: Add output storage API (`app/api/mcp/outputs/[jobId]/[outputKey]/route.ts`)
+3. ✅ Phase 2: Implement resource link format (`lib/mcp/types.ts`, `lib/mcp/output-parser.ts`)
+4. ✅ Phase 3: Re-enable SSE with resource links (`app/api/mcp/route.ts`)
+5. ✅ Phase 4: Update polling to use resource links (`lib/mcp/tools.ts`)
 
 ## Testing Checklist
 

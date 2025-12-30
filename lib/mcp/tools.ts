@@ -15,7 +15,7 @@ import {
   executeFlowServerWithProgress,
 } from "@/lib/execution/server-execute";
 import { jobStore } from "./job-store";
-import { transformOutputs } from "./output-parser";
+import { transformOutputs, transformOutputsToResourceLinks } from "./output-parser";
 import {
   formatSSEEvent,
   formatResultEvent,
@@ -31,6 +31,7 @@ import type {
   RunStatusResult,
   StreamingRunResult,
   StructuredOutput,
+  OutputContent,
 } from "./types";
 import type { Node } from "@xyflow/react";
 
@@ -63,6 +64,23 @@ const EXECUTION_LIMITS = {
   /** Maximum output size in bytes (10MB) - supports larger images */
   MAX_OUTPUT_SIZE: 10_000_000,
 } as const;
+
+/**
+ * Get the base URL for constructing resource links.
+ * Uses NEXT_PUBLIC_SITE_URL in production, falls back to localhost in development.
+ */
+function getBaseUrl(): string {
+  // Try environment variable first (set in Vercel)
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
+  }
+  // Vercel deployment URL
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  // Fallback for local development
+  return "http://localhost:3000";
+}
 
 // ============================================================================
 // Validation Helpers
@@ -383,10 +401,10 @@ export async function getRunStatus(
       message = `Status: ${job.status}`;
   }
 
-  // Summarize large outputs to prevent context bloat in MCP clients
-  // Binary data (images, audio) is truncated to show only metadata
-  const summarizedOutputs = job.outputs
-    ? summarizeOutputsForContext(job.outputs)
+  // Transform outputs to resource links to prevent context bloat in MCP clients
+  // Binary data (images, audio) becomes fetchable URLs instead of inline base64
+  const resourceLinkOutputs = job.outputs
+    ? transformOutputsToResourceLinks(job.outputs, job.id, getBaseUrl())
     : undefined;
 
   return {
@@ -396,52 +414,11 @@ export async function getRunStatus(
     created_at: job.createdAt.toISOString(),
     started_at: job.startedAt?.toISOString(),
     completed_at: job.completedAt?.toISOString(),
-    outputs: summarizedOutputs,
+    outputs: resourceLinkOutputs,
     errors: job.errors,
   };
 }
 
-/**
- * Summarize outputs to prevent context bloat in MCP clients.
- * Binary data (images, audio) is replaced with metadata.
- * Text outputs are truncated if too long.
- */
-function summarizeOutputsForContext(
-  outputs: Record<string, StructuredOutput>
-): Record<string, StructuredOutput> {
-  const MAX_TEXT_LENGTH = 2000;
-  const result: Record<string, StructuredOutput> = {};
-
-  for (const [key, output] of Object.entries(outputs)) {
-    if (output.type === "image" || output.type === "audio") {
-      // Replace binary data with metadata summary
-      const sizeKB = Math.round((output.value.length * 3) / 4 / 1024); // base64 to KB
-      result[key] = {
-        type: output.type,
-        value: `[${output.type.toUpperCase()}: ${sizeKB}KB, ${output.mimeType || "unknown format"}]`,
-        mimeType: output.mimeType,
-      };
-    } else if (output.type === "text" && output.value.length > MAX_TEXT_LENGTH) {
-      // Truncate long text
-      result[key] = {
-        type: output.type,
-        value: output.value.slice(0, MAX_TEXT_LENGTH) + `\n\n[TRUNCATED: ${output.value.length} chars total]`,
-      };
-    } else if (output.type === "code" && output.value.length > MAX_TEXT_LENGTH) {
-      // Truncate long code
-      result[key] = {
-        type: output.type,
-        value: output.value.slice(0, MAX_TEXT_LENGTH) + `\n\n// [TRUNCATED: ${output.value.length} chars total]`,
-        mimeType: output.mimeType,
-      };
-    } else {
-      // Keep small outputs as-is
-      result[key] = output;
-    }
-  }
-
-  return result;
-}
 
 // ============================================================================
 // Internal Helpers
@@ -764,6 +741,9 @@ export function createFlowExecutionStream(
           }
         }
 
+        // Create job for storing outputs (needed for resource links)
+        const job = await jobStore.create(token, validatedInputs);
+
         // Log execution for rate limiting
         const { error: logError } = await supabase.rpc("log_execution", {
           p_share_token: token,
@@ -830,10 +810,24 @@ export function createFlowExecutionStream(
         const structuredOutputs = transformOutputs(result.outputs);
         const hasErrors = Object.keys(result.errors).length > 0;
 
-        // Build final result
+        // Store outputs in job (so resource links work)
+        if (hasErrors) {
+          await jobStore.fail(job.id, result.errors);
+        } else {
+          await jobStore.complete(job.id, structuredOutputs);
+        }
+
+        // Transform to resource links for small context response
+        const resourceLinkOutputs = transformOutputsToResourceLinks(
+          structuredOutputs,
+          job.id,
+          getBaseUrl()
+        );
+
+        // Build final result with resource links
         const finalResult: StreamingRunResult = {
           status: hasErrors ? "failed" : "completed",
-          outputs: structuredOutputs,
+          outputs: resourceLinkOutputs,
           errors: hasErrors ? result.errors : undefined,
           duration_ms: Date.now() - startTime,
         };

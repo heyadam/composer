@@ -29,6 +29,47 @@ export interface StructuredOutput {
 }
 
 /**
+ * Resource link for large outputs.
+ * Instead of embedding binary data inline (which causes context bloat),
+ * return a fetchable URL that clients can use to retrieve the full data.
+ */
+export interface ResourceLink {
+  /** Discriminator for resource links */
+  type: "resource_link";
+  /** Full URL to fetch the output data */
+  uri: string;
+  /** Suggested filename for the output (e.g., "Anime.png") */
+  name: string;
+  /** MIME type of the output data */
+  mimeType: string;
+  /** Size of the output in bytes (helps LLMs understand scale) */
+  size_bytes: number;
+  /** Optional description for additional context */
+  description?: string;
+}
+
+/**
+ * Type guard to check if an object is a ResourceLink
+ */
+export function isResourceLink(obj: unknown): obj is ResourceLink {
+  if (!obj || typeof obj !== "object") return false;
+  const o = obj as Record<string, unknown>;
+  return (
+    o.type === "resource_link" &&
+    typeof o.uri === "string" &&
+    typeof o.name === "string" &&
+    typeof o.mimeType === "string" &&
+    typeof o.size_bytes === "number"
+  );
+}
+
+/**
+ * Union type for output content.
+ * Can be either inline structured output or a resource link to fetch.
+ */
+export type OutputContent = StructuredOutput | ResourceLink;
+
+/**
  * Type guard to check if an object is a StructuredOutput
  */
 export function isStructuredOutput(obj: unknown): obj is StructuredOutput {
@@ -106,7 +147,8 @@ export interface RunStatusResult {
   created_at: string;
   started_at?: string;
   completed_at?: string;
-  outputs?: Record<string, StructuredOutput>;
+  /** Outputs as resource links (for binary) or inline content (for small text) */
+  outputs?: Record<string, OutputContent>;
   errors?: Record<string, string>;
 }
 
@@ -158,8 +200,8 @@ export interface NodeExecutionEvent {
 export interface StreamingRunResult {
   /** Overall execution status */
   status: "completed" | "failed";
-  /** Outputs from preview-output nodes (keyed by label) */
-  outputs?: Record<string, StructuredOutput>;
+  /** Outputs as resource links (for binary) or inline content (for small text) */
+  outputs?: Record<string, OutputContent>;
   /** Errors from failed nodes (keyed by label) */
   errors?: Record<string, string>;
   /** Total execution time in milliseconds */
