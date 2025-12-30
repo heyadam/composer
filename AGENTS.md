@@ -77,6 +77,7 @@ Required for owner-funded execution:
 ## Skills
 - `/supabase` for DB work, `/node-creation` for new node types.
 - `/content-design` for UI text, `/testing` for tests, `/gemini-agents` for low-complexity batch edits.
+- `/docs` for Nextra documentation (pages, navigation, common issues).
 
 ## New User Experience (NUX)
 - **Welcome Dialog**: `components/Flow/WelcomeDialog/` — three-step onboarding.

@@ -1,0 +1,191 @@
+# MCP Integration
+
+Run Composer flows programmatically from AI tools like Claude Code, Cursor, or any MCP-compatible client.
+
+## What is MCP?
+
+[Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open standard that lets AI assistants connect to external tools and data sources. Composer provides an MCP server that exposes your flows as tools that AI assistants can discover and execute.
+
+## Prerequisites
+
+Before using MCP integration:
+
+1. **Save your flow** to the cloud (requires sign-in)
+2. **Publish your flow** using the Share button
+3. **Enable owner-funded execution** in share settings
+4. **Store your API keys** server-side (Settings → API Keys → Store Keys)
+
+## Available Tools
+
+The Composer MCP server provides three tools:
+
+### get_flow_info
+
+Discover what inputs and outputs a flow has before running it.
+
+```json
+{
+  "name": "Story Generator",
+  "description": "Generates a story with an illustration",
+  "ownerFunded": true,
+  "inputs": [
+    { "id": "input-1", "label": "Topic", "type": "text-input" }
+  ],
+  "outputs": [
+    { "id": "output-1", "label": "Story" },
+    { "id": "output-2", "label": "Image" }
+  ]
+}
+```
+
+### run_flow
+
+Start executing a flow with optional input values. Returns a job ID for polling.
+
+```json
+{
+  "job_id": "job_abc123xyz456789",
+  "status": "pending",
+  "message": "Job created. Use get_run_status to check progress.",
+  "quota_remaining": 95
+}
+```
+
+### get_run_status
+
+Check the status of a running job and retrieve results when complete.
+
+```json
+{
+  "job_id": "job_abc123xyz456789",
+  "status": "completed",
+  "created_at": "2025-01-15T10:30:00.000Z",
+  "completed_at": "2025-01-15T10:30:15.000Z",
+  "outputs": {
+    "output-1": "Once upon a time...",
+    "output-2": "data:image/png;base64,..."
+  }
+}
+```
+
+## Configuration
+
+### Claude Code
+
+Add to your `~/.claude/claude_mcp_settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "composer": {
+      "type": "http",
+      "url": "https://composer.design/api/mcp"
+    }
+  }
+}
+```
+
+### Cursor
+
+Add to your Cursor MCP settings:
+
+```json
+{
+  "mcpServers": {
+    "composer": {
+      "type": "http",
+      "url": "https://composer.design/api/mcp"
+    }
+  }
+}
+```
+
+### Local Development
+
+For testing with a local Composer instance:
+
+```json
+{
+  "mcpServers": {
+    "composer-local": {
+      "type": "http",
+      "url": "http://localhost:3000/api/mcp"
+    }
+  }
+}
+```
+
+## Usage Examples
+
+### In Claude Code
+
+Ask Claude to run your flow:
+
+```
+Use the composer MCP to run the flow with token "abc123xyz456"
+with input "Write a haiku about coding"
+```
+
+Claude will:
+1. Call `get_flow_info` to discover the flow's inputs
+2. Call `run_flow` with your input values
+3. Poll `get_run_status` until execution completes
+4. Return the results
+
+### Providing Inputs
+
+Inputs are matched by node label or ID:
+
+```json
+{
+  "token": "abc123xyz456",
+  "inputs": {
+    "Topic": "Space exploration",
+    "Style": "Professional"
+  }
+}
+```
+
+## Rate Limits
+
+To prevent abuse, MCP execution is rate-limited:
+
+| Limit | Value |
+|-------|-------|
+| Per minute | 10 runs per flow |
+| Per day | 100 runs per flow |
+| Job expiry | 1 hour |
+| Execution timeout | 5 minutes |
+| Max output size | 1 MB |
+
+## Finding Your Share Token
+
+1. Open your flow in Composer
+2. Click the **Share** button (globe icon)
+3. Your 12-character share token is in the URL: `composer.design/f/1234/abc123xyz456`
+4. The token is the last segment: `abc123xyz456`
+
+## Limitations
+
+- **Text inputs only**: MCP can only provide values to Text Input nodes. Image and Audio Input nodes use pre-configured data from the flow.
+- **Owner-funded required**: MCP execution always uses the flow owner's API keys.
+- **No streaming**: Results are returned when execution completes, not streamed.
+
+## Troubleshooting
+
+### "Owner API keys not available"
+
+Make sure you've stored your API keys server-side:
+1. Go to Settings → API Keys
+2. Click "Store Keys" to save keys for owner-funded execution
+
+### "Rate limit exceeded"
+
+Wait for the rate limit window to reset (1 minute for per-minute limits, midnight UTC for daily limits).
+
+### "Flow not found"
+
+Check that:
+- The flow is published (Share button shows "Published")
+- The share token is correct (12 alphanumeric characters)
+- Owner-funded execution is enabled
