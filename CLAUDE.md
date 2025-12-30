@@ -69,6 +69,10 @@ Invoke `/gemini-agents` for high-velocity parallel code changes. Spawns 2-4 agen
 
 Invoke `/testing` when writing or modifying tests. Covers Vitest setup, testing patterns, hook testing, execution engine testing, mocking strategies, and copy-paste templates for common scenarios.
 
+### Docs Skill
+
+Invoke `/docs` when writing or updating user-facing documentation. Covers Nextra page creation, navigation setup, MDX conventions, and common issues like hydration errors.
+
 ## Architecture Overview
 
 This is an AI agent workflow builder using Next.js 16 App Router with React Flow for visual flow editing.
@@ -89,6 +93,7 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 | Type System | `types.md` | Node data interfaces, port types |
 | UI & Motion | `ui-motion.md` | shadcn/ui, motion.dev animations |
 | Testing | `testing.md` | Vitest tests, mobile blocker, NUX |
+| MCP Server | `mcp.md` | JSON-RPC API, tools, job store, rate limiting |
 
 ### Node Types Summary
 

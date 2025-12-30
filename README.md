@@ -282,3 +282,12 @@ This project includes four Claude Code skills at `.claude/skills/`:
 ├── GEMINI_USAGE.md    # Gemini CLI command patterns
 └── EXAMPLES.md        # Real-world usage examples
 ```
+
+**Docs** (`/docs`) - Nextra documentation guide:
+```
+.claude/skills/docs/
+├── SKILL.md           # Router with quick reference
+├── PAGES.md           # Creating and organizing doc pages
+├── ISSUES.md          # Common errors and fixes (hydration, navigation)
+└── MDX.md             # MDX syntax and conventions
+```

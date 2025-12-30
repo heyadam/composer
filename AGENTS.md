@@ -69,6 +69,7 @@ Required for owner-funded execution:
 - Encryption: `lib/encryption.ts` (AES-256-GCM for API key storage).
 - Service client: `lib/supabase/service.ts` (server-only, for owner key access).
 - Shared API helpers: `lib/api/providers.ts` (e.g., `getAnthropicClient`)
+- MCP server: `app/api/mcp/route.ts` + `lib/mcp/` (JSON-RPC API for programmatic flow execution).
 - Model list: `docs/AI_MODELS.md` is the source of truth.
 - Design text standards: use `/content-design` skill.
 - Tests: `lib/hooks/__tests__/` using Vitest + React Testing Library.
@@ -76,6 +77,7 @@ Required for owner-funded execution:
 ## Skills
 - `/supabase` for DB work, `/node-creation` for new node types.
 - `/content-design` for UI text, `/testing` for tests, `/gemini-agents` for low-complexity batch edits.
+- `/docs` for Nextra documentation (pages, navigation, common issues).
 
 ## New User Experience (NUX)
 - **Welcome Dialog**: `components/Flow/WelcomeDialog/` — three-step onboarding.
@@ -84,6 +86,24 @@ Required for owner-funded execution:
 - **Step 2**: API keys intro explaining benefits (skip option).
 - **Step 3**: API keys form with inputs + VIP code unlock (skip option).
 - **Heroes**: Interactive demo (step 1) and 3D provider icons (step 2).
+
+## LLM Rules to Follow (`.claude/rules/`)
+
+Detailed architecture documentation is auto-loaded from these rule files:
+
+| File | Topics |
+|------|--------|
+| `architecture.md` | Flow editor, providers, edges, sidebars |
+| `nodes.md` | All 11 node types and their features |
+| `execution.md` | Engine, API routes, execution hooks, caching |
+| `autopilot.md` | AI chat interface, flow generation |
+| `collaboration.md` | Live sharing, cursors, owner-funded execution |
+| `auth-storage.md` | Supabase auth, API keys, flow persistence |
+| `audio-realtime.md` | Audio registry, WebRTC, voice conversation |
+| `types.md` | Node data interfaces, port types |
+| `ui-motion.md` | shadcn/ui, motion.dev animations |
+| `testing.md` | Vitest tests, mobile blocker, NUX |
+| `mcp.md` | MCP server, JSON-RPC API, job store, rate limiting |
 
 ## When Unsure
 - Check `CLAUDE.md` and `.claude/rules/` for deeper architecture and component notes.
