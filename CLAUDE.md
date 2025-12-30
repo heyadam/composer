@@ -89,6 +89,7 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 | Type System | `types.md` | Node data interfaces, port types |
 | UI & Motion | `ui-motion.md` | shadcn/ui, motion.dev animations |
 | Testing | `testing.md` | Vitest tests, mobile blocker, NUX |
+| MCP Server | `mcp.md` | JSON-RPC API, tools, job store, rate limiting |
 
 ### Node Types Summary
 
