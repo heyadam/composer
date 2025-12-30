@@ -47,36 +47,32 @@ export type AgentNode = ... | YourInputNode;
 ```tsx
 "use client";
 
-import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
+import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import type { YourInputNodeData } from "@/types/flow";
 import { Keyboard } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
-import { cn } from "@/lib/utils";
+import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 
 type YourInputNodeType = Node<YourInputNodeData, "your-input">;
 
 export function YourInputNode({ id, data }: NodeProps<YourInputNodeType>) {
   const { updateNodeData } = useReactFlow();
-  const edges = useEdges();
-
-  const isOutputConnected = edges.some(
-    (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
-  );
+  const { isOutputConnected } = useEdgeConnections(id);
 
   return (
     <NodeFrame
       title={data.label}
       onTitleChange={(label) => updateNodeData(id, { label })}
-      icon={<Keyboard className="h-4 w-4" />}
-      iconClassName="bg-purple-500/10 text-purple-600 dark:text-purple-300"
-      accentBorderClassName="border-purple-500"
+      icon={<Keyboard />}
+      accentColor="violet"
       status={data.executionStatus}
+      fromCache={data.fromCache}
       className="w-[280px]"
       ports={
         <PortRow
           nodeId={id}
-          output={{ id: "output", label: "String", colorClass: "cyan", isConnected: isOutputConnected }}
+          output={{ id: "output", label: "String", colorClass: "cyan", isConnected: isOutputConnected("output", true) }}
         />
       }
     >
@@ -84,12 +80,7 @@ export function YourInputNode({ id, data }: NodeProps<YourInputNodeType>) {
         value={data.inputValue || ""}
         onChange={(e) => updateNodeData(id, { inputValue: e.target.value })}
         placeholder="Enter text..."
-        className={cn(
-          "nodrag w-full min-h-[84px] resize-y rounded-md border border-input",
-          "bg-background/60 dark:bg-muted/40 px-3 py-2 text-sm",
-          "shadow-xs transition-[color,box-shadow] outline-none",
-          "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-        )}
+        className="nodrag node-input min-h-[84px] resize-y"
       />
     </NodeFrame>
   );
@@ -127,6 +118,7 @@ export interface YourProcessingNodeData extends Record<string, unknown>, Executi
   systemPrompt?: string;
   provider?: string;
   model?: string;
+  cacheable?: boolean;
 }
 
 // Port schema
@@ -135,7 +127,10 @@ export interface YourProcessingNodeData extends Record<string, unknown>, Executi
     { id: "prompt", label: "prompt", dataType: "string", required: true },
     { id: "system", label: "system", dataType: "string", required: false },
   ],
-  outputs: [{ id: "output", label: "string", dataType: "string" }],
+  outputs: [
+    { id: "output", label: "string", dataType: "string" },
+    { id: "done", label: "done", dataType: "pulse" },
+  ],
 },
 ```
 
@@ -144,74 +139,72 @@ export interface YourProcessingNodeData extends Record<string, unknown>, Executi
 ```tsx
 "use client";
 
-import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
+import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import type { YourProcessingNodeData } from "@/types/flow";
 import { Sparkles } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
 import { InputWithHandle } from "./InputWithHandle";
+import { NodeFooter } from "./NodeFooter";
+import { CacheToggle } from "./CacheToggle";
+import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 import { cn } from "@/lib/utils";
 
 type YourProcessingNodeType = Node<YourProcessingNodeData, "your-processing">;
 
 export function YourProcessingNode({ id, data }: NodeProps<YourProcessingNodeType>) {
   const { updateNodeData } = useReactFlow();
-  const edges = useEdges();
-
-  const isPromptConnected = edges.some(
-    (edge) => edge.target === id && edge.targetHandle === "prompt"
-  );
-  const isOutputConnected = edges.some(
-    (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
-  );
+  const { isInputConnected, isOutputConnected } = useEdgeConnections(id);
 
   return (
     <NodeFrame
       title={data.label}
       onTitleChange={(label) => updateNodeData(id, { label })}
-      icon={<Sparkles className="h-4 w-4" />}
-      iconClassName="bg-orange-500/10 text-orange-600 dark:text-orange-300"
-      accentBorderClassName="border-orange-500"
+      icon={<Sparkles />}
+      accentColor="amber"
       status={data.executionStatus}
+      fromCache={data.fromCache}
       className="w-[280px]"
       ports={
-        <PortRow
-          nodeId={id}
-          input={{ id: "prompt", label: "Prompt", colorClass: "cyan", isConnected: isPromptConnected }}
-          output={{ id: "output", label: "String", colorClass: "cyan", isConnected: isOutputConnected }}
-        />
+        <>
+          <PortRow
+            nodeId={id}
+            input={{ id: "prompt", label: "Prompt", colorClass: "cyan", isConnected: isInputConnected("prompt") }}
+            output={{ id: "output", label: "String", colorClass: "cyan", isConnected: isOutputConnected("output", true) }}
+          />
+          <PortRow
+            nodeId={id}
+            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isOutputConnected("done") }}
+          />
+        </>
       }
-      footer={
-        data.executionError ? (
-          <p className="text-xs text-destructive whitespace-pre-wrap line-clamp-4">
-            {data.executionError}
-          </p>
-        ) : data.executionOutput ? (
-          <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4">
-            {data.executionOutput}
-          </p>
-        ) : null
-      }
+      footer={<NodeFooter error={data.executionError} output={data.executionOutput} />}
     >
-      <InputWithHandle
-        id="prompt"
-        label="User Prompt"
-        colorClass="cyan"
-        isConnected={isPromptConnected}
-      >
-        <textarea
-          value={isPromptConnected ? "" : (data.userPrompt ?? "")}
-          onChange={(e) => updateNodeData(id, { userPrompt: e.target.value })}
-          placeholder={isPromptConnected ? "Connected" : "Enter prompt..."}
-          disabled={isPromptConnected}
-          className={cn(
-            "nodrag w-full min-h-[60px] resize-y rounded-md border border-input px-3 py-2 text-sm",
-            isPromptConnected
-              ? "bg-muted/50 dark:bg-muted/20 cursor-not-allowed"
-              : "bg-background/60 dark:bg-muted/40"
-          )}
+      <div className="space-y-3">
+        <InputWithHandle
+          id="prompt"
+          label="User Prompt"
+          colorClass="cyan"
+          isConnected={isInputConnected("prompt")}
+        >
+          <textarea
+            value={isInputConnected("prompt") ? "" : (data.userPrompt ?? "")}
+            onChange={(e) => updateNodeData(id, { userPrompt: e.target.value })}
+            placeholder={isInputConnected("prompt") ? "Connected" : "Enter prompt..."}
+            disabled={isInputConnected("prompt")}
+            className={cn(
+              "nodrag node-input min-h-[60px] resize-y",
+              isInputConnected("prompt") && "node-input:disabled"
+            )}
+          />
+        </InputWithHandle>
+
+        <CacheToggle
+          nodeId={id}
+          checked={data.cacheable ?? false}
+          className="pt-2 border-t border-white/[0.06]"
         />
-      </InputWithHandle>
+      </div>
     </NodeFrame>
   );
 }
@@ -299,49 +292,40 @@ export interface YourOutputNodeData extends Record<string, unknown>, ExecutionDa
 ```tsx
 "use client";
 
-import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
+import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import type { YourOutputNodeData } from "@/types/flow";
 import { Square } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
+import { NodeFooter } from "./NodeFooter";
+import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 
 type YourOutputNodeType = Node<YourOutputNodeData, "your-output">;
 
 export function YourOutputNode({ id, data }: NodeProps<YourOutputNodeType>) {
   const { updateNodeData } = useReactFlow();
-  const edges = useEdges();
-
-  const isInputConnected = edges.some(
-    (edge) => edge.target === id && (edge.targetHandle === "input" || !edge.targetHandle)
-  );
+  const { isInputConnected } = useEdgeConnections(id);
 
   return (
     <NodeFrame
       title={data.label}
       onTitleChange={(label) => updateNodeData(id, { label })}
-      icon={<Square className="h-4 w-4" />}
-      iconClassName="bg-blue-500/10 text-blue-600 dark:text-blue-300"
-      accentBorderClassName="border-blue-500"
+      icon={<Square />}
+      accentColor="emerald"
       status={data.executionStatus}
       className="w-[280px]"
       ports={
         <PortRow
           nodeId={id}
-          input={{ id: "input", label: "Response", colorClass: "amber", isConnected: isInputConnected }}
+          input={{ id: "input", label: "Response", colorClass: "amber", isConnected: isInputConnected("input", true) }}
         />
       }
       footer={
-        data.executionError ? (
-          <p className="text-xs text-destructive whitespace-pre-wrap line-clamp-4">
-            {data.executionError}
-          </p>
-        ) : data.executionOutput ? (
-          <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4">
-            {data.executionOutput}
-          </p>
-        ) : (
-          <p className="text-xs text-muted-foreground">Output appears here</p>
-        )
+        <NodeFooter
+          error={data.executionError}
+          output={data.executionOutput}
+          emptyMessage="Output appears here"
+        />
       }
     />
   );
@@ -375,13 +359,80 @@ For nodes that transform data locally without external API calls.
 export interface YourTransformNodeData extends Record<string, unknown>, ExecutionData {
   label: string;
   config?: string;
+  cacheable?: boolean;
 }
 
 // Port schema
 "your-transform": {
   inputs: [{ id: "input", label: "input", dataType: "string", required: true }],
-  outputs: [{ id: "output", label: "output", dataType: "string" }],
+  outputs: [
+    { id: "output", label: "output", dataType: "string" },
+    { id: "done", label: "done", dataType: "pulse" },
+  ],
 },
+```
+
+### Component (`components/Flow/nodes/YourTransformNode.tsx`)
+
+```tsx
+"use client";
+
+import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
+import type { YourTransformNodeData } from "@/types/flow";
+import { RefreshCw } from "lucide-react";
+import { NodeFrame } from "./NodeFrame";
+import { PortRow } from "./PortLabel";
+import { NodeFooter } from "./NodeFooter";
+import { CacheToggle } from "./CacheToggle";
+import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
+
+type YourTransformNodeType = Node<YourTransformNodeData, "your-transform">;
+
+export function YourTransformNode({ id, data }: NodeProps<YourTransformNodeType>) {
+  const { updateNodeData } = useReactFlow();
+  const { isInputConnected, isOutputConnected } = useEdgeConnections(id);
+
+  return (
+    <NodeFrame
+      title={data.label}
+      onTitleChange={(label) => updateNodeData(id, { label })}
+      icon={<RefreshCw />}
+      accentColor="amber"
+      status={data.executionStatus}
+      fromCache={data.fromCache}
+      className="w-[280px]"
+      ports={
+        <>
+          <PortRow
+            nodeId={id}
+            input={{ id: "input", label: "Input", colorClass: "cyan", isConnected: isInputConnected("input", true) }}
+            output={{ id: "output", label: "Output", colorClass: "cyan", isConnected: isOutputConnected("output", true) }}
+          />
+          <PortRow
+            nodeId={id}
+            output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isOutputConnected("done") }}
+          />
+        </>
+      }
+      footer={<NodeFooter error={data.executionError} output={data.executionOutput} />}
+    >
+      <div className="space-y-3">
+        <input
+          value={data.config || ""}
+          onChange={(e) => updateNodeData(id, { config: e.target.value })}
+          placeholder="Configuration..."
+          className="nodrag node-input"
+        />
+
+        <CacheToggle
+          nodeId={id}
+          checked={data.cacheable ?? false}
+          className="pt-2 border-t border-white/[0.06]"
+        />
+      </div>
+    </NodeFrame>
+  );
+}
 ```
 
 ### Executor (`lib/execution/executors/your-transform.ts`)
@@ -404,6 +455,107 @@ export const yourTransformExecutor: NodeExecutor = {
     return { output: result };
   },
 };
+```
+
+---
+
+## Image Input Node Template
+
+For nodes that accept image uploads as flow input.
+
+### Type Definition (`types/flow.ts`)
+
+```typescript
+export interface YourImageInputNodeData extends Record<string, unknown>, ExecutionData {
+  label: string;
+  uploadedImage?: string;
+}
+
+// Port schema
+"your-image-input": {
+  inputs: [],
+  outputs: [{ id: "output", label: "image", dataType: "image" }],
+},
+```
+
+### Component (`components/Flow/nodes/YourImageInputNode.tsx`)
+
+```tsx
+"use client";
+
+import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
+import type { YourImageInputNodeData } from "@/types/flow";
+import { ImageIcon, Upload } from "lucide-react";
+import { NodeFrame } from "./NodeFrame";
+import { PortRow } from "./PortLabel";
+import { ImageClearButton } from "./ImageClearButton";
+import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
+import { useImageFileInput } from "@/lib/hooks/useImageFileInput";
+import { parseImageOutput, getImageDataUrl } from "@/lib/image-utils";
+import { cn } from "@/lib/utils";
+
+type YourImageInputNodeType = Node<YourImageInputNodeData, "your-image-input">;
+
+export function YourImageInputNode({ id, data }: NodeProps<YourImageInputNodeType>) {
+  const { updateNodeData } = useReactFlow();
+  const { isOutputConnected } = useEdgeConnections(id);
+  const { fileInputRef, handleFileChange, handleClear, triggerFileSelect } = useImageFileInput({
+    nodeId: id,
+    dataKey: "uploadedImage",
+  });
+
+  const imageData = data.uploadedImage ? parseImageOutput(data.uploadedImage) : null;
+
+  return (
+    <NodeFrame
+      title={data.label}
+      onTitleChange={(label) => updateNodeData(id, { label })}
+      icon={<ImageIcon />}
+      accentColor="fuchsia"
+      status={data.executionStatus}
+      fromCache={data.fromCache}
+      className="w-[280px]"
+      ports={
+        <PortRow
+          nodeId={id}
+          output={{ id: "output", label: "Image", colorClass: "purple", isConnected: isOutputConnected("output", true) }}
+        />
+      }
+    >
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
+      {imageData ? (
+        <div className="relative group rounded-lg overflow-hidden border border-white/[0.06]">
+          <img
+            src={getImageDataUrl(imageData)}
+            alt="Uploaded"
+            className="w-full h-auto max-h-[200px] object-cover"
+          />
+          <ImageClearButton onClear={handleClear} />
+        </div>
+      ) : (
+        <button
+          onClick={triggerFileSelect}
+          className={cn(
+            "nodrag w-full h-24 flex flex-col items-center justify-center gap-2",
+            "rounded-lg border border-dashed border-white/[0.1]",
+            "bg-white/[0.02] hover:bg-white/[0.04] transition-colors",
+            "text-white/40 hover:text-white/60"
+          )}
+        >
+          <Upload className="h-5 w-5" />
+          <span className="text-xs">Upload image</span>
+        </button>
+      )}
+    </NodeFrame>
+  );
+}
 ```
 
 ---
@@ -534,6 +686,10 @@ Select your AI provider and model:
 **Google Gemini**:
 - [Option]: [Description]
 
+## Caching
+
+Enable the **Cache output** toggle to reuse results when inputs haven't changed. This speeds up re-runs and saves API costs.
+
 ## Inline Inputs
 
 If a port isn't connected, you can enter text directly in the node:
@@ -598,6 +754,10 @@ The Your Transform node [what it does]. It processes data locally without extern
 ## Configuration
 
 - **[Option]**: [Description]
+
+## Caching
+
+Enable the **Cache output** toggle to skip re-execution when inputs haven't changed.
 
 ## Example
 
