@@ -9,16 +9,10 @@ import { InputWithHandle } from "./InputWithHandle";
 import { NodeFooter } from "./NodeFooter";
 import { CacheToggle } from "./CacheToggle";
 import { ProviderModelSelector } from "./ProviderModelSelector";
+import { ConfigSelect } from "./ConfigSelect";
 import { cn } from "@/lib/utils";
 import { PROVIDERS, DEFAULT_REACT_PROVIDER, DEFAULT_REACT_MODEL, type ProviderId } from "@/lib/providers";
 import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 type ReactNodeType = Node<ReactNodeData, "react-component">;
 
@@ -112,28 +106,15 @@ export function ReactNode({ id, data }: NodeProps<ReactNodeType>) {
             onModelChange={(model, label) => {
               updateNodeData(id, { model, label });
             }}
-            width="w-[120px]"
           />
 
           {/* Style Preset */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-[11px] font-medium text-white/55">Style</div>
-            <Select
-              value={currentStylePreset}
-              onValueChange={(value: ReactStylePreset) => updateNodeData(id, { stylePreset: value })}
-            >
-              <SelectTrigger className="nodrag h-7 w-[120px] text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STYLE_PRESETS.map((preset) => (
-                  <SelectItem key={preset.value} value={preset.value} className="text-xs">
-                    {preset.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <ConfigSelect
+            label="Style"
+            value={currentStylePreset}
+            options={STYLE_PRESETS}
+            onChange={(value) => updateNodeData(id, { stylePreset: value as ReactStylePreset })}
+          />
 
           {/* Cache toggle */}
           <CacheToggle nodeId={id} checked={data.cacheable ?? false} className="pt-1" />

@@ -147,6 +147,7 @@ import { PortRow } from "./PortLabel";
 import { InputWithHandle } from "./InputWithHandle";
 import { NodeFooter } from "./NodeFooter";
 import { CacheToggle } from "./CacheToggle";
+import { ConfigSelect } from "./ConfigSelect";
 import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 import { cn } from "@/lib/utils";
 
@@ -198,6 +199,14 @@ export function YourProcessingNode({ id, data }: NodeProps<YourProcessingNodeTyp
             )}
           />
         </InputWithHandle>
+
+        {/* Use ConfigSelect for dropdowns with labels */}
+        {/* <ConfigSelect
+          label="Option"
+          value={data.option || "default"}
+          options={[{ value: "default", label: "Default" }]}
+          onChange={(value) => updateNodeData(id, { option: value })}
+        /> */}
 
         <CacheToggle
           nodeId={id}

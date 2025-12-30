@@ -38,7 +38,7 @@ export function ProviderModelSelector({
   currentModel,
   onProviderChange,
   onModelChange,
-  width = "w-[100px]",
+  width = "w-[140px]",
 }: ProviderModelSelectorProps) {
   const providerConfig = providers[currentProvider];
 

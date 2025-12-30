@@ -8,19 +8,30 @@ import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
 import { InputWithHandle } from "./InputWithHandle";
 import { NodeFooter } from "./NodeFooter";
+import { NodeSelect } from "./NodeSelect";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useRealtimeSession } from "@/lib/hooks/useRealtimeSession";
 import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 
-const VOICES = ["marin", "cedar", "alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"] as const;
+const VOICE_OPTIONS = [
+  { value: "marin", label: "Marin" },
+  { value: "cedar", label: "Cedar" },
+  { value: "alloy", label: "Alloy" },
+  { value: "ash", label: "Ash" },
+  { value: "ballad", label: "Ballad" },
+  { value: "coral", label: "Coral" },
+  { value: "echo", label: "Echo" },
+  { value: "sage", label: "Sage" },
+  { value: "shimmer", label: "Shimmer" },
+  { value: "verse", label: "Verse" },
+] as const;
+
+const VAD_MODE_OPTIONS = [
+  { value: "semantic_vad", label: "Semantic VAD" },
+  { value: "server_vad", label: "Server VAD" },
+  { value: "disabled", label: "Manual (PTT)" },
+] as const;
 
 type RealtimeNodeType = Node<RealtimeNodeData, "realtime-conversation">;
 
@@ -169,33 +180,20 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
 
         {/* Voice and VAD mode selectors */}
         <div className="flex gap-2">
-          <Select
+          <NodeSelect
             value={data.voice}
-            onValueChange={(v) => updateNodeData(id, { voice: v })}
-          >
-            <SelectTrigger className="flex-1 nodrag h-8 text-xs">
-              <SelectValue placeholder="Voice" />
-            </SelectTrigger>
-            <SelectContent>
-              {VOICES.map((v) => (
-                <SelectItem key={v} value={v} className="text-xs">{v}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select
+            options={VOICE_OPTIONS}
+            onChange={(v) => updateNodeData(id, { voice: v })}
+            placeholder="Voice"
+            className="flex-1"
+          />
+          <NodeSelect
             value={data.vadMode}
-            onValueChange={(v) => updateNodeData(id, { vadMode: v })}
-          >
-            <SelectTrigger className="flex-1 nodrag h-8 text-xs">
-              <SelectValue placeholder="VAD" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="semantic_vad" className="text-xs">Semantic VAD</SelectItem>
-              <SelectItem value="server_vad" className="text-xs">Server VAD</SelectItem>
-              <SelectItem value="disabled" className="text-xs">Manual (PTT)</SelectItem>
-            </SelectContent>
-          </Select>
+            options={VAD_MODE_OPTIONS}
+            onChange={(v) => updateNodeData(id, { vadMode: v })}
+            placeholder="VAD"
+            className="flex-1"
+          />
         </div>
 
         {/* Session controls */}

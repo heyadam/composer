@@ -55,13 +55,12 @@ export function AudioTranscriptionNode({ id, data }: NodeProps<AudioTranscriptio
           value={model}
           options={MODEL_OPTIONS}
           onChange={(value) => updateNodeData(id, { model: value })}
-          width="w-[120px]"
         />
 
         {/* Language input (when not connected) */}
         {!isInputConnected("language") && (
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-medium text-white/55">
+            <label className="node-config-label">
               Language (optional)
             </label>
             <Input

@@ -48,7 +48,7 @@ export function StringCombineNode({ id, data }: NodeProps<StringCombineNodeType>
       footer={<NodeFooter error={data.executionError} output={data.executionOutput} />}
     >
       <div className="space-y-2">
-        <label className="text-xs text-white/50 font-medium">Separator</label>
+        <label className="node-config-label">Separator</label>
         <input
           value={data.separator ?? ""}
           onChange={(e) => updateNodeData(id, { separator: e.target.value })}

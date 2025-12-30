@@ -184,7 +184,6 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
             onModelChange={(model, label) => {
               updateNodeData(id, { model, label });
             }}
-            width="w-[120px]"
           />
 
           {currentModelConfig?.supportsVerbosity && (
@@ -193,7 +192,6 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
               value={data.verbosity || "medium"}
               options={VERBOSITY_OPTIONS}
               onChange={(verbosity) => updateNodeData(id, { verbosity })}
-              width="w-[120px]"
             />
           )}
 
@@ -203,7 +201,6 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
               value={data.thinking ? "on" : "off"}
               options={THINKING_OPTIONS}
               onChange={(val) => updateNodeData(id, { thinking: val === "on" })}
-              width="w-[120px]"
             />
           )}
 
@@ -220,7 +217,6 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
                   },
                 })
               }
-              width="w-[120px]"
             />
           )}
 
@@ -237,7 +233,6 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
                   },
                 })
               }
-              width="w-[120px]"
             />
           )}
 
@@ -251,7 +246,6 @@ export function PromptNode({ id, data }: NodeProps<PromptNodeType>) {
                   googleSafetyPreset: val as "default" | "strict" | "relaxed" | "none",
                 })
               }
-              width="w-[120px]"
             />
           )}
 

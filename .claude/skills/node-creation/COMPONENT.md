@@ -182,6 +182,49 @@ import { ImageClearButton } from "./ImageClearButton";
 </div>
 ```
 
+### ConfigSelect
+
+Labeled dropdown for configuration options (Provider, Model, Format, etc.):
+
+```tsx
+import { ConfigSelect } from "./ConfigSelect";
+
+const OPTIONS = [
+  { value: "option1", label: "Option 1" },
+  { value: "option2", label: "Option 2" },
+] as const;
+
+<ConfigSelect
+  label="Setting"
+  value={data.setting || "option1"}
+  options={OPTIONS}
+  onChange={(value) => updateNodeData(id, { setting: value })}
+/>
+```
+
+### NodeSelect
+
+Standalone dropdown without a label row (for inline layouts):
+
+```tsx
+import { NodeSelect } from "./NodeSelect";
+
+const OPTIONS = [
+  { value: "a", label: "Choice A" },
+  { value: "b", label: "Choice B" },
+] as const;
+
+<div className="flex gap-2">
+  <NodeSelect
+    value={data.choice}
+    options={OPTIONS}
+    onChange={(v) => updateNodeData(id, { choice: v })}
+    placeholder="Select..."
+    className="flex-1"
+  />
+</div>
+```
+
 ## Key Patterns
 
 ### PortRow Configuration
@@ -338,6 +381,9 @@ export { YourNode };
 The node styling uses CSS custom properties defined in `app/styles/nodes.css`:
 
 ```css
+/* Text size - use for all node text */
+--node-text-size: 11px;
+
 /* Border opacity hierarchy (use in Tailwind as border-white/[value]) */
 --node-border-strong: 0.1;   /* Primary borders */
 --node-border-medium: 0.06;  /* Secondary borders */
@@ -347,12 +393,23 @@ The node styling uses CSS custom properties defined in `app/styles/nodes.css`:
 --node-bg-strong: 0.05;
 --node-bg-medium: 0.03;
 --node-bg-subtle: 0.02;
+
+/* Text opacities */
+--node-text-primary: 0.95;
+--node-text-muted: 0.60;
+--node-text-placeholder: 0.40;
 ```
+
+**Typography classes** (all use `--node-text-size`):
+- `.node-input` — Text inputs and textareas
+- `.port-label` — Port labels next to handles
+- `.node-config-label` — Labels in config rows
 
 When adding custom elements, prefer these tokens:
 - `border-white/[0.1]` for strong borders
 - `border-white/[0.06]` for medium borders
 - `border-white/[0.03]` for subtle borders
+- `text-[11px]` for inline text (matches `--node-text-size`)
 
 ## Real-World Examples
 
