@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
 import type { ImageInputNodeData } from "@/types/flow";
-import { Upload, X } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,6 @@ export function ImageInputNode({ id, data }: NodeProps<ImageInputNodeType>) {
   const edges = useEdges();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check if output is connected (handle undefined when default handle is used)
   const isOutputConnected = edges.some(
     (edge) => edge.source === id && (edge.sourceHandle === "output" || !edge.sourceHandle)
   );
@@ -31,7 +30,7 @@ export function ImageInputNode({ id, data }: NodeProps<ImageInputNodeType>) {
 
     const reader = new FileReader();
     reader.onload = () => {
-      const base64 = (reader.result as string).split(",")[1]; // Remove data URL prefix
+      const base64 = (reader.result as string).split(",")[1];
       const imageData = stringifyImageOutput({
         type: "image",
         value: base64,
@@ -40,8 +39,6 @@ export function ImageInputNode({ id, data }: NodeProps<ImageInputNodeType>) {
       updateNodeData(id, { uploadedImage: imageData });
     };
     reader.readAsDataURL(file);
-
-    // Reset input so same file can be re-selected
     e.target.value = "";
   };
 
@@ -57,9 +54,8 @@ export function ImageInputNode({ id, data }: NodeProps<ImageInputNodeType>) {
     <NodeFrame
       title={data.label}
       onTitleChange={(label) => updateNodeData(id, { label })}
-      icon={<Upload className="h-4 w-4" />}
-      iconClassName="bg-purple-500/10 text-purple-600 dark:text-purple-300"
-      accentBorderClassName="border-purple-500"
+      icon={<ImagePlus />}
+      accentColor="fuchsia"
       status={data.executionStatus}
       fromCache={data.fromCache}
       className="w-[280px]"
@@ -83,14 +79,15 @@ export function ImageInputNode({ id, data }: NodeProps<ImageInputNodeType>) {
           <img
             src={getImageDataUrl(uploadedImageData)}
             alt="Uploaded"
-            className="w-full max-h-[120px] object-contain rounded-md border border-input bg-background/60"
+            className="w-full max-h-[100px] object-contain rounded-lg border border-white/[0.06] bg-black/20"
           />
           <button
             onClick={handleClear}
             className={cn(
-              "nodrag absolute top-1 right-1 p-1 rounded-full",
-              "bg-black/60 hover:bg-black/80 text-white",
-              "opacity-0 group-hover:opacity-100 transition-opacity"
+              "nodrag absolute top-1.5 right-1.5 p-1 rounded-md",
+              "bg-black/60 hover:bg-black/80 text-white/70 hover:text-white",
+              "opacity-0 group-hover:opacity-100 transition-all duration-200",
+              "border border-white/[0.08]"
             )}
           >
             <X className="h-3 w-3" />
@@ -99,15 +96,10 @@ export function ImageInputNode({ id, data }: NodeProps<ImageInputNodeType>) {
       ) : (
         <button
           onClick={() => fileInputRef.current?.click()}
-          className={cn(
-            "nodrag w-full min-h-[84px] flex flex-col items-center justify-center gap-2",
-            "rounded-md border border-dashed border-input bg-background/60 dark:bg-muted/40",
-            "text-muted-foreground text-sm",
-            "hover:border-ring hover:bg-muted/50 transition-colors cursor-pointer"
-          )}
+          className="nodrag node-upload-zone min-h-[72px]"
         >
-          <Upload className="h-6 w-6" />
-          <span>Upload image</span>
+          <ImagePlus className="h-5 w-5" />
+          <span className="text-[11px] font-medium">Upload image</span>
         </button>
       )}
     </NodeFrame>

@@ -332,9 +332,8 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
     <NodeFrame
       title={data.label}
       onTitleChange={(label) => updateNodeData(id, { label })}
-      icon={<Mic className="h-4 w-4" />}
-      iconClassName="bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"
-      accentBorderClassName="border-emerald-500"
+      icon={<Mic />}
+      accentColor="teal"
       status={data.executionStatus}
       className="w-[280px]"
       ports={
@@ -350,12 +349,13 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
         </>
       }
     >
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {/* Waveform visualization / Status display */}
         <div
           className={cn(
-            "relative w-full h-16 rounded-md border bg-background/60 dark:bg-muted/40 overflow-hidden",
-            isRecording ? "border-emerald-500" : "border-input"
+            "relative w-full h-14 rounded-lg overflow-hidden",
+            "bg-white/[0.02] border",
+            isRecording ? "border-emerald-500/50" : "border-white/[0.06]"
           )}
         >
           {isRecording ? (
@@ -364,26 +364,26 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
                 ref={canvasRef}
                 className="w-full h-full"
                 width={248}
-                height={64}
+                height={56}
               />
               {/* Recording indicator */}
-              <div className="absolute top-2 left-2 flex items-center gap-1.5">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+              <div className="absolute top-2 left-2.5 flex items-center gap-1.5">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-[11px] text-white/50">
                   {formatAudioDuration(duration)}
                 </span>
               </div>
             </>
           ) : hasRecording ? (
-            <div className="flex items-center justify-center h-full gap-2 text-sm text-muted-foreground">
-              <div className="w-3 h-3 rounded-full bg-emerald-500" />
+            <div className="flex items-center justify-center h-full gap-2 text-[12px] text-white/50">
+              <div className="w-2 h-2 rounded-full bg-emerald-400" />
               <span>Ready • {formatAudioDuration(duration)}</span>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+            <div className="flex items-center justify-center h-full text-[12px] text-white/35">
               Press to record
             </div>
           )}
@@ -395,12 +395,12 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
             <button
               onClick={stopRecording}
               className={cn(
-                "nodrag flex-1 flex items-center justify-center gap-2 py-2 rounded-md",
-                "bg-red-500 hover:bg-red-600 text-white text-sm font-medium",
-                "transition-colors"
+                "nodrag flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg",
+                "bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-[12px] font-medium",
+                "border border-rose-500/30 transition-colors"
               )}
             >
-              <Square className="h-4 w-4" />
+              <Square className="h-3.5 w-3.5" />
               Stop
             </button>
           ) : (
@@ -408,21 +408,21 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
               <button
                 onClick={startRecording}
                 className={cn(
-                  "nodrag flex-1 flex items-center justify-center gap-2 py-2 rounded-md",
-                  "bg-white hover:bg-gray-100 text-gray-900 text-sm font-medium",
-                  "transition-colors"
+                  "nodrag flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg",
+                  "bg-white/[0.08] hover:bg-white/[0.12] text-white/80 text-[12px] font-medium",
+                  "border border-white/[0.08] transition-colors"
                 )}
               >
-                <Mic className="h-4 w-4" />
+                <Mic className="h-3.5 w-3.5" />
                 {hasRecording ? "Re-record" : "Record"}
               </button>
               {hasRecording && (
                 <button
                   onClick={clearRecording}
                   className={cn(
-                    "nodrag px-3 py-2 rounded-md text-sm",
-                    "border border-input bg-background hover:bg-muted",
-                    "transition-colors"
+                    "nodrag px-3 py-2 rounded-lg text-[12px]",
+                    "border border-white/[0.06] bg-transparent hover:bg-white/[0.04]",
+                    "text-white/50 transition-colors"
                   )}
                 >
                   Clear
@@ -434,7 +434,7 @@ export function AudioInputNode({ id, data }: NodeProps<AudioInputNodeType>) {
 
         {/* Error message */}
         {error && (
-          <p className="text-xs text-destructive">{error}</p>
+          <p className="text-[11px] text-rose-400">{error}</p>
         )}
       </div>
     </NodeFrame>

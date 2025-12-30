@@ -43,9 +43,8 @@ export function SwitchNode({ id, data }: NodeProps<SwitchNodeType>) {
     <NodeFrame
       title={data.label}
       onTitleChange={(label) => updateNodeData(id, { label })}
-      icon={isOn ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
-      iconClassName="bg-orange-500/10 text-orange-600 dark:text-orange-300"
-      accentBorderClassName="border-orange-500"
+      icon={isOn ? <ToggleRight /> : <ToggleLeft />}
+      accentColor="amber"
       status={data.executionStatus}
       className="w-[200px]"
       ports={
@@ -66,7 +65,7 @@ export function SwitchNode({ id, data }: NodeProps<SwitchNodeType>) {
       <Button
         size="sm"
         variant={isOn ? "default" : "outline"}
-        className="w-full nodrag"
+        className="w-full nodrag h-8"
         onClick={handleToggle}
         disabled={!canManualToggle}
       >
@@ -85,7 +84,7 @@ export function SwitchNode({ id, data }: NodeProps<SwitchNodeType>) {
 
       {/* Helper text when pulse inputs connected or executing */}
       {!canManualToggle && !isExecuting && (
-        <p className="text-xs text-muted-foreground text-center mt-1">
+        <p className="text-[11px] text-white/35 text-center mt-1.5">
           Controlled by pulse inputs
         </p>
       )}

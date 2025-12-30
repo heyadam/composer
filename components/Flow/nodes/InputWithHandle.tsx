@@ -6,12 +6,6 @@ import { cn } from "@/lib/utils";
 import { useConnectionState } from "../ConnectionContext";
 import type { PortColorClass } from "./PortLabel";
 
-// Handle positioning constants
-// Accounts for NodeFrame's px-3 (12px) padding + 1px for visual centering
-const HANDLE_LEFT_OFFSET = -13;
-// Vertical offset to align handle with the label baseline
-const DEFAULT_HANDLE_TOP = 8;
-
 interface InputWithHandleProps {
   id: string;
   label?: string;
@@ -19,8 +13,7 @@ interface InputWithHandleProps {
   className?: string;
   required?: boolean;
   colorClass?: PortColorClass;
-  handleOffset?: number; // Optional vertical offset for handle
-  isConnected?: boolean; // Whether the handle is connected
+  isConnected?: boolean;
 }
 
 export function InputWithHandle({
@@ -30,53 +23,42 @@ export function InputWithHandle({
   className,
   required = true,
   colorClass = "cyan",
-  handleOffset,
   isConnected = false,
 }: InputWithHandleProps) {
   const { isConnecting } = useConnectionState();
-
-  const colorMap: Record<PortColorClass, { dot: string; hoverDot: string }> = {
-    cyan: { dot: "!bg-cyan-400", hoverDot: "hover:!bg-cyan-400" },
-    purple: { dot: "!bg-purple-400", hoverDot: "hover:!bg-purple-400" },
-    amber: { dot: "!bg-amber-400", hoverDot: "hover:!bg-amber-400" },
-    emerald: { dot: "!bg-emerald-400", hoverDot: "hover:!bg-emerald-400" },
-    rose: { dot: "!bg-rose-400", hoverDot: "hover:!bg-rose-400" },       // boolean
-    orange: { dot: "!bg-orange-400", hoverDot: "hover:!bg-orange-400" }, // pulse
-  };
-
   const highlight = isConnecting;
 
   return (
-    <div className={cn("relative group", className)}>
-      <Handle
-        type="target"
-        position={Position.Left}
-        id={id}
-        className={cn(
-          "!w-3.5 !h-3.5 !border-2 !border-background !shadow-sm transition-all duration-200",
-          highlight
-            ? `${colorMap[colorClass].dot} !scale-110`
-            : isConnected
-            ? "!bg-white hover:!scale-110"
-            : "!bg-gray-500 hover:!scale-110"
-        )}
-        style={{
-          left: HANDLE_LEFT_OFFSET,
-          top: handleOffset ?? DEFAULT_HANDLE_TOP
-        }}
-      />
-      
-      <div className="flex flex-col gap-1.5">
-        {label && (
-          <label 
-            htmlFor={id} 
-            className="text-xs font-medium text-muted-foreground cursor-pointer"
+    <div className={cn("flex flex-col gap-1.5", className)}>
+      {/* Label row with handle */}
+      {label && (
+        <div className="relative flex items-center gap-1.5">
+          <Handle
+            type="target"
+            position={Position.Left}
+            id={id}
+            className={cn(
+              "port-handle",
+              `port-${colorClass}`,
+              highlight && "!scale-110",
+              !isConnected && !highlight && "!opacity-35"
+            )}
+            style={{ left: -20, top: "50%", transform: "translateY(-50%)" }}
+          />
+          <label
+            htmlFor={id}
+            className={cn(
+              "port-label cursor-pointer transition-all duration-200",
+              highlight && "!opacity-100 !text-white/80",
+              !required && "opacity-35"
+            )}
           >
             {label}
           </label>
-        )}
-        {children}
-      </div>
+        </div>
+      )}
+      {/* Input content */}
+      {children}
     </div>
   );
 }

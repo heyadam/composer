@@ -40,9 +40,8 @@ export function AudioTranscriptionNode({ id, data }: NodeProps<AudioTranscriptio
     <NodeFrame
       title={data.label}
       onTitleChange={(label) => updateNodeData(id, { label })}
-      icon={<FileAudio className="h-4 w-4" />}
-      iconClassName="bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"
-      accentBorderClassName="border-emerald-500"
+      icon={<FileAudio />}
+      accentColor="teal"
       status={data.executionStatus}
       fromCache={data.fromCache}
       className="w-[260px]"
@@ -63,8 +62,8 @@ export function AudioTranscriptionNode({ id, data }: NodeProps<AudioTranscriptio
         data.executionOutput || data.executionError ? (
           <div
             className={cn(
-              "text-xs max-h-[100px] overflow-y-auto",
-              data.executionError ? "text-destructive" : "text-muted-foreground"
+              "text-[12px] max-h-[80px] overflow-y-auto",
+              data.executionError ? "text-rose-400" : "text-white/50"
             )}
           >
             {data.executionError || data.executionOutput}
@@ -72,7 +71,7 @@ export function AudioTranscriptionNode({ id, data }: NodeProps<AudioTranscriptio
         ) : undefined
       }
     >
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5">
         {/* Model selector */}
         <ConfigSelect
           label="Model"
@@ -85,25 +84,25 @@ export function AudioTranscriptionNode({ id, data }: NodeProps<AudioTranscriptio
         {/* Language input (when not connected) */}
         {!isLanguageConnected && (
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label className="text-[11px] font-medium text-white/40">
               Language (optional)
             </label>
             <Input
               value={data.language || ""}
               onChange={(e) => updateNodeData(id, { language: e.target.value })}
               placeholder="e.g., en, es, fr"
-              className="nodrag h-7 text-xs"
+              className="nodrag node-input h-8"
             />
           </div>
         )}
 
         {/* Cache toggle */}
-        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none nodrag pt-2 border-t">
+        <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider text-white/40 cursor-pointer select-none nodrag pt-2 border-t border-white/[0.04]">
           <input
             type="checkbox"
             checked={data.cacheable ?? false}
             onChange={(e) => updateNodeData(id, { cacheable: e.target.checked })}
-            className="rounded border-input h-3.5 w-3.5 accent-primary"
+            className="node-checkbox"
           />
           <span>Cache output</span>
         </label>

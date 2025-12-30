@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { useReactFlow, useEdges, type NodeProps, type Node } from "@xyflow/react";
 import type { ImageNodeData } from "@/types/flow";
-import { ImageIcon, Upload, X } from "lucide-react";
+import { Sparkles, Upload, X } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
 import { InputWithHandle } from "./InputWithHandle";
@@ -30,7 +30,6 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
   const edges = useEdges();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check if inputs/output are connected
   const isImageConnected = edges.some(
     (edge) => edge.target === id && edge.targetHandle === "image"
   );
@@ -44,7 +43,6 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
     (edge) => edge.source === id && edge.sourceHandle === "done"
   );
 
-  // File upload handling for inline image input
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -76,7 +74,7 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
   const renderFooter = () => {
     if (data.executionError) {
       return (
-        <p className="text-xs text-destructive whitespace-pre-wrap line-clamp-4">
+        <p className="text-xs text-rose-400 whitespace-pre-wrap line-clamp-4">
           {data.executionError}
         </p>
       );
@@ -87,7 +85,7 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
       if (imageData) {
         return (
           <div
-            className="w-full rounded overflow-hidden bg-muted/20"
+            className="w-full rounded-lg overflow-hidden bg-black/30 border border-white/10"
             style={{ minHeight: "80px" }}
           >
             <img
@@ -105,7 +103,7 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
         );
       }
       return (
-        <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4">
+        <p className="text-xs text-white/60 whitespace-pre-wrap line-clamp-4">
           {data.executionOutput}
         </p>
       );
@@ -118,9 +116,8 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
     <NodeFrame
       title={data.label}
       onTitleChange={(label) => updateNodeData(id, { label })}
-      icon={<ImageIcon className="h-4 w-4" />}
-      iconClassName="bg-gray-500/10 text-gray-600 dark:text-gray-300"
-      accentBorderClassName=""
+      icon={<Sparkles />}
+      accentColor="rose"
       status={data.executionStatus}
       fromCache={data.fromCache}
       className="w-[280px]"
@@ -138,8 +135,7 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
       }
       footer={renderFooter()}
     >
-      <div className="space-y-2">
-        {/* Hidden file input for image upload */}
+      <div className="space-y-3">
         <input
           ref={fileInputRef}
           type="file"
@@ -161,10 +157,8 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
             placeholder={isPromptConnected ? "Connected" : "Describe the image..."}
             disabled={isPromptConnected}
             className={cn(
-              "nodrag w-full min-h-[60px] resize-y rounded-md border border-input px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none",
-              isPromptConnected
-                ? "bg-muted/50 dark:bg-muted/20 cursor-not-allowed placeholder:italic placeholder:text-muted-foreground"
-                : "bg-background/60 dark:bg-muted/40 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              "nodrag node-input min-h-[60px] resize-y",
+              isPromptConnected && "node-input:disabled"
             )}
           />
         </InputWithHandle>
@@ -178,7 +172,7 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
           isConnected={isImageConnected}
         >
           {isImageConnected ? (
-            <div className="text-xs text-muted-foreground italic px-3 py-2 border border-dashed border-input rounded-md bg-muted/20">
+            <div className="node-input min-h-[50px] flex items-center justify-center text-white/40 italic text-sm">
               Connected
             </div>
           ) : uploadedImageData ? (
@@ -186,14 +180,15 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
               <img
                 src={getImageDataUrl(uploadedImageData)}
                 alt="Base"
-                className="w-full max-h-[80px] object-contain rounded-md border border-input bg-background/60"
+                className="w-full max-h-[80px] object-contain rounded-lg border border-white/10 bg-black/30"
               />
               <button
                 onClick={handleClearImage}
                 className={cn(
-                  "nodrag absolute top-1 right-1 p-1 rounded-full",
-                  "bg-black/60 hover:bg-black/80 text-white",
-                  "opacity-0 group-hover:opacity-100 transition-opacity"
+                  "nodrag absolute top-1.5 right-1.5 p-1 rounded-md",
+                  "bg-black/70 hover:bg-black/90 text-white/80 hover:text-white",
+                  "opacity-0 group-hover:opacity-100 transition-all duration-200",
+                  "border border-white/10"
                 )}
               >
                 <X className="h-3 w-3" />
@@ -202,83 +197,80 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
           ) : (
             <button
               onClick={() => fileInputRef.current?.click()}
-              className={cn(
-                "nodrag w-full min-h-[50px] flex flex-col items-center justify-center gap-1",
-                "rounded-md border border-dashed border-input bg-background/60 dark:bg-muted/40",
-                "text-muted-foreground text-xs",
-                "hover:border-ring hover:bg-muted/50 transition-colors cursor-pointer"
-              )}
+              className="nodrag node-upload-zone min-h-[50px]"
             >
               <Upload className="h-4 w-4" />
-              <span>Upload image</span>
+              <span className="text-[10px] font-medium uppercase tracking-wider">Upload</span>
             </button>
           )}
         </InputWithHandle>
 
-        <ProviderModelSelector
-          providers={IMAGE_PROVIDERS}
-          currentProvider={currentProvider}
-          currentModel={currentModel}
-          onProviderChange={(provider, model, label) => {
-            updateNodeData(id, { provider, model, label });
-          }}
-          onModelChange={(model, label) => {
-            updateNodeData(id, { model, label });
-          }}
-        />
+        <div className="space-y-2.5 pt-2 border-t border-white/[0.06]">
+          <ProviderModelSelector
+            providers={IMAGE_PROVIDERS}
+            currentProvider={currentProvider}
+            currentModel={currentModel}
+            onProviderChange={(provider, model, label) => {
+              updateNodeData(id, { provider, model, label });
+            }}
+            onModelChange={(model, label) => {
+              updateNodeData(id, { model, label });
+            }}
+          />
 
-        {/* OpenAI-specific options */}
-        {currentProvider === "openai" && (
-          <>
-            <ConfigSelect
-              label="Format"
-              value={data.outputFormat || "webp"}
-              options={OUTPUT_FORMAT_OPTIONS}
-              onChange={(outputFormat) => updateNodeData(id, { outputFormat })}
-            />
-            <ConfigSelect
-              label="Size"
-              value={data.size || "1024x1024"}
-              options={SIZE_OPTIONS}
-              onChange={(size) => updateNodeData(id, { size })}
-            />
-            <ConfigSelect
-              label="Quality"
-              value={data.quality || "low"}
-              options={QUALITY_OPTIONS}
-              onChange={(quality) => updateNodeData(id, { quality })}
-            />
-            {currentModelConfig?.supportsPartialImages && (
+          {/* OpenAI-specific options */}
+          {currentProvider === "openai" && (
+            <>
               <ConfigSelect
-                label="Partials"
-                value={String(data.partialImages ?? 3)}
-                options={PARTIAL_IMAGES_OPTIONS}
-                onChange={(val) => updateNodeData(id, { partialImages: Number(val) })}
+                label="Format"
+                value={data.outputFormat || "webp"}
+                options={OUTPUT_FORMAT_OPTIONS}
+                onChange={(outputFormat) => updateNodeData(id, { outputFormat })}
               />
-            )}
-          </>
-        )}
+              <ConfigSelect
+                label="Size"
+                value={data.size || "1024x1024"}
+                options={SIZE_OPTIONS}
+                onChange={(size) => updateNodeData(id, { size })}
+              />
+              <ConfigSelect
+                label="Quality"
+                value={data.quality || "low"}
+                options={QUALITY_OPTIONS}
+                onChange={(quality) => updateNodeData(id, { quality })}
+              />
+              {currentModelConfig?.supportsPartialImages && (
+                <ConfigSelect
+                  label="Partials"
+                  value={String(data.partialImages ?? 3)}
+                  options={PARTIAL_IMAGES_OPTIONS}
+                  onChange={(val) => updateNodeData(id, { partialImages: Number(val) })}
+                />
+              )}
+            </>
+          )}
 
-        {/* Google-specific options */}
-        {currentProvider === "google" && (
-          <ConfigSelect
-            label="Aspect"
-            value={data.aspectRatio || "1:1"}
-            options={ASPECT_RATIO_OPTIONS}
-            onChange={(aspectRatio) => updateNodeData(id, { aspectRatio })}
-          />
-        )}
+          {/* Google-specific options */}
+          {currentProvider === "google" && (
+            <ConfigSelect
+              label="Aspect"
+              value={data.aspectRatio || "1:1"}
+              options={ASPECT_RATIO_OPTIONS}
+              onChange={(aspectRatio) => updateNodeData(id, { aspectRatio })}
+            />
+          )}
 
-        {/* Cache toggle */}
-        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none nodrag pt-2 border-t">
-          <input
-            type="checkbox"
-            checked={data.cacheable ?? false}
-            onChange={(e) => updateNodeData(id, { cacheable: e.target.checked })}
-            className="rounded border-input h-3.5 w-3.5 accent-primary"
-          />
-          <span>Cache output</span>
-        </label>
+          {/* Cache toggle */}
+          <label className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider text-white/40 cursor-pointer select-none nodrag pt-1">
+            <input
+              type="checkbox"
+              checked={data.cacheable ?? false}
+              onChange={(e) => updateNodeData(id, { cacheable: e.target.checked })}
+              className="node-checkbox"
+            />
+            <span>Cache output</span>
+          </label>
+        </div>
       </div>
     </NodeFrame>
   );
