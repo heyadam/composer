@@ -116,6 +116,18 @@ http://localhost:3000/auth/callback
 https://your-domain.com/auth/callback
 ```
 
+### Deployment (Vercel)
+
+Additional environment variables for production:
+
+```
+CRON_SECRET=<random-16-char-string>   # Secures the /api/mcp/cleanup cron endpoint
+ENCRYPTION_KEY=<32-byte-hex-string>   # Required for owner-funded execution (API key encryption)
+SUPABASE_SERVICE_ROLE_KEY=<key>       # Required for owner-funded execution
+```
+
+The `vercel.json` configures an hourly cron job for MCP job cleanup. Vercel automatically sends `CRON_SECRET` as a bearer token to authenticate cron requests.
+
 ### Development
 
 ```bash
