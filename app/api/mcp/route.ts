@@ -14,8 +14,9 @@
  * - get_run_status: Poll for job status and results
  */
 
-// Edge runtime required for SSE streaming on Vercel
-export const runtime = "edge";
+// Node.js runtime required for crypto module (API key encryption/decryption)
+// SSE streaming works with Node.js runtime on Vercel
+export const runtime = "nodejs";
 
 // Allow up to 5 minutes for flow execution (matches EXECUTION_LIMITS.TIMEOUT_MS)
 export const maxDuration = 300;

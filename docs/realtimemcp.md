@@ -10,7 +10,7 @@ Convert the MCP server from polling-based to push-based (SSE streaming) executio
 | 1.2 | Create `lib/mcp/sse.ts` | ✅ Complete | formatSSEEvent, formatProgressEvent, formatResultEvent, formatErrorEvent, formatHeartbeat |
 | 2 | Update `lib/execution/server-execute.ts` | ✅ Complete | executeFlowServerWithProgress with AbortSignal support |
 | 3 | Add streaming tool to `lib/mcp/tools.ts` | ✅ Complete | createFlowExecutionStream, countExecutableNodes |
-| 4 | Update `app/api/mcp/route.ts` for SSE | ✅ Complete | Edge runtime, Accept header detection, SSE response |
+| 4 | Update `app/api/mcp/route.ts` for SSE | ✅ Complete | Node.js runtime (crypto dependency), Accept header detection, SSE response |
 | 5 | Verify polling fallback | ✅ Complete | Existing tests pass (319/319) |
 | 6 | Write tests | ✅ Complete | 28 SSE utility tests + 8 route SSE tests (354/354 total) |
 
@@ -430,15 +430,14 @@ await jobStore.complete(jobId, structuredOutputs);
 
 ---
 
-## Edge Runtime Considerations
+## Runtime Considerations
 
-Switching to Edge runtime may require changes if code uses Node.js-specific APIs:
+Using **Node.js runtime** (not Edge) because `lib/encryption.ts` uses Node.js `crypto` module for API key encryption/decryption. SSE streaming works fine with Node.js runtime on Vercel.
 
-| Node.js API | Edge Runtime Alternative |
-|-------------|-------------------------|
-| `crypto.randomUUID()` | ✅ Available in Edge |
-| `Buffer.from()` | Use `Uint8Array` or polyfill |
-| `process.env` | ✅ Available in Edge |
-| Supabase client | ✅ Works in Edge |
+```typescript
+// In app/api/mcp/route.ts
+export const runtime = "nodejs";  // Required for crypto module
+export const maxDuration = 300;   // 5 minutes
+```
 
-**Action**: Verify `lib/supabase/service.ts` works in Edge runtime. May need to use `@supabase/ssr` instead of `@supabase/supabase-js` if issues arise.
+**Note**: Edge runtime would require rewriting encryption to use Web Crypto API (`crypto.subtle`).
