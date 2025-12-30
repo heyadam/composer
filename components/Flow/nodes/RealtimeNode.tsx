@@ -268,7 +268,7 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
 
         {/* Transcript display */}
         {transcript && transcript.length > 0 && (
-          <div className="max-h-40 overflow-y-auto space-y-1.5 p-2 bg-white/[0.02] rounded-lg border border-white/[0.04]">
+          <div className="max-h-40 overflow-y-auto space-y-1.5 p-2 bg-white/[0.02] rounded-lg border border-white/[0.03]">
             {transcript.map((entry) => (
               <div
                 key={entry.id}
