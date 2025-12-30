@@ -4,19 +4,33 @@
  * Exposes Composer flow operations via the Model Context Protocol.
  * Uses stateless mode for serverless compatibility.
  *
+ * Supports both polling-based and SSE streaming execution:
+ * - Polling: Call run_flow to get job_id, then poll get_run_status
+ * - Streaming: Call run_flow with Accept: text/event-stream header
+ *
  * Tools:
  * - get_flow_info: Discover flow inputs/outputs by share token
- * - run_flow: Start async flow execution, returns job_id
+ * - run_flow: Start async flow execution (supports SSE streaming)
  * - get_run_status: Poll for job status and results
  */
+
+// Node.js runtime required for crypto module (API key encryption/decryption)
+// SSE streaming works with Node.js runtime on Vercel
+export const runtime = "nodejs";
+
+// Allow up to 5 minutes for flow execution (matches EXECUTION_LIMITS.TIMEOUT_MS)
+export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
 import { z } from "zod";
 
-// Allow up to 5 minutes for flow execution (matches EXECUTION_LIMITS.TIMEOUT_MS)
-export const maxDuration = 300;
-import { getFlowInfo, runFlow, getRunStatus } from "@/lib/mcp/tools";
+import {
+  getFlowInfo,
+  runFlow,
+  getRunStatus,
+  createFlowExecutionStream,
+} from "@/lib/mcp/tools";
 
 // ============================================================================
 // Zod Schemas for Runtime Validation
@@ -61,10 +75,10 @@ const TOOLS = [
   {
     name: "run_flow",
     description:
-      "Execute a Composer flow asynchronously with optional input values. " +
-      "Returns a job_id that you can poll with get_run_status. " +
-      "Requires owner-funded execution to be enabled on the flow. " +
-      "Note: Only text-input nodes can receive values; image/audio inputs use pre-configured data.",
+      "STEP 1 of 2: Start a Composer flow execution. " +
+      "Returns a job_id - the flow runs asynchronously in the background. " +
+      "CRITICAL: After calling run_flow, you MUST IMMEDIATELY call get_run_status with the returned job_id. " +
+      "The flow takes 5-60 seconds. Do NOT stop after run_flow - always follow up with get_run_status.",
     inputSchema: {
       type: "object",
       properties: {
@@ -86,14 +100,16 @@ const TOOLS = [
   {
     name: "get_run_status",
     description:
-      "Check the status of an async flow execution and retrieve results when complete. " +
-      "Poll this until status is 'completed' or 'failed'.",
+      "STEP 2 of 2: Get results after calling run_flow. REQUIRED - you must call this after run_flow. " +
+      "Pass the job_id from run_flow's response. " +
+      "If status is 'running', wait 3 seconds and call get_run_status again. " +
+      "Repeat until status is 'completed' (outputs available) or 'failed' (check errors).",
     inputSchema: {
       type: "object",
       properties: {
         job_id: {
           type: "string",
-          description: "Job ID returned from run_flow",
+          description: "Job ID returned from run_flow - required to check status",
         },
         token: {
           type: "string",
@@ -121,13 +137,13 @@ async function handleJsonRpcRequest(
   switch (method) {
     case "initialize":
       return {
-        protocolVersion: "2024-11-05",
+        protocolVersion: "2025-03-26",
         capabilities: {
           tools: {},
         },
         serverInfo: {
           name: "composer-mcp",
-          version: "1.0.0",
+          version: "2.0.0",
         },
       };
 
@@ -217,6 +233,9 @@ function buildErrorResponse(
  * POST /api/mcp
  *
  * Handle MCP JSON-RPC requests
+ *
+ * For run_flow with Accept: text/event-stream header, returns an SSE stream
+ * with real-time progress updates instead of returning a job_id for polling.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -225,6 +244,49 @@ export async function POST(request: NextRequest) {
     // Handle single request or batch
     const isBatch = Array.isArray(body);
     const requests = isBatch ? body : [body];
+
+    // SSE streaming with resource links - outputs are returned as fetchable URLs
+    // instead of inline base64, keeping the response small and preventing context bloat.
+    // Resource links point to /api/mcp/outputs/:jobId/:key for full data retrieval.
+    const acceptsSSE = request.headers.get("Accept")?.includes("text/event-stream");
+
+    // For single run_flow requests with SSE accept header, return streaming response
+    if (!isBatch && acceptsSSE && requests.length === 1) {
+      const req = requests[0];
+      const parseResult = JsonRpcRequestSchema.safeParse(req);
+
+      if (parseResult.success) {
+        const validatedReq = parseResult.data;
+
+        // Check if this is a tools/call for run_flow
+        // Also verify we have a valid request ID (streaming requires an ID to correlate the response)
+        if (validatedReq.method === "tools/call" && validatedReq.id !== null) {
+          const toolParseResult = ToolCallParamsSchema.safeParse(validatedReq.params);
+          if (toolParseResult.success && toolParseResult.data.name === "run_flow") {
+            const args = toolParseResult.data.arguments;
+
+            // Return SSE stream directly (no after() needed - stream keeps function alive)
+            const stream = createFlowExecutionStream(
+              args.token as string,
+              (args.inputs as Record<string, string>) || {},
+              validatedReq.id,
+              request.signal
+            );
+
+            return new Response(stream, {
+              headers: {
+                "Content-Type": "text/event-stream",
+                "Cache-Control": "no-cache, no-transform",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+              },
+            });
+          }
+        }
+      }
+    }
+
+    // Standard JSON-RPC handling for non-SSE requests
     const responses: unknown[] = [];
 
     for (const req of requests) {
@@ -299,10 +361,12 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     name: "composer-mcp",
-    version: "1.0.0",
+    version: "2.0.0",
+    protocolVersion: "2025-03-26",
     description:
       "MCP server for Composer - a visual AI workflow builder. " +
-      "Use POST to interact with the JSON-RPC API.",
+      "Use POST to interact with the JSON-RPC API. " +
+      "Supports SSE streaming for real-time execution progress.",
     tools: TOOLS.map((t) => t.name),
   });
 }

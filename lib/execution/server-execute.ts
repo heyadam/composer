@@ -15,6 +15,33 @@ import type { Node, Edge } from "@xyflow/react";
 import { resolveImageInput, modelSupportsVision, getVisionCapableModel } from "@/lib/vision";
 import type { ProviderId } from "@/lib/providers";
 import { getIncomingEdges, getOutgoingEdges, collectNodeInputs } from "./graph-utils";
+import type { StructuredOutput } from "@/lib/mcp/types";
+import { parseRawOutput } from "@/lib/mcp/output-parser";
+
+/**
+ * Event emitted during flow execution for progress tracking.
+ */
+export interface NodeExecutionEvent {
+  /** Unique identifier of the node */
+  nodeId: string;
+  /** User-visible label of the node */
+  nodeLabel: string;
+  /** Type of node (e.g., "text-generation", "preview-output") */
+  nodeType: string;
+  /** Current execution status */
+  status: "running" | "success" | "error";
+  /** Structured output for preview-output nodes (only on success) */
+  output?: StructuredOutput;
+  /** Error message if status is "error" */
+  error?: string;
+  /** ISO 8601 timestamp of the event */
+  timestamp: string;
+}
+
+/**
+ * Callback for receiving progress updates during flow execution.
+ */
+export type NodeProgressCallback = (event: NodeExecutionEvent) => void;
 
 interface ApiKeys {
   openai?: string;
@@ -725,6 +752,207 @@ export async function executeFlowServer(
       const label = (node.data?.label as string) || node.id;
       errors[label] =
         error instanceof Error ? error.message : "Unknown error";
+    }
+  }
+
+  // Start execution from all root nodes in parallel
+  await Promise.all(rootNodes.map((node) => executeNodeAndContinue(node)));
+
+  return { outputs, errors };
+}
+
+/**
+ * Execute a complete flow with progress callbacks.
+ *
+ * This function extends `executeFlowServer` with real-time progress reporting
+ * and cancellation support. It's designed for SSE streaming in the MCP server.
+ *
+ * **Progress Callbacks:**
+ * - "running" event is emitted immediately before each node starts executing
+ * - "success" event is emitted after a node completes successfully
+ *   - For preview-output nodes, includes the structured output in the event
+ * - "error" event is emitted if a node fails
+ *
+ * **Cancellation:**
+ * The `signal` parameter accepts an AbortSignal. When aborted:
+ * - The function throws an error with message "Execution cancelled"
+ * - Already-running node executions complete, but no new nodes are started
+ * - This allows graceful cleanup when clients disconnect
+ *
+ * @param nodes - Array of nodes in the flow
+ * @param edges - Array of edges connecting nodes
+ * @param apiKeys - API keys for AI providers
+ * @param inputOverrides - Optional overrides for input node values
+ * @param onProgress - Optional callback for progress updates
+ * @param signal - Optional AbortSignal for cancellation
+ * @returns Execution result with outputs from preview-output nodes
+ *
+ * @example
+ * ```typescript
+ * const controller = new AbortController();
+ *
+ * const result = await executeFlowServerWithProgress(
+ *   nodes,
+ *   edges,
+ *   apiKeys,
+ *   { nodeId: "my input value" },
+ *   (event) => {
+ *     console.log(`Node ${event.nodeLabel}: ${event.status}`);
+ *   },
+ *   controller.signal
+ * );
+ *
+ * // To cancel: controller.abort();
+ * ```
+ */
+export async function executeFlowServerWithProgress(
+  nodes: Node[],
+  edges: Edge[],
+  apiKeys: ApiKeys,
+  inputOverrides?: Record<string, string>,
+  onProgress?: NodeProgressCallback,
+  signal?: AbortSignal
+): Promise<ExecutionResult> {
+  const executedOutputs: Record<string, string> = {};
+  const executedNodes = new Set<string>();
+  const outputs: Record<string, string> = {};
+  const errors: Record<string, string> = {};
+
+  // Check for cancellation at start
+  if (signal?.aborted) {
+    throw new Error("Execution cancelled");
+  }
+
+  // Find all root nodes (no incoming edges, but connected to flow)
+  const rootNodes = nodes.filter((node) => {
+    const hasIncoming = getIncomingEdges(node.id, edges).length > 0;
+    const hasOutgoing = getOutgoingEdges(node.id, edges).length > 0;
+    return (
+      (!hasIncoming && hasOutgoing) ||
+      (node.type === "preview-output" && !hasIncoming)
+    );
+  });
+
+  if (rootNodes.length === 0) {
+    return {
+      outputs: {},
+      errors: { _flow: "No connected nodes found to execute" },
+    };
+  }
+
+  // Check if all upstream dependencies are satisfied
+  function areInputsReady(nodeId: string): boolean {
+    const incomingEdges = getIncomingEdges(nodeId, edges);
+    for (const edge of incomingEdges) {
+      if (!executedNodes.has(edge.source)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Execute a node and recursively execute downstream
+  async function executeNodeAndContinue(node: Node): Promise<void> {
+    if (executedNodes.has(node.id)) return;
+
+    // Check for cancellation before starting each node
+    if (signal?.aborted) {
+      throw new Error("Execution cancelled");
+    }
+
+    const label = (node.data?.label as string) || node.id;
+    const nodeType = node.type || "unknown";
+
+    // Collect inputs from upstream nodes
+    let inputs = collectNodeInputs(node.id, edges, executedOutputs);
+
+    // For input node, apply override or use stored value
+    if (node.type === "text-input") {
+      const overrideValue = inputOverrides?.[node.id];
+      const nodeInput =
+        typeof node.data?.inputValue === "string" ? node.data.inputValue : "";
+      inputs = { prompt: overrideValue ?? nodeInput };
+    }
+
+    // Emit "running" event before execution
+    onProgress?.({
+      nodeId: node.id,
+      nodeLabel: label,
+      nodeType,
+      status: "running",
+      timestamp: new Date().toISOString(),
+    });
+
+    try {
+      const result = await executeNode(node, inputs, apiKeys);
+      executedOutputs[node.id] = result;
+      executedNodes.add(node.id);
+
+      // Capture output node results
+      if (node.type === "preview-output") {
+        outputs[label] = result;
+
+        // Emit "success" event with structured output for preview-output nodes
+        onProgress?.({
+          nodeId: node.id,
+          nodeLabel: label,
+          nodeType,
+          status: "success",
+          output: parseRawOutput(result),
+          timestamp: new Date().toISOString(),
+        });
+
+        return;
+      }
+
+      // Emit "success" event for non-output nodes (no output included)
+      onProgress?.({
+        nodeId: node.id,
+        nodeLabel: label,
+        nodeType,
+        status: "success",
+        timestamp: new Date().toISOString(),
+      });
+
+      // Execute downstream nodes that are now ready
+      const outgoingEdges = getOutgoingEdges(node.id, edges);
+      const nextPromises: Promise<void>[] = [];
+
+      for (const edge of outgoingEdges) {
+        // Check for cancellation before scheduling downstream nodes
+        if (signal?.aborted) {
+          throw new Error("Execution cancelled");
+        }
+
+        const targetNode = nodes.find((n) => n.id === edge.target);
+        if (targetNode && !executedNodes.has(targetNode.id)) {
+          if (areInputsReady(targetNode.id)) {
+            nextPromises.push(executeNodeAndContinue(targetNode));
+          }
+        }
+      }
+
+      await Promise.all(nextPromises);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+
+      // Re-throw cancellation errors to stop the flow
+      if (errorMessage === "Execution cancelled") {
+        throw error;
+      }
+
+      // Emit "error" event
+      onProgress?.({
+        nodeId: node.id,
+        nodeLabel: label,
+        nodeType,
+        status: "error",
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+
+      errors[label] = errorMessage;
     }
   }
 

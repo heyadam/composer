@@ -10,10 +10,29 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { decryptKeys } from "@/lib/encryption";
 import { recordToNode, recordToEdge } from "@/lib/flows/transform";
-import { executeFlowServer } from "@/lib/execution/server-execute";
+import {
+  executeFlowServer,
+  executeFlowServerWithProgress,
+} from "@/lib/execution/server-execute";
 import { jobStore } from "./job-store";
+import { transformOutputs, transformOutputsToResourceLinks } from "./output-parser";
+import {
+  formatSSEEvent,
+  formatResultEvent,
+  formatErrorEvent,
+  formatHeartbeat,
+  JsonRpcErrorCode,
+} from "./sse";
 import type { FlowNodeRecord, FlowEdgeRecord } from "@/lib/flows/types";
-import type { FlowInfo, FlowJob, RunFlowResult, RunStatusResult } from "./types";
+import type {
+  FlowInfo,
+  FlowJob,
+  RunFlowResult,
+  RunStatusResult,
+  StreamingRunResult,
+  StructuredOutput,
+  OutputContent,
+} from "./types";
 import type { Node } from "@xyflow/react";
 
 // ============================================================================
@@ -42,9 +61,26 @@ type InputNodeType = (typeof INPUT_NODE_TYPES)[number];
 const EXECUTION_LIMITS = {
   /** Maximum execution time in milliseconds (5 minutes) */
   TIMEOUT_MS: 5 * 60 * 1000,
-  /** Maximum output size in bytes (1MB) */
-  MAX_OUTPUT_SIZE: 1_000_000,
+  /** Maximum output size in bytes (10MB) - supports larger images */
+  MAX_OUTPUT_SIZE: 10_000_000,
 } as const;
+
+/**
+ * Get the base URL for constructing resource links.
+ * Uses NEXT_PUBLIC_SITE_URL in production, falls back to localhost in development.
+ */
+function getBaseUrl(): string {
+  // Try environment variable first (set in Vercel)
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
+  }
+  // Vercel deployment URL
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  // Fallback for local development
+  return "http://localhost:3000";
+}
 
 // ============================================================================
 // Validation Helpers
@@ -304,8 +340,14 @@ export async function runFlow(
   return {
     response: {
       job_id: job.id,
-      status: job.status,
-      message: `Job ${job.id} created. Use get_run_status to check progress.`,
+      // Use "started" (not job.status) to clearly indicate this is a submission confirmation
+      // This prevents LLMs from confusing the response with a polling status and retrying run_flow
+      status: "started" as const,
+      message:
+        `Flow execution started. ` +
+        `NEXT STEP: Call get_run_status with job_id "${job.id}" to get results. ` +
+        `Poll every 2-3 seconds until status is "completed" or "failed".`,
+      next_action: "call get_run_status" as const,
       quota_remaining: quotaResult.remaining,
     },
     executionPromise,
@@ -340,16 +382,43 @@ export async function getRunStatus(
     throw new Error(`Job not found: ${jobId}. Jobs expire after 1 hour.`);
   }
 
+  // Generate contextual message based on status
+  let message: string;
+  switch (job.status) {
+    case "pending":
+      message = "Flow is queued and will start shortly. Call get_run_status again in 2-3 seconds.";
+      break;
+    case "running":
+      message = "Flow is still executing. Call get_run_status again in 2-3 seconds to check progress.";
+      break;
+    case "completed":
+      message = "Flow completed successfully! The outputs field contains the results.";
+      break;
+    case "failed":
+      message = "Flow execution failed. Check the errors field for details.";
+      break;
+    default:
+      message = `Status: ${job.status}`;
+  }
+
+  // Transform outputs to resource links to prevent context bloat in MCP clients
+  // Binary data (images, audio) becomes fetchable URLs instead of inline base64
+  const resourceLinkOutputs = job.outputs
+    ? transformOutputsToResourceLinks(job.outputs, job.id, getBaseUrl())
+    : undefined;
+
   return {
     job_id: job.id,
     status: job.status,
+    message,
     created_at: job.createdAt.toISOString(),
     started_at: job.startedAt?.toISOString(),
     completed_at: job.completedAt?.toISOString(),
-    outputs: job.outputs,
+    outputs: resourceLinkOutputs,
     errors: job.errors,
   };
 }
+
 
 // ============================================================================
 // Internal Helpers
@@ -457,14 +526,19 @@ async function executeJobAsync(job: FlowJob): Promise<void> {
 
   // Update job with results
   const errors = result.errors || {};
-  const outputs = result.outputs || {};
+  const rawOutputs = result.outputs || {};
   const hasErrors = Object.keys(errors).length > 0;
 
-  // Check output size
-  const outputSize = JSON.stringify(outputs).length;
+  // Transform raw string outputs to structured format with explicit types
+  const structuredOutputs = transformOutputs(rawOutputs);
+
+  // Check output size (10MB to support larger images)
+  const outputSize = JSON.stringify(structuredOutputs).length;
   if (outputSize > EXECUTION_LIMITS.MAX_OUTPUT_SIZE) {
+    const sizeInMB = (outputSize / 1024 / 1024).toFixed(1);
+    const maxInMB = (EXECUTION_LIMITS.MAX_OUTPUT_SIZE / 1024 / 1024).toFixed(0);
     await jobStore.fail(job.id, {
-      _error: `Output size (${Math.round(outputSize / 1024)}KB) exceeds maximum allowed (${Math.round(EXECUTION_LIMITS.MAX_OUTPUT_SIZE / 1024)}KB)`,
+      _error: `Output size (${sizeInMB}MB) exceeds maximum allowed (${maxInMB}MB)`,
     });
     return;
   }
@@ -473,7 +547,7 @@ async function executeJobAsync(job: FlowJob): Promise<void> {
     await jobStore.fail(job.id, errors);
   } else {
     try {
-      await jobStore.complete(job.id, outputs);
+      await jobStore.complete(job.id, structuredOutputs);
     } catch (completeError) {
       // If we can't mark as complete, mark as failed instead
       console.error("Failed to complete job, marking as failed:", completeError);
@@ -484,4 +558,304 @@ async function executeJobAsync(job: FlowJob): Promise<void> {
       });
     }
   }
+}
+
+// ============================================================================
+// Streaming Execution
+// ============================================================================
+
+/** Node types that should not be counted for progress tracking */
+const NON_EXECUTABLE_NODE_TYPES = ["comment"] as const;
+
+/**
+ * Count the number of executable nodes in a flow.
+ * Excludes comment nodes and other non-executable node types.
+ *
+ * @param nodes - Array of nodes to count
+ * @returns Number of executable nodes
+ */
+export function countExecutableNodes(nodes: Node[]): number {
+  return nodes.filter(
+    (node) =>
+      !NON_EXECUTABLE_NODE_TYPES.includes(
+        node.type as (typeof NON_EXECUTABLE_NODE_TYPES)[number]
+      )
+  ).length;
+}
+
+/**
+ * Create a ReadableStream for SSE-based flow execution.
+ *
+ * This function returns a stream that emits:
+ * - Progress events as JSON-RPC notifications via SSE
+ * - Heartbeats every 15 seconds to keep the connection alive
+ * - Final result as JSON-RPC response
+ *
+ * The stream handles:
+ * - Token and rate limit validation
+ * - Flow loading and owner key decryption
+ * - Real-time progress tracking during execution
+ * - Client disconnect handling via AbortSignal
+ * - Error responses in JSON-RPC format
+ *
+ * @param token - Share token for the flow (12 alphanumeric characters)
+ * @param inputs - Input values for text-input nodes (keyed by node label or ID)
+ * @param requestId - JSON-RPC request ID for correlating the response
+ * @param signal - AbortSignal for client disconnect handling
+ * @returns ReadableStream that emits SSE-formatted events
+ *
+ * @example
+ * ```typescript
+ * const stream = createFlowExecutionStream(
+ *   "abc123xyz789",
+ *   { "User Input": "Hello world" },
+ *   "req-123",
+ *   request.signal
+ * );
+ *
+ * return new Response(stream, {
+ *   headers: { "Content-Type": "text/event-stream" }
+ * });
+ * ```
+ */
+export function createFlowExecutionStream(
+  token: string,
+  inputs: Record<string, string>,
+  requestId: string | number,
+  signal: AbortSignal
+): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    async start(controller) {
+      // Setup heartbeat interval (15 seconds)
+      const heartbeat = setInterval(() => {
+        if (!signal.aborted) {
+          controller.enqueue(encoder.encode(formatHeartbeat()));
+        }
+      }, 15000);
+
+      const startTime = Date.now();
+
+      try {
+        // Validate token format
+        validateToken(token);
+        const validatedInputs = validateInputs(inputs);
+
+        const supabase = createServiceRoleClient();
+
+        // Check minute-level rate limit
+        const { data: minuteLimit, error: minuteError } = await supabase
+          .rpc("check_minute_rate_limit", {
+            p_share_token: token,
+            p_limit: RATE_LIMITS.PER_MINUTE,
+          })
+          .single<{ allowed: boolean; current_count: number; reset_at: string }>();
+
+        if (minuteError) {
+          throw new Error("Rate limit check unavailable. Please try again.");
+        }
+
+        if (!minuteLimit?.allowed) {
+          const retryAfter = minuteLimit?.reset_at
+            ? Math.ceil(
+                (new Date(minuteLimit.reset_at).getTime() - Date.now()) / 1000
+              )
+            : 60;
+          throw new Error(`Rate limit exceeded. Try again in ${retryAfter} seconds.`);
+        }
+
+        // Check daily execution quota
+        const { data: quotaResult, error: quotaError } = await supabase.rpc(
+          "execute_live_flow_check",
+          {
+            p_share_token: token,
+            p_daily_limit: RATE_LIMITS.PER_DAY,
+          }
+        );
+
+        if (quotaError) {
+          throw new Error("Quota check unavailable. Please try again.");
+        }
+
+        if (!quotaResult?.allowed) {
+          throw new Error(quotaResult?.reason || "Daily execution quota exceeded.");
+        }
+
+        // Load flow data
+        const { data: rawFlowData, error: flowError } = await supabase.rpc(
+          "get_live_flow",
+          { p_share_token: token }
+        );
+
+        if (flowError || !rawFlowData) {
+          throw new Error("Failed to load flow");
+        }
+
+        // Validate flow data structure
+        const flowData = validateFlowData(rawFlowData);
+
+        // Check if owner-funded execution is enabled
+        if (!flowData.flow.use_owner_keys) {
+          throw new Error(
+            "This flow requires owner-funded execution to be enabled. " +
+              "The flow owner must enable 'Use Owner Keys' in the share settings."
+          );
+        }
+
+        // Get owner's encrypted API keys
+        const { data: encryptedKeys, error: keysError } = await supabase.rpc(
+          "get_owner_keys_for_execution",
+          { p_share_token: token }
+        );
+
+        if (keysError || !encryptedKeys) {
+          throw new Error(
+            "Owner API keys not available. " +
+              "The flow owner must store their API keys to enable execution."
+          );
+        }
+
+        // Decrypt keys
+        const encryptionKey = process.env.ENCRYPTION_KEY;
+        if (!encryptionKey) {
+          throw new Error("Server configuration error: encryption key not set");
+        }
+
+        const apiKeys = decryptKeys(encryptedKeys, encryptionKey);
+
+        // Convert DB records to React Flow format
+        const nodes = flowData.nodes.map(recordToNode);
+        const edges = flowData.edges.map(recordToEdge);
+
+        // Build input overrides map
+        const inputOverrides: Record<string, string> = {};
+        for (const node of nodes) {
+          if (node.type === "text-input") {
+            const label = (node.data?.label as string) || node.id;
+            if (validatedInputs[label] !== undefined) {
+              inputOverrides[node.id] = validatedInputs[label];
+            } else if (validatedInputs[node.id] !== undefined) {
+              inputOverrides[node.id] = validatedInputs[node.id];
+            }
+          }
+        }
+
+        // Create job for storing outputs (needed for resource links)
+        const job = await jobStore.create(token, validatedInputs);
+
+        // Log execution for rate limiting
+        const { error: logError } = await supabase.rpc("log_execution", {
+          p_share_token: token,
+        });
+        if (logError) {
+          console.warn("Failed to log execution (non-critical):", logError.message);
+        }
+
+        // Count executable nodes for progress tracking
+        const totalNodes = countExecutableNodes(nodes);
+        let completedNodes = 0;
+
+        // Progress callback that emits SSE events
+        const onProgress = (event: {
+          nodeId: string;
+          nodeLabel: string;
+          nodeType: string;
+          status: "running" | "success" | "error";
+          output?: import("./types").StructuredOutput;
+          error?: string;
+          timestamp: string;
+        }) => {
+          if (signal.aborted) return;
+
+          // Count completed nodes (both success and error count as completed)
+          if (event.status === "success" || event.status === "error") {
+            completedNodes++;
+          }
+
+          // Emit progress notification
+          controller.enqueue(
+            encoder.encode(
+              formatSSEEvent({
+                jsonrpc: "2.0",
+                method: "notifications/progress",
+                params: {
+                  progressToken: String(requestId),
+                  progress: completedNodes,
+                  total: totalNodes,
+                  message: `${event.nodeLabel}: ${event.status}`,
+                  node: event,
+                },
+              })
+            )
+          );
+        };
+
+        // Execute flow with progress callbacks and abort signal
+        const result = await executeFlowServerWithProgress(
+          nodes,
+          edges,
+          apiKeys,
+          Object.keys(inputOverrides).length > 0 ? inputOverrides : undefined,
+          onProgress,
+          signal
+        );
+
+        // Check for cancellation before sending final result
+        if (signal.aborted) {
+          throw new Error("Execution cancelled");
+        }
+
+        // Transform outputs to structured format
+        const structuredOutputs = transformOutputs(result.outputs);
+        const hasErrors = Object.keys(result.errors).length > 0;
+
+        // Store outputs in job (so resource links work)
+        if (hasErrors) {
+          await jobStore.fail(job.id, result.errors);
+        } else {
+          await jobStore.complete(job.id, structuredOutputs);
+        }
+
+        // Transform to resource links for small context response
+        const resourceLinkOutputs = transformOutputsToResourceLinks(
+          structuredOutputs,
+          job.id,
+          getBaseUrl()
+        );
+
+        // Build final result with resource links
+        const finalResult: StreamingRunResult = {
+          status: hasErrors ? "failed" : "completed",
+          outputs: resourceLinkOutputs,
+          errors: hasErrors ? result.errors : undefined,
+          duration_ms: Date.now() - startTime,
+        };
+
+        // Send final result
+        controller.enqueue(encoder.encode(formatResultEvent(requestId, finalResult)));
+      } catch (error) {
+        // Send error response
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        controller.enqueue(
+          encoder.encode(
+            formatErrorEvent(
+              requestId,
+              JsonRpcErrorCode.INTERNAL_ERROR,
+              errorMessage
+            )
+          )
+        );
+      } finally {
+        clearInterval(heartbeat);
+        controller.close();
+      }
+    },
+
+    cancel() {
+      // Called when the client disconnects
+      // The signal parameter already handles abort propagation to the execution
+    },
+  });
 }
