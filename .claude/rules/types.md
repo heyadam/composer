@@ -45,6 +45,7 @@ Flow types in `types/flow.ts` define node data interfaces with execution state t
 - `sessionStatus`: Connection state (`disconnected`, `connecting`, `connected`, `error`)
 - `transcript`: Array of conversation entries with role, text, and timestamp
 - `audioOutStreamId`: Registry ID for output audio stream
+- `resolvedInstructions`: Instructions resolved from connected input during execution (runtime only)
 
 ### AudioTranscriptionNodeData
 

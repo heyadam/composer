@@ -61,10 +61,24 @@
   - `semantic_vad`: Semantic voice activity detection
   - `server_vad`: Server-side voice activity detection
   - `disabled`: Manual push-to-talk (PTT)
-- Live transcript display
+- System instructions input (connectable from upstream nodes via `resolvedInstructions`)
+- Live transcript display with auto-scroll and compact 10px font
+- Transcript streams to connected preview-output nodes in real-time
 - Audio input/output ports (emerald colored)
 - Auto-starts session when flow executes if output is connected
+- Transcript clears on flow reset
 - 60-minute maximum session duration
+
+**Connected Instructions Pattern**: When the instructions input is connected:
+1. Executor resolves the input value from connected edge
+2. Passes `resolvedInstructions` to component via `onNodeStateChange`
+3. Component waits for resolved value before auto-starting session
+4. Uses `hasAutoStartedRef` to handle race condition where executor completes before React re-renders
+
+**Live Transcript Streaming**: The component pushes transcript updates to connected preview-output nodes:
+- Sets `stringOutput` on preview-output targets (not just `executionOutput`)
+- `useFlowExecution` has a sync effect that watches preview-output nodes and updates `previewEntries`
+- This enables the ResponsesSidebar to show live transcript updates
 
 **useRealtimeSession Hook** (`lib/hooks/useRealtimeSession.ts`): Manages WebRTC-based realtime voice sessions:
 - Connection lifecycle (connecting, connected, disconnected, error)
@@ -72,6 +86,7 @@
 - Audio input/output stream management via audio registry
 - Session timers (60-minute max)
 - Push-to-talk event handling
+- `clearTranscript()`: Clears internal transcript state (used on flow reset)
 - Supports owner-funded execution via share token
 
 ## Realtime API

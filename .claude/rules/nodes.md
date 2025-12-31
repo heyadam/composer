@@ -54,9 +54,12 @@ All node components are in `components/Flow/nodes/` with editable labels.
 **RealtimeNode** (type: `realtime-conversation`): Real-time voice conversation using OpenAI's Realtime API:
 - Voice selection (10 voices: alloy, ash, ballad, coral, echo, sage, shimmer, verse, marin, cedar)
 - VAD modes (semantic, server, manual PTT)
-- Live transcript display
+- System instructions input (can be connected from upstream nodes)
+- Live transcript display with auto-scroll (10px font)
+- Transcript output streams to connected preview-output nodes in real-time
 - Audio input/output ports
 - Auto-starts session when flow executes if output is connected
+- Transcript clears on flow reset
 
 ## Utility Nodes
 
