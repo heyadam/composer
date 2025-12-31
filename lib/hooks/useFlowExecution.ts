@@ -313,6 +313,48 @@ export function useFlowExecution({
     [setNodes, addPreviewEntry, updatePreviewEntry]
   );
 
+  // Sync preview-output node data to preview entries
+  // This handles live updates from interactive nodes (like realtime-conversation)
+  // that update node data directly without going through the execution engine
+  useEffect(() => {
+    nodes.forEach((node) => {
+      if (node.type === "preview-output") {
+        const nodeData = node.data as {
+          label?: string;
+          stringOutput?: string;
+          imageOutput?: string;
+          audioOutput?: string;
+          codeOutput?: string;
+          executionStatus?: string;
+        };
+
+        // Check if this node has output that's not yet in preview entries
+        const hasOutput = nodeData.stringOutput || nodeData.imageOutput || nodeData.audioOutput || nodeData.codeOutput;
+        if (hasOutput) {
+          // Ensure preview entry exists
+          if (!addedPreviewIds.current.has(node.id)) {
+            addedPreviewIds.current.add(node.id);
+            addPreviewEntry({
+              nodeId: node.id,
+              nodeLabel: nodeData.label || "Preview Output",
+              nodeType: "preview-output",
+              status: nodeData.executionStatus === "success" ? "success" : "running",
+            });
+          }
+
+          // Update preview entry with current output
+          updatePreviewEntry(node.id, {
+            status: nodeData.executionStatus === "success" ? "success" : "running",
+            stringOutput: nodeData.stringOutput,
+            imageOutput: nodeData.imageOutput,
+            audioOutput: nodeData.audioOutput,
+            codeOutput: nodeData.codeOutput,
+          });
+        }
+      }
+    });
+  }, [nodes, addPreviewEntry, updatePreviewEntry]);
+
   // Clear visual state for starting a new run (preserves cache)
   const clearExecutionState = useCallback(() => {
     // Clear any pending inputs (e.g., audio recording waiting)

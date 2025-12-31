@@ -54,7 +54,7 @@ function formatTranscript(entries: RealtimeTranscriptEntry[]): string {
 }
 
 export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
-  const { updateNodeData, getEdges } = useReactFlow();
+  const { updateNodeData, getEdges, getNodes } = useReactFlow();
   const edges = useEdges(); // Still needed for getConnectedAudioStreamId
   const { isInputConnected, isOutputConnected } = useEdgeConnections(id);
   const [isPttHeld, setIsPttHeld] = useState(false);
@@ -66,20 +66,33 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
   // Push transcript to connected nodes in real-time
   const pushTranscriptToConnectedNodes = useCallback((entries: RealtimeTranscriptEntry[]) => {
     const currentEdges = getEdges();
+    const currentNodes = getNodes();
     const transcriptEdges = currentEdges.filter(
       (edge) => edge.source === id && edge.sourceHandle === "transcript"
     );
 
     const formattedTranscript = formatTranscript(entries);
 
-    // Update each connected node's executionOutput
+    // Update each connected node's output
     transcriptEdges.forEach((edge) => {
-      updateNodeData(edge.target, {
-        executionOutput: formattedTranscript || "(No conversation yet)",
-        executionStatus: entries.length > 0 ? "success" : undefined,
-      });
+      const targetNode = currentNodes.find((n) => n.id === edge.target);
+
+      // For preview-output nodes, set stringOutput (what they display)
+      // For other nodes, set executionOutput
+      if (targetNode?.type === "preview-output") {
+        updateNodeData(edge.target, {
+          stringOutput: formattedTranscript || "(No conversation yet)",
+          executionOutput: formattedTranscript || "(No conversation yet)",
+          executionStatus: entries.length > 0 ? "success" : undefined,
+        });
+      } else {
+        updateNodeData(edge.target, {
+          executionOutput: formattedTranscript || "(No conversation yet)",
+          executionStatus: entries.length > 0 ? "success" : undefined,
+        });
+      }
     });
-  }, [id, getEdges, updateNodeData]);
+  }, [id, getEdges, getNodes, updateNodeData]);
 
   // Realtime session hook
   const {
