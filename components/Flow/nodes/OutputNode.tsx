@@ -27,7 +27,7 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
     }
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 px-3.5 py-2.5">
         {data.stringOutput && (
           <p className="text-xs text-white/75 whitespace-pre-wrap line-clamp-4">
             {data.stringOutput}

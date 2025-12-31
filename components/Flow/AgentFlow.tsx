@@ -31,8 +31,6 @@ import { MyFlowsDialog } from "./MyFlowsDialog";
 import { FlowContextMenu } from "./FlowContextMenu";
 import { CommentEditContext } from "./CommentEditContext";
 import { CollaboratorCursors } from "./CollaboratorCursors";
-// Removed: import { initialNodes, initialEdges, defaultFlow } from "@/lib/example-flow";
-// Canvas now starts empty, templates modal offers starter flows
 import { useCommentSuggestions } from "@/lib/hooks/useCommentSuggestions";
 import { useSuggestions } from "@/lib/hooks/useSuggestions";
 import { useClipboard } from "@/lib/hooks/useClipboard";

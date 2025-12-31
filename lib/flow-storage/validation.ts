@@ -195,20 +195,48 @@ export function validateFlow(data: unknown): FlowValidationResult {
 }
 
 /**
- * Sanitizes loaded nodes by removing execution state and runtime-only data
+ * Sanitizes loaded nodes by removing execution state and runtime-only data.
+ * This prevents large data like base64 images from being saved to files.
  */
 export function sanitizeNodes(nodes: Node[]): Node[] {
   return nodes.map((node) => ({
     ...node,
     data: {
       ...node.data,
+      // Execution state (all nodes)
       executionStatus: undefined,
       executionOutput: undefined,
       executionError: undefined,
-      uploadedImage: undefined,  // ImageInputNode runtime state
-      imageInput: undefined,     // PromptNode vision input runtime state
-      isRecording: undefined,    // AudioInputNode runtime state
-      awaitingInput: undefined,  // AudioInputNode runtime state
+      fromCache: undefined,
+
+      // Preview-output node outputs (can contain large base64 data)
+      stringOutput: undefined,
+      imageOutput: undefined,
+      audioOutput: undefined,
+      codeOutput: undefined,
+
+      // Text-generation node runtime state
+      executionReasoning: undefined,
+      imageInput: undefined,     // Vision input (runtime only)
+
+      // Image-input node runtime state
+      uploadedImage: undefined,
+
+      // Audio-input node runtime state
+      audioBuffer: undefined,    // Base64 audio data
+      audioMimeType: undefined,
+      recordingDuration: undefined,
+      isRecording: undefined,
+      awaitingInput: undefined,
+
+      // Realtime-conversation node runtime state
+      transcript: undefined,
+      sessionStatus: undefined,
+      audioOutStreamId: undefined,
+
+      // AI-logic node auto-generated code (regenerated on execution)
+      generatedCode: undefined,
+      codeExplanation: undefined,
     },
     // Remove autopilot highlighting
     className: undefined,
