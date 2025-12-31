@@ -154,19 +154,23 @@
     {
       "id": "edge-writer-to-story-output",
       "source": "autopilot-text-generation-1702500002000",
+      "sourceHandle": "output",
       "target": "autopilot-preview-output-1702500005000",
+      "targetHandle": "string",
       "type": "colored",
       "data": {
-        "dataType": "response"
+        "dataType": "string"
       }
     },
     {
       "id": "edge-image-to-output",
       "source": "autopilot-image-generation-1702500004000",
+      "sourceHandle": "output",
       "target": "autopilot-preview-output-1702500006000",
+      "targetHandle": "image",
       "type": "colored",
       "data": {
-        "dataType": "response"
+        "dataType": "image"
       }
     }
   ]

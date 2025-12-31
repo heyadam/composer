@@ -12,7 +12,8 @@ export const previewOutputExecutor: NodeExecutor = {
 
   async execute(ctx: ExecutionContext): Promise<ExecuteNodeResult> {
     // Output node collects string, image, audio, and code inputs separately
-    const stringOutput = ctx.inputs["string"] || "";
+    // Also check "prompt" for backward compatibility with legacy edges that don't have targetHandle
+    const stringOutput = ctx.inputs["string"] || ctx.inputs["prompt"] || "";
     const imageOutput = ctx.inputs["image"] || "";
     const audioOutput = ctx.inputs["audio"] || "";
     const codeOutput = ctx.inputs["code"] || "";

@@ -282,6 +282,30 @@ describe("preview-output executor", () => {
     expect(result.imageOutput).toBe("");
     expect(result.audioOutput).toBe("");
   });
+
+  it("falls back to prompt input for backward compatibility", async () => {
+    // Legacy edges don't have targetHandle set, defaulting to "prompt"
+    const ctx = createMockContext({
+      inputs: { prompt: "Legacy text from prompt handle" },
+    });
+
+    const result = await previewOutputExecutor.execute(ctx);
+
+    expect(result.output).toBe("Legacy text from prompt handle");
+    expect(result.stringOutput).toBe("Legacy text from prompt handle");
+  });
+
+  it("prefers string input over prompt fallback", async () => {
+    // When both exist, prefer the explicit "string" handle
+    const ctx = createMockContext({
+      inputs: { string: "New string handle", prompt: "Legacy prompt handle" },
+    });
+
+    const result = await previewOutputExecutor.execute(ctx);
+
+    expect(result.output).toBe("New string handle");
+    expect(result.stringOutput).toBe("New string handle");
+  });
 });
 
 describe("comment executor", () => {

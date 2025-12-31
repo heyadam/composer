@@ -128,19 +128,23 @@
     {
       "id": "edge-gemini-to-output",
       "source": "autopilot-text-generation-1702500002",
+      "sourceHandle": "output",
       "target": "autopilot-preview-output-1702500004",
+      "targetHandle": "string",
       "type": "colored",
       "data": {
-        "dataType": "response"
+        "dataType": "string"
       }
     },
     {
       "id": "edge-gpt-to-output",
       "source": "autopilot-text-generation-1702500003",
+      "sourceHandle": "output",
       "target": "autopilot-preview-output-1702500005",
+      "targetHandle": "string",
       "type": "colored",
       "data": {
-        "dataType": "response"
+        "dataType": "string"
       }
     }
   ]
