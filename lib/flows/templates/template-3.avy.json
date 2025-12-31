@@ -3,7 +3,7 @@
     "name": "i2i",
     "schemaVersion": 1,
     "createdAt": "2025-12-22T21:14:44.017Z",
-    "updatedAt": "2025-12-22T21:16:35.011Z"
+    "updatedAt": "2025-12-31T17:08:06.685Z"
   },
   "nodes": [
     {
@@ -18,7 +18,7 @@
       },
       "measured": {
         "width": 280,
-        "height": 176
+        "height": 184
       },
       "selected": false,
       "dragging": false
@@ -39,7 +39,7 @@
       },
       "measured": {
         "width": 280,
-        "height": 370
+        "height": 567
       },
       "selected": false
     },
@@ -55,7 +55,7 @@
       },
       "measured": {
         "width": 280,
-        "height": 109
+        "height": 201
       }
     }
   ],
@@ -71,13 +71,17 @@
       }
     },
     {
-      "id": "edge-gen-to-output",
-      "source": "autopilot-image-generation-1734567890001",
-      "target": "autopilot-preview-output-1734567890002",
       "type": "colored",
+      "source": "autopilot-image-generation-1734567890001",
+      "sourceHandle": "output",
+      "target": "autopilot-preview-output-1734567890002",
+      "targetHandle": "image",
       "data": {
-        "dataType": "response"
-      }
+        "dataType": "image",
+        "sourceHandle": "output",
+        "targetHandle": "image"
+      },
+      "id": "xy-edge__autopilot-image-generation-1734567890001output-autopilot-preview-output-1734567890002image"
     }
   ]
 }

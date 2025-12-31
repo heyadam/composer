@@ -1,129 +1,145 @@
 {
   "metadata": {
-    "name": "nux",
-    "description": "A sample flow demonstrating text generation and React component rendering",
+    "name": "StoryGen",
     "schemaVersion": 1,
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2025-12-22T17:07:42.295Z"
+    "createdAt": "2025-12-31T17:05:15.858Z",
+    "updatedAt": "2025-12-31T17:05:15.858Z"
   },
   "nodes": [
     {
       "id": "autopilot-text-input-1702500001000",
       "type": "text-input",
       "position": {
-        "x": 53.10846159265657,
-        "y": 210.87961557429796
+        "x": 30.7599468028786,
+        "y": 38.3638444106978
       },
       "data": {
         "label": "Story Prompt",
         "inputValue": "A curious dog who discovers a magical door"
       },
+      "width": 280,
+      "height": 202,
       "measured": {
         "width": 280,
-        "height": 182
-      },
-      "selected": false,
-      "dragging": false
+        "height": 202
+      }
     },
     {
       "id": "autopilot-text-generation-1702500002000",
       "type": "text-generation",
       "position": {
-        "x": 360.27077217884505,
-        "y": 180.13538608942258
+        "x": 351.860317193164,
+        "y": 57.9130665820473
       },
       "data": {
         "label": "Story Writer",
-        "systemPrompt": "You are a creative short story writer. Write an engaging, imaginative short story (15- 50 words) based on the user's prompt. Include vivid descriptions, interesting characters, and a satisfying narrative arc.",
+        "model": "gemini-3-flash-preview",
         "provider": "google",
-        "model": "gemini-3-flash-preview"
+        "systemPrompt": "You are a creative short story writer. Write an engaging, imaginative short story (15- 50 words) based on the user's prompt. Include vivid descriptions, interesting characters, and a satisfying narrative arc.",
+        "googleThinkingConfig": {
+          "thinkingLevel": "low"
+        }
       },
+      "width": 280,
+      "height": 638,
       "measured": {
         "width": 280,
-        "height": 546
-      },
-      "selected": false,
-      "dragging": false
+        "height": 638
+      }
     },
     {
       "id": "autopilot-text-generation-1702500003000",
       "type": "text-generation",
       "position": {
-        "x": 721.5826183478725,
-        "y": 60.99844989780425
+        "x": 721.582618347873,
+        "y": 60.9984498978042
       },
       "data": {
         "label": "Image Prompt Generator",
-        "systemPrompt": "Extract the most visually compelling scene from the story and create a detailed image generation prompt. Focus on the key moment, characters, setting, mood, and artistic style. Output only the image prompt, no explanations.",
+        "model": "gemini-3-flash-preview",
         "provider": "google",
-        "model": "gemini-3-flash-preview"
+        "systemPrompt": "Extract the most visually compelling scene from the story and create a detailed image generation prompt. Focus on the key moment, characters, setting, mood, and artistic style. Output only the image prompt, no explanations."
       },
+      "width": 280,
+      "height": 638,
       "measured": {
         "width": 280,
-        "height": 546
-      },
-      "selected": false,
-      "dragging": false
-    },
-    {
-      "id": "autopilot-image-generation-1702500004000",
-      "type": "image-generation",
-      "position": {
-        "x": 1053.6216183988024,
-        "y": 172.81122308040108
-      },
-      "data": {
-        "label": "Story Illustration",
-        "provider": "google",
-        "model": "gemini-2.5-flash-image",
-        "aspectRatio": "1:1"
-      },
-      "measured": {
-        "width": 280,
-        "height": 523
-      },
-      "selected": true,
-      "dragging": false
+        "height": 638
+      }
     },
     {
       "id": "autopilot-preview-output-1702500005000",
       "type": "preview-output",
       "position": {
-        "x": 719.4380815875282,
-        "y": 641.5112715575392
+        "x": 734.495425806959,
+        "y": 731.275919954505
       },
       "data": {
         "label": "Story"
       },
+      "width": 280,
+      "height": 201,
       "measured": {
         "width": 280,
-        "height": 157
-      },
-      "selected": false,
-      "dragging": false
+        "height": 201
+      }
     },
     {
       "id": "autopilot-preview-output-1702500006000",
       "type": "preview-output",
       "position": {
-        "x": 1370.3758494985896,
-        "y": 173.50099268727044
+        "x": 1468.42874074904,
+        "y": 155.027259553127
       },
       "data": {
         "label": "Illustration"
       },
+      "width": 280,
+      "height": 201,
       "measured": {
         "width": 280,
-        "height": 255
+        "height": 201
+      }
+    },
+    {
+      "id": "autopilot-image-generation-1702500004000",
+      "type": "image-generation",
+      "position": {
+        "x": 1093.25457669564,
+        "y": 23.45000959927
       },
-      "selected": false,
-      "dragging": false
+      "data": {
+        "label": "Story Illustration",
+        "model": "gemini-2.5-flash-image",
+        "provider": "google",
+        "aspectRatio": "1:1"
+      },
+      "width": 280,
+      "height": 567,
+      "measured": {
+        "width": 280,
+        "height": 567
+      }
     }
   ],
   "edges": [
     {
+      "id": "xy-edge__autopilot-image-generation-1702500004000output-autopilot-preview-output-1702500006000image",
+      "source": "autopilot-image-generation-1702500004000",
+      "sourceHandle": "output",
+      "target": "autopilot-preview-output-1702500006000",
+      "targetHandle": "image",
+      "type": "colored",
+      "data": {
+        "dataType": "image",
+        "sourceHandle": "output",
+        "targetHandle": "image"
+      }
+    },
+    {
       "id": "edge-input-to-writer",
       "source": "autopilot-text-input-1702500001000",
+      "sourceHandle": null,
       "target": "autopilot-text-generation-1702500002000",
       "targetHandle": "prompt",
       "type": "colored",
@@ -134,6 +150,7 @@
     {
       "id": "edge-writer-to-prompt-gen",
       "source": "autopilot-text-generation-1702500002000",
+      "sourceHandle": null,
       "target": "autopilot-text-generation-1702500003000",
       "targetHandle": "prompt",
       "type": "colored",
@@ -144,6 +161,7 @@
     {
       "id": "edge-prompt-to-image",
       "source": "autopilot-text-generation-1702500003000",
+      "sourceHandle": null,
       "target": "autopilot-image-generation-1702500004000",
       "targetHandle": "prompt",
       "type": "colored",
@@ -152,21 +170,16 @@
       }
     },
     {
-      "id": "edge-writer-to-story-output",
+      "id": "xy-edge__autopilot-text-generation-1702500002000output-autopilot-preview-output-1702500005000string",
       "source": "autopilot-text-generation-1702500002000",
+      "sourceHandle": "output",
       "target": "autopilot-preview-output-1702500005000",
+      "targetHandle": "string",
       "type": "colored",
       "data": {
-        "dataType": "response"
-      }
-    },
-    {
-      "id": "edge-image-to-output",
-      "source": "autopilot-image-generation-1702500004000",
-      "target": "autopilot-preview-output-1702500006000",
-      "type": "colored",
-      "data": {
-        "dataType": "response"
+        "dataType": "string",
+        "sourceHandle": "output",
+        "targetHandle": "string"
       }
     }
   ]

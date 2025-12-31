@@ -1,17 +1,17 @@
 {
   "metadata": {
-    "name": "basic-text",
+    "name": "SimpleTextGen",
     "schemaVersion": 1,
     "createdAt": "2025-12-22T21:14:44.017Z",
-    "updatedAt": "2025-12-22T21:14:44.017Z"
+    "updatedAt": "2025-12-31T17:07:07.719Z"
   },
   "nodes": [
     {
       "id": "autopilot-text-input-1702500001",
       "type": "text-input",
       "position": {
-        "x": 0,
-        "y": 336.25
+        "x": -25.894417475728147,
+        "y": 287.18689320388347
       },
       "data": {
         "label": "User Input",
@@ -19,7 +19,7 @@
       },
       "measured": {
         "width": 280,
-        "height": 182
+        "height": 202
       },
       "selected": false,
       "dragging": false
@@ -28,8 +28,8 @@
       "id": "autopilot-text-generation-1702500002",
       "type": "text-generation",
       "position": {
-        "x": 402.5,
-        "y": 15
+        "x": 397.04854368932035,
+        "y": -59.95752427184466
       },
       "data": {
         "label": "Gemini Response",
@@ -39,7 +39,7 @@
       },
       "measured": {
         "width": 280,
-        "height": 530
+        "height": 707
       },
       "selected": false,
       "dragging": false
@@ -48,21 +48,22 @@
       "id": "autopilot-text-generation-1702500003",
       "type": "text-generation",
       "position": {
-        "x": 400,
-        "y": 500
+        "x": 400.00000000000006,
+        "y": 660.8179611650485
       },
       "data": {
-        "label": "GPT Response",
+        "label": "GPT-5 Mini",
         "systemPrompt": "",
         "provider": "openai",
-        "model": "gpt-5.2",
+        "model": "gpt-5-mini",
         "verbosity": "low"
       },
       "measured": {
         "width": 280,
-        "height": 546
+        "height": 675
       },
-      "selected": false
+      "selected": true,
+      "dragging": false
     },
     {
       "id": "autopilot-preview-output-1702500004",
@@ -72,11 +73,15 @@
         "y": 100
       },
       "data": {
-        "label": "Gemini Output"
+        "label": "Gemini Output",
+        "stringOutput": "",
+        "imageOutput": "",
+        "audioOutput": "",
+        "codeOutput": ""
       },
       "measured": {
         "width": 280,
-        "height": 141
+        "height": 201
       }
     },
     {
@@ -87,11 +92,15 @@
         "y": 500
       },
       "data": {
-        "label": "GPT Output"
+        "label": "GPT Output",
+        "stringOutput": "",
+        "imageOutput": "",
+        "audioOutput": "",
+        "codeOutput": ""
       },
       "measured": {
         "width": 280,
-        "height": 157
+        "height": 201
       }
     }
   ],
