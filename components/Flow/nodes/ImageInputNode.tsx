@@ -2,7 +2,7 @@
 
 import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import type { ImageInputNodeData } from "@/types/flow";
-import { ImagePlus } from "lucide-react";
+import { ImagePlus, Upload } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
 import { ImageClearButton } from "./ImageClearButton";
@@ -60,10 +60,10 @@ export function ImageInputNode({ id, data }: NodeProps<ImageInputNodeType>) {
       ) : (
         <button
           onClick={triggerFileSelect}
-          className="nodrag node-upload-zone min-h-[72px]"
+          className="nodrag node-upload-zone w-full min-h-[72px]"
         >
-          <ImagePlus className="h-5 w-5" />
-          <span className="text-[11px] font-medium">Upload image</span>
+          <Upload className="h-4 w-4" />
+          <span className="text-[10px] font-medium uppercase tracking-wider">Upload</span>
         </button>
       )}
     </NodeFrame>
