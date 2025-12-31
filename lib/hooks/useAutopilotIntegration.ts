@@ -15,6 +15,11 @@ import type {
 } from "@/lib/autopilot/types";
 import { resolveNodeOverlaps, applyDisplacements } from "@/lib/layout";
 
+/** CSS class for smooth position animation on displaced nodes */
+const ANIMATION_CLASS = "autopilot-displaced";
+/** Duration to keep animation class (matches CSS transition duration) */
+const ANIMATION_DURATION_MS = 300;
+
 export interface UseAutopilotIntegrationProps {
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
@@ -153,9 +158,28 @@ export function useAutopilotIntegration({
             allEdges
           );
 
-          // Apply displacements to shift existing nodes
+          // Apply displacements to shift existing nodes with animation class
           if (Object.keys(displacements).length > 0) {
-            return applyDisplacements(allNodes, displacements);
+            // Schedule removal of animation class after transition completes
+            setTimeout(() => {
+              setNodes((nodes) =>
+                nodes.map((n) => {
+                  if (n.className?.includes(ANIMATION_CLASS)) {
+                    return {
+                      ...n,
+                      className: n.className
+                        .replace(ANIMATION_CLASS, "")
+                        .trim() || undefined,
+                    };
+                  }
+                  return n;
+                })
+              );
+            }, ANIMATION_DURATION_MS + 50); // Small buffer for safety
+
+            return applyDisplacements(allNodes, displacements, {
+              animationClass: ANIMATION_CLASS,
+            });
           }
 
           return allNodes;

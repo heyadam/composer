@@ -173,6 +173,20 @@ html, body {
   animation: selected-glow 2s ease-in-out infinite !important;
 }
 
+/* Autopilot-added node entrance animation - fade in only */
+@keyframes autopilot-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.react-flow__node.autopilot-added {
+  animation: autopilot-enter 300ms ease-out forwards;
+}
+
 /* Autopilot-added node glow effect - purple with animation */
 @keyframes autopilot-glow {
   0%, 100% {
@@ -192,6 +206,11 @@ html, body {
 .react-flow__node.autopilot-added > div {
   border-color: #a855f7 !important;
   animation: autopilot-glow 2s ease-in-out infinite !important;
+}
+
+/* Smooth position animation for nodes displaced by Autopilot */
+.react-flow__node.autopilot-displaced {
+  transition: transform 300ms ease-in-out;
 }
 
 /* Prompt input glow effect - soft pulsing purple */

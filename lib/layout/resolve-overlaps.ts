@@ -669,13 +669,30 @@ export function resolveNodeOverlaps(
 /**
  * Apply displacements to nodes, returning new node array with updated positions
  */
+export interface ApplyDisplacementsOptions {
+  /** Add animation class to displaced nodes for CSS transitions */
+  animationClass?: string;
+}
+
 export function applyDisplacements(
   nodes: Node[],
-  displacements: DisplacementMap
+  displacements: DisplacementMap,
+  options?: ApplyDisplacementsOptions
 ): Node[] {
+  const animationClass = options?.animationClass;
+
   return nodes.map((node) => {
     const d = displacements[node.id];
     if (!d) return node;
+
+    // Check if there's actually a displacement
+    const hasDisplacement = d.dx !== 0 || d.dy !== 0;
+
+    // Build className - append animation class if displacement occurred
+    let className = node.className || "";
+    if (hasDisplacement && animationClass) {
+      className = className ? `${className} ${animationClass}` : animationClass;
+    }
 
     return {
       ...node,
@@ -683,6 +700,7 @@ export function applyDisplacements(
         x: node.position.x + d.dx,
         y: node.position.y + d.dy,
       },
+      ...(className !== (node.className || "") && { className }),
     };
   });
 }
