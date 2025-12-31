@@ -227,6 +227,7 @@ export interface RealtimeNodeData extends Record<string, unknown>, ExecutionData
   transcript?: RealtimeTranscriptEntry[];
   elapsedSeconds?: number;
   audioOutStreamId?: string;      // Registry ID for output audio stream
+  resolvedInstructions?: string;  // Instructions resolved from connected input during execution
 }
 
 // Audio transcription node data

@@ -198,6 +198,8 @@ export function useFlowExecution({
                   ...(state.codeExplanation && { codeExplanation: state.codeExplanation }),
                   // Signal audio-input to start recording
                   ...(state.awaitingInput !== undefined && { awaitingInput: state.awaitingInput }),
+                  // Resolved instructions for realtime-conversation
+                  ...(state.resolvedInstructions !== undefined && { resolvedInstructions: state.resolvedInstructions }),
                   // Output node separate inputs
                   ...(state.stringOutput !== undefined && { stringOutput: state.stringOutput }),
                   ...(state.imageOutput !== undefined && { imageOutput: state.imageOutput }),

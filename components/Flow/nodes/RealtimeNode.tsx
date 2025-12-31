@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useReactFlow, useEdges, type NodeProps, type Node, type Edge } from "@xyflow/react";
 import type { RealtimeNodeData, AudioEdgeData, RealtimeTranscriptEntry } from "@/types/flow";
 import { Mic, Square, Loader2 } from "lucide-react";
@@ -58,6 +58,7 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
   const edges = useEdges(); // Still needed for getConnectedAudioStreamId
   const { isInputConnected, isOutputConnected } = useEdgeConnections(id);
   const [isPttHeld, setIsPttHeld] = useState(false);
+  const transcriptRef = useRef<HTMLDivElement>(null);
 
   // Check if any output is connected (for auto-start behavior)
   const hasOutputConnection = isOutputConnected("transcript") || isOutputConnected("audio-out");
@@ -108,29 +109,47 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
     }
   }, [edges, transcript, pushTranscriptToConnectedNodes]);
 
+  // Auto-scroll transcript to bottom when new entries arrive
+  useEffect(() => {
+    if (transcriptRef.current && transcript && transcript.length > 0) {
+      transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
+    }
+  }, [transcript]);
+
   // Auto-start session when flow execution begins (if connected to output)
+  const instructionsConnected = isInputConnected("instructions");
   useEffect(() => {
     // Only auto-start if:
     // 1. Execution just started (status is "running")
     // 2. Session is not already active
     // 3. Node has an output connection
+    // 4. If instructions input is connected, wait for resolvedInstructions to be set
     if (
       data.executionStatus === "running" &&
       status === "disconnected" &&
       hasOutputConnection
     ) {
+      // If instructions are connected, wait for resolved value from executor
+      if (instructionsConnected && !data.resolvedInstructions) {
+        return; // Wait for resolvedInstructions to be set
+      }
+
+      // Use resolved instructions from connected input, fallback to inline
+      const effectiveInstructions = data.resolvedInstructions ?? data.instructions;
       connect({
-        instructions: data.instructions,
+        instructions: effectiveInstructions,
         voice: data.voice,
         vadMode: data.vadMode,
       });
     }
-  }, [data.executionStatus, status, hasOutputConnection, data.instructions, data.voice, data.vadMode, connect]);
+  }, [data.executionStatus, status, hasOutputConnection, instructionsConnected, data.resolvedInstructions, data.instructions, data.voice, data.vadMode, connect]);
 
   // Handler to start session with current config
   const handleStartSession = () => {
+    // Use resolved instructions from connected input if available, fallback to inline
+    const effectiveInstructions = data.resolvedInstructions ?? data.instructions;
     connect({
-      instructions: data.instructions,
+      instructions: effectiveInstructions,
       voice: data.voice,
       vadMode: data.vadMode,
     });
@@ -266,12 +285,15 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
 
         {/* Transcript display */}
         {transcript && transcript.length > 0 && (
-          <div className="max-h-40 overflow-y-auto space-y-1.5 p-2 bg-white/[0.02] rounded-lg border border-white/[0.03]">
+          <div
+            ref={transcriptRef}
+            className="max-h-40 overflow-y-auto space-y-1 p-2 bg-white/[0.02] rounded-lg border border-white/[0.03]"
+          >
             {transcript.map((entry) => (
               <div
                 key={entry.id}
                 className={cn(
-                  "text-[12px] p-2 rounded-md",
+                  "text-[10px] p-1.5 rounded-md",
                   entry.role === "user" ? "bg-blue-500/10 text-white/85" : "bg-emerald-500/10 text-white/85"
                 )}
               >

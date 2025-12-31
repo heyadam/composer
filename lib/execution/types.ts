@@ -48,6 +48,8 @@ export interface NodeExecutionState {
   codeExplanation?: string;
   /** True when execution is waiting for user input (e.g., audio recording) */
   awaitingInput?: boolean;
+  /** Resolved instructions from connected input (for realtime-conversation) */
+  resolvedInstructions?: string;
   /** True when the "done" pulse has fired (node completed execution) */
   pulseFired?: boolean;
   /** Output node: string/text input */

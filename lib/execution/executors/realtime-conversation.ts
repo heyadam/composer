@@ -2,6 +2,7 @@
  * Realtime Conversation Node Executor
  *
  * Interactive real-time voice conversation node.
+ * Resolves connected instructions input and passes to component for session start.
  * Execution passes through current transcript since the node is interactive.
  */
 
@@ -13,7 +14,20 @@ export const realtimeConversationExecutor: NodeExecutor = {
   hasPulseOutput: true,
 
   async execute(ctx: ExecutionContext): Promise<ExecuteNodeResult> {
-    const { node } = ctx;
+    const { node, inputs, onNodeStateChange } = ctx;
+
+    // Resolve instructions from connected input or inline value
+    const hasInstructionsEdge = "instructions" in inputs;
+    const inlineInstructions = typeof node.data?.instructions === "string" ? node.data.instructions : "";
+    const resolvedInstructions = hasInstructionsEdge ? inputs["instructions"] : inlineInstructions;
+
+    // Pass resolved instructions to component before it auto-starts the session
+    if (onNodeStateChange && hasInstructionsEdge) {
+      onNodeStateChange(node.id, {
+        status: "running",
+        resolvedInstructions,
+      });
+    }
 
     // Realtime node is interactive - execution passes through current transcript
     const transcriptEntries = (node.data.transcript as Array<{ role: string; text: string }>) || [];
