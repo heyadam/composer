@@ -298,6 +298,11 @@ export function useRealtimeSession(options: UseRealtimeSessionOptions) {
     dcRef.current?.send(JSON.stringify(event));
   }, []);
 
+  // Clear transcript (used when flow is reset)
+  const clearTranscript = useCallback(() => {
+    setTranscript([]);
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -313,5 +318,6 @@ export function useRealtimeSession(options: UseRealtimeSessionOptions) {
     connect,
     disconnect,
     sendEvent,
+    clearTranscript,
   };
 }

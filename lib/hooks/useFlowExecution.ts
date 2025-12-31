@@ -342,6 +342,18 @@ export function useFlowExecution({
           };
         }
 
+        // Clear transcript and resolved instructions for realtime-conversation nodes
+        if (node.type === "realtime-conversation") {
+          return {
+            ...node,
+            data: {
+              ...baseData,
+              transcript: undefined,
+              resolvedInstructions: undefined,
+            },
+          };
+        }
+
         return { ...node, data: baseData };
       })
     );

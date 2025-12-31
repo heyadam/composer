@@ -90,6 +90,7 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
     connect,
     disconnect,
     sendEvent,
+    clearTranscript,
   } = useRealtimeSession({
     nodeId: id,
     audioInStreamId: isInputConnected("audio-in") ? getConnectedAudioStreamId(edges, id) : undefined,
@@ -115,6 +116,13 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
       transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
     }
   }, [transcript]);
+
+  // Clear internal transcript when flow is reset (data.transcript becomes undefined)
+  useEffect(() => {
+    if (data.transcript === undefined && transcript.length > 0) {
+      clearTranscript();
+    }
+  }, [data.transcript, transcript.length, clearTranscript]);
 
   // Auto-start session when flow execution begins (if connected to output)
   const instructionsConnected = isInputConnected("instructions");
