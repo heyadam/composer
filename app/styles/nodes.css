@@ -404,6 +404,19 @@
 }
 
 /* ============================================
+   Image Preview
+   ============================================ */
+.node-image-preview {
+  @apply w-full aspect-square rounded-lg overflow-hidden;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, var(--node-border-medium));
+}
+
+.node-image-preview img {
+  @apply w-full h-full object-contain;
+}
+
+/* ============================================
    Checkbox
    ============================================ */
 .node-checkbox {

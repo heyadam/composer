@@ -2,7 +2,7 @@
 
 import { ReactNode } from "react";
 import { ThinkingSummary } from "@/components/ThinkingSummary";
-import { parseImageOutput, getImageDataUrl } from "@/lib/image-utils";
+import { NodeImagePreview } from "./NodeImagePreview";
 import { AudioPreview } from "@/components/Flow/ResponsesSidebar/AudioPreview";
 
 interface NodeFooterProps {
@@ -104,18 +104,9 @@ export function NodeFooter({
     <div className="node-footer-content space-y-2">
       {reasoning && <ThinkingSummary reasoning={reasoning} />}
 
-      {imageOutput && (() => {
-        const imageData = parseImageOutput(imageOutput);
-        return imageData ? (
-          <div className="w-full rounded-lg overflow-hidden bg-black/30 border border-white/10">
-            <img
-              src={getImageDataUrl(imageData)}
-              alt="Generated"
-              className="w-full h-auto max-h-[120px] object-cover"
-            />
-          </div>
-        ) : null;
-      })()}
+      {imageOutput && (
+        <NodeImagePreview src={imageOutput} alt="Generated" />
+      )}
 
       {audioOutput && <AudioPreview output={audioOutput} compact />}
 

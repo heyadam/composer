@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import type { PreviewEntry } from "./types";
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { isImageOutput, parseImageOutput, getImageDataUrl } from "@/lib/image-utils";
+import { isImageOutput } from "@/lib/image-utils";
 import { isReactOutput, parseReactOutput } from "@/lib/react-utils";
 import { isAudioOutput } from "@/lib/audio-utils";
+import { NodeImagePreview } from "@/components/Flow/nodes/NodeImagePreview";
 import { ReactPreview } from "./ReactPreview";
 import { AudioPreview } from "./AudioPreview";
 
@@ -47,17 +48,14 @@ function ResponseCard({ entry }: { entry: PreviewEntry }) {
 
       // Render image output
       if (entry.imageOutput && isImageOutput(entry.imageOutput)) {
-        const imageData = parseImageOutput(entry.imageOutput);
-        if (imageData) {
-          outputs.push(
-            <img
-              key="image"
-              src={getImageDataUrl(imageData)}
-              alt="Generated"
-              className="w-full h-auto rounded"
-            />
-          );
-        }
+        outputs.push(
+          <NodeImagePreview
+            key="image"
+            src={entry.imageOutput}
+            alt="Generated"
+            showContainer={false}
+          />
+        );
       }
 
       // Render audio output
@@ -115,14 +113,13 @@ function ResponseCard({ entry }: { entry: PreviewEntry }) {
       }
 
       if (isImageOutput(entry.output)) {
-        const imageData = parseImageOutput(entry.output);
-        return imageData ? (
-          <img
-            src={getImageDataUrl(imageData)}
+        return (
+          <NodeImagePreview
+            src={entry.output}
             alt="Generated"
-            className="w-full h-auto rounded"
+            showContainer={false}
           />
-        ) : null;
+        );
       }
 
       return (

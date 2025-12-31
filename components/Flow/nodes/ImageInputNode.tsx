@@ -6,7 +6,7 @@ import { ImagePlus, Upload } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortRow } from "./PortLabel";
 import { ImageClearButton } from "./ImageClearButton";
-import { parseImageOutput, getImageDataUrl } from "@/lib/image-utils";
+import { NodeImagePreview } from "./NodeImagePreview";
 import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 import { useImageFileInput } from "@/lib/hooks/useImageFileInput";
 
@@ -20,9 +20,7 @@ export function ImageInputNode({ id, data }: NodeProps<ImageInputNodeType>) {
     dataKey: "uploadedImage",
   });
 
-  const uploadedImageData = data.uploadedImage
-    ? parseImageOutput(data.uploadedImage)
-    : null;
+  const hasUploadedImage = !!data.uploadedImage;
 
   return (
     <NodeFrame
@@ -48,13 +46,9 @@ export function ImageInputNode({ id, data }: NodeProps<ImageInputNodeType>) {
         className="hidden"
       />
 
-      {uploadedImageData ? (
+      {hasUploadedImage ? (
         <div className="relative group">
-          <img
-            src={getImageDataUrl(uploadedImageData)}
-            alt="Uploaded"
-            className="w-full max-h-[100px] object-contain rounded-lg border border-white/[0.06] bg-black/20"
-          />
+          <NodeImagePreview src={data.uploadedImage!} alt="Uploaded" />
           <ImageClearButton onClear={handleClear} />
         </div>
       ) : (

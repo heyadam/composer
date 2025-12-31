@@ -6,7 +6,7 @@ import { Eye } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortList } from "./PortLabel";
 import { NodeFooter } from "./NodeFooter";
-import { parseImageOutput, getImageDataUrl } from "@/lib/image-utils";
+import { NodeImagePreview } from "./NodeImagePreview";
 import { AudioPreview } from "@/components/Flow/ResponsesSidebar/AudioPreview";
 import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 
@@ -34,18 +34,9 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
           </p>
         )}
 
-        {data.imageOutput && (() => {
-          const imageData = parseImageOutput(data.imageOutput);
-          return imageData ? (
-            <div className="rounded-lg overflow-hidden border border-white/10">
-              <img
-                src={getImageDataUrl(imageData)}
-                alt="Generated image"
-                className="w-full h-auto max-h-[160px] object-contain bg-black/30"
-              />
-            </div>
-          ) : null;
-        })()}
+        {data.imageOutput && (
+          <NodeImagePreview src={data.imageOutput} alt="Generated image" />
+        )}
 
         {data.audioOutput && (
           <AudioPreview output={data.audioOutput} compact />

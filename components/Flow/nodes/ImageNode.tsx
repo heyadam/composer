@@ -11,6 +11,7 @@ import { ProviderModelSelector } from "./ProviderModelSelector";
 import { ConfigSelect } from "./ConfigSelect";
 import { CacheToggle } from "./CacheToggle";
 import { ImageClearButton } from "./ImageClearButton";
+import { NodeImagePreview } from "./NodeImagePreview";
 import { cn } from "@/lib/utils";
 import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 import { useImageFileInput } from "@/lib/hooks/useImageFileInput";
@@ -25,7 +26,6 @@ import {
   PARTIAL_IMAGES_OPTIONS,
   type ImageProviderId,
 } from "@/lib/providers";
-import { parseImageOutput, getImageDataUrl } from "@/lib/image-utils";
 
 type ImageNodeType = Node<ImageNodeData, "image-generation">;
 
@@ -37,7 +37,7 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
     dataKey: "imageInput",
   });
 
-  const uploadedImageData = data.imageInput ? parseImageOutput(data.imageInput) : null;
+  const hasUploadedImage = !!data.imageInput;
 
   const currentProvider = (data.provider || DEFAULT_IMAGE_PROVIDER) as ImageProviderId;
   const currentModel = data.model || DEFAULT_IMAGE_MODEL;
@@ -126,13 +126,9 @@ export function ImageNode({ id, data }: NodeProps<ImageNodeType>) {
             <div className="node-input min-h-[50px] flex items-center justify-center text-white/55 italic text-sm">
               Connected
             </div>
-          ) : uploadedImageData ? (
+          ) : hasUploadedImage ? (
             <div className="relative group">
-              <img
-                src={getImageDataUrl(uploadedImageData)}
-                alt="Base"
-                className="w-full max-h-[80px] object-contain rounded-lg border border-white/10 bg-black/30"
-              />
+              <NodeImagePreview src={data.imageInput!} alt="Base" />
               <ImageClearButton onClear={handleClear} />
             </div>
           ) : (
