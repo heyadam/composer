@@ -47,6 +47,38 @@ Uses [motion.dev](https://motion.dev) (npm package `motion`) for spring-based an
 - Header nav buttons: Labels animate in/out based on available width using `AnimatedLabel`
 - Logo container: Animates position when sidebar opens
 
+## React Flow Node Animations
+
+CSS-based animations for React Flow nodes. These use pure CSS instead of motion.dev because React Flow controls node positioning via `transform: translate()`.
+
+**Important**: Never animate `transform` on React Flow nodes—it conflicts with React Flow's positioning. Use `opacity`, `box-shadow`, or other non-transform properties.
+
+**Autopilot Node Classes** (in `app/globals.css`):
+
+| Class | Animation | Duration | Purpose |
+|-------|-----------|----------|---------|
+| `.autopilot-added` | `autopilot-enter` (opacity 0→1) | 300ms ease-out | New nodes fade in |
+| `.autopilot-added > div` | `autopilot-glow` (box-shadow pulse) | 2s infinite | Purple highlight until interacted |
+| `.autopilot-displaced` | `transition: transform` | 300ms ease-in-out | Existing nodes slide to new positions |
+| `.selected > div` | `selected-glow` (box-shadow pulse) | 2s infinite | Yellow highlight for selected nodes |
+
+**Animation Class Lifecycle**:
+1. `autopilot-added`: Applied when node is created, removed when user drags the node
+2. `autopilot-displaced`: Applied during position update, auto-removed after 350ms via setTimeout
+
+**CSS Keyframes**:
+```css
+@keyframes autopilot-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes autopilot-glow {
+  0%, 100% { box-shadow: /* subtle purple */ }
+  50% { box-shadow: /* brighter purple */ }
+}
+```
+
 ## Templates Modal
 
 **Templates Modal** (`components/Flow/TemplatesModal/`): New flow creation dialog with AI prompt input:

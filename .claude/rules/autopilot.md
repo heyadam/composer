@@ -41,6 +41,30 @@ AI-powered natural language flow editing.
 
 **useAutopilotChat** (`lib/hooks/useAutopilotChat.ts`): Manages conversation state, streaming responses, post-stream evaluation, auto-retry on validation failure, auto-apply on success, and undo functionality.
 
-**useAutopilotIntegration** (`lib/hooks/useAutopilotIntegration.ts`): Handles applying/undoing autopilot changes to the flow, highlight management for newly added nodes. Extracted from AgentFlow for testability.
+**useAutopilotIntegration** (`lib/hooks/useAutopilotIntegration.ts`): Handles applying/undoing autopilot changes to the flow, highlight management for newly added nodes, and smooth animations. Extracted from AgentFlow for testability.
 
 **useSuggestions** (`lib/hooks/useSuggestions.ts`): Fetches dynamic LLM-generated prompt suggestions based on current flow state. Refreshable with default fallback suggestions.
+
+## Node Layout & Animation
+
+When Autopilot adds new nodes, the system automatically resolves overlaps and animates changes.
+
+**Layout Module** (`lib/layout/`):
+- `resolve-overlaps.ts`: Collision detection and resolution algorithm
+- `resolveNodeOverlaps(nodes, newNodeIds, edges)`: Calculates displacement vectors for existing nodes
+- `applyDisplacements(nodes, displacements, options?)`: Applies position changes with optional animation class
+- Uses AABB collision detection with configurable gap (default: 50px)
+- Smart push direction: right by default, down when nodes are vertically stacked
+- Respects parent-child relationships (comment children move with parent)
+- Max displacement capped at 400px to prevent excessive gaps
+
+**Animation Classes** (in `app/globals.css`):
+- `.autopilot-added`: New nodes fade in (300ms opacity animation) + purple glow effect
+- `.autopilot-displaced`: Existing nodes slide to new positions (300ms ease-in-out transition)
+- Animation classes auto-removed after transitions complete (350ms timeout)
+
+**Animation Flow**:
+1. Autopilot adds nodes with `autopilot-added` class (triggers fade-in)
+2. `resolveNodeOverlaps` calculates which existing nodes need to move
+3. `applyDisplacements` shifts nodes and adds `autopilot-displaced` class (triggers slide)
+4. After 350ms, `autopilot-displaced` class is removed to clean up
