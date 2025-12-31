@@ -107,6 +107,11 @@ export function useDemoExecution(): UseDemoExecutionReturn {
                   executionOutput: state.output,
                   executionError: state.error,
                   executionReasoning: state.reasoning,
+                  // Output node specific fields
+                  stringOutput: state.stringOutput,
+                  imageOutput: state.imageOutput,
+                  audioOutput: state.audioOutput,
+                  codeOutput: state.codeOutput,
                 },
               }
             : node
@@ -170,6 +175,11 @@ export function useDemoExecution(): UseDemoExecutionReturn {
                   executionOutput: state.output,
                   executionError: state.error,
                   executionReasoning: state.reasoning,
+                  // Output node specific fields
+                  stringOutput: state.stringOutput,
+                  imageOutput: state.imageOutput,
+                  audioOutput: state.audioOutput,
+                  codeOutput: state.codeOutput,
                 },
               }
             : node
