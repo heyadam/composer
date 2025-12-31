@@ -316,17 +316,32 @@ export function useFlowExecution({
     // Clear any pending inputs (e.g., audio recording waiting)
     pendingInputRegistry.clear();
     setNodes((nds) =>
-      nds.map((node) => ({
-        ...node,
-        data: {
+      nds.map((node) => {
+        const baseData = {
           ...node.data,
           executionStatus: undefined,
           executionOutput: undefined,
           executionError: undefined,
           awaitingInput: undefined, // Clear awaiting state
           fromCache: undefined, // Clear cache indicator
-        },
-      }))
+        };
+
+        // Clear output-specific fields for preview-output nodes
+        if (node.type === "preview-output") {
+          return {
+            ...node,
+            data: {
+              ...baseData,
+              stringOutput: undefined,
+              imageOutput: undefined,
+              audioOutput: undefined,
+              codeOutput: undefined,
+            },
+          };
+        }
+
+        return { ...node, data: baseData };
+      })
     );
     setPreviewEntries([]);
     setDebugEntries([]);
