@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { Node, Edge, NodeChange } from "@xyflow/react";
 import { addEdge } from "@xyflow/react";
 import type {
@@ -13,10 +13,12 @@ import type {
   RemovedNodeInfo,
   RemovedEdgeInfo,
 } from "@/lib/autopilot/types";
+import { resolveNodeOverlaps, applyDisplacements } from "@/lib/layout";
 
 export interface UseAutopilotIntegrationProps {
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
+  edges: Edge[];
 }
 
 export interface UseAutopilotIntegrationReturn {
@@ -30,8 +32,13 @@ export interface UseAutopilotIntegrationReturn {
 export function useAutopilotIntegration({
   setNodes,
   setEdges,
+  edges,
 }: UseAutopilotIntegrationProps): UseAutopilotIntegrationReturn {
   const [highlightedIds, setHighlightedIds] = useState<Set<string>>(new Set());
+
+  // Keep a ref to edges for use in the overlap resolver
+  const edgesRef = useRef<Edge[]>(edges);
+  edgesRef.current = edges;
 
   // Apply changes from autopilot
   const applyChanges = useCallback(
@@ -41,76 +48,137 @@ export function useAutopilotIntegration({
       const removedNodes: RemovedNodeInfo[] = [];
       const removedEdges: RemovedEdgeInfo[] = [];
 
+      // Collect actions by type for batched processing
+      const addNodeActions: AddNodeAction[] = [];
+      const addEdgeActions: AddEdgeAction[] = [];
+      const removeEdgeActions: RemoveEdgeAction[] = [];
+      const removeNodeActions: RemoveNodeAction[] = [];
+
       for (const action of changes.actions) {
-        if (action.type === "addNode") {
-          const nodeAction = action as AddNodeAction;
-          nodeIds.push(nodeAction.node.id);
-          setNodes((nds) =>
-            nds.concat({
-              id: nodeAction.node.id,
-              type: nodeAction.node.type,
-              position: nodeAction.node.position,
-              data: nodeAction.node.data,
-              className: "autopilot-added",
-            })
-          );
-        } else if (action.type === "addEdge") {
-          const edgeAction = action as AddEdgeAction;
-          edgeIds.push(edgeAction.edge.id);
-          setEdges((eds) =>
-            addEdge(
-              {
-                id: edgeAction.edge.id,
-                source: edgeAction.edge.source,
-                sourceHandle: edgeAction.edge.sourceHandle,
-                target: edgeAction.edge.target,
-                targetHandle: edgeAction.edge.targetHandle,
-                type: "colored",
-                data: edgeAction.edge.data,
-              },
-              eds
-            )
-          );
-        } else if (action.type === "removeEdge") {
-          const removeAction = action as RemoveEdgeAction;
-          setEdges((eds) => eds.filter((e) => e.id !== removeAction.edgeId));
-        } else if (action.type === "removeNode") {
-          const removeAction = action as RemoveNodeAction;
-          const nodeId = removeAction.nodeId;
-
-          // Store the node data for undo
-          setNodes((nds) => {
-            const nodeToRemove = nds.find((n) => n.id === nodeId);
-            if (nodeToRemove) {
-              removedNodes.push({
-                id: nodeToRemove.id,
-                type: nodeToRemove.type as string,
-                position: nodeToRemove.position,
-                data: nodeToRemove.data,
-              });
-            }
-            return nds.filter((n) => n.id !== nodeId);
-          });
-
-          // Also remove connected edges and store them for undo
-          setEdges((eds) => {
-            const edgesToRemove = eds.filter(
-              (e) => e.source === nodeId || e.target === nodeId
-            );
-            edgesToRemove.forEach((e) => {
-              removedEdges.push({
-                id: e.id,
-                source: e.source,
-                sourceHandle: e.sourceHandle,
-                target: e.target,
-                targetHandle: e.targetHandle,
-                type: e.type,
-                data: e.data as { dataType: string } | undefined,
-              });
-            });
-            return eds.filter((e) => e.source !== nodeId && e.target !== nodeId);
-          });
+        switch (action.type) {
+          case "addNode":
+            addNodeActions.push(action as AddNodeAction);
+            break;
+          case "addEdge":
+            addEdgeActions.push(action as AddEdgeAction);
+            break;
+          case "removeEdge":
+            removeEdgeActions.push(action as RemoveEdgeAction);
+            break;
+          case "removeNode":
+            removeNodeActions.push(action as RemoveNodeAction);
+            break;
         }
+      }
+
+      // Process removes first (to ensure accurate overlap detection)
+      for (const removeAction of removeNodeActions) {
+        const nodeId = removeAction.nodeId;
+
+        // Store the node data for undo
+        setNodes((nds) => {
+          const nodeToRemove = nds.find((n) => n.id === nodeId);
+          if (nodeToRemove) {
+            removedNodes.push({
+              id: nodeToRemove.id,
+              type: nodeToRemove.type as string,
+              position: nodeToRemove.position,
+              data: nodeToRemove.data,
+            });
+          }
+          return nds.filter((n) => n.id !== nodeId);
+        });
+
+        // Also remove connected edges and store them for undo
+        setEdges((eds) => {
+          const edgesToRemove = eds.filter(
+            (e) => e.source === nodeId || e.target === nodeId
+          );
+          edgesToRemove.forEach((e) => {
+            removedEdges.push({
+              id: e.id,
+              source: e.source,
+              sourceHandle: e.sourceHandle,
+              target: e.target,
+              targetHandle: e.targetHandle,
+              type: e.type,
+              data: e.data as { dataType: string } | undefined,
+            });
+          });
+          return eds.filter((e) => e.source !== nodeId && e.target !== nodeId);
+        });
+      }
+
+      for (const removeAction of removeEdgeActions) {
+        setEdges((eds) => eds.filter((e) => e.id !== removeAction.edgeId));
+      }
+
+      // Batch add nodes and resolve overlaps in a single setNodes call
+      if (addNodeActions.length > 0) {
+        const newNodes: Node[] = addNodeActions.map((nodeAction) => {
+          nodeIds.push(nodeAction.node.id);
+          return {
+            id: nodeAction.node.id,
+            type: nodeAction.node.type,
+            position: nodeAction.node.position,
+            data: nodeAction.node.data,
+            className: "autopilot-added",
+          };
+        });
+
+        // Collect new edges to include in overlap resolution
+        // This ensures we know which existing nodes are sources/targets of new nodes
+        const newEdges: Edge[] = addEdgeActions.map((edgeAction) => ({
+          id: edgeAction.edge.id,
+          source: edgeAction.edge.source,
+          sourceHandle: edgeAction.edge.sourceHandle,
+          target: edgeAction.edge.target,
+          targetHandle: edgeAction.edge.targetHandle,
+          type: "colored",
+          data: edgeAction.edge.data,
+        }));
+
+        setNodes((existingNodes) => {
+          // Combine existing nodes with new nodes
+          const allNodes = [...existingNodes, ...newNodes];
+          const newNodeIds = new Set(nodeIds);
+
+          // Combine existing edges with new edges for accurate relationship detection
+          const allEdges = [...(edgesRef.current || []), ...newEdges];
+
+          // Resolve overlaps between new nodes and existing nodes
+          const displacements = resolveNodeOverlaps(
+            allNodes,
+            newNodeIds,
+            allEdges
+          );
+
+          // Apply displacements to shift existing nodes
+          if (Object.keys(displacements).length > 0) {
+            return applyDisplacements(allNodes, displacements);
+          }
+
+          return allNodes;
+        });
+      }
+
+      // Add edges after nodes are added
+      for (const edgeAction of addEdgeActions) {
+        edgeIds.push(edgeAction.edge.id);
+        setEdges((eds) =>
+          addEdge(
+            {
+              id: edgeAction.edge.id,
+              source: edgeAction.edge.source,
+              sourceHandle: edgeAction.edge.sourceHandle,
+              target: edgeAction.edge.target,
+              targetHandle: edgeAction.edge.targetHandle,
+              type: "colored",
+              data: edgeAction.edge.data,
+            },
+            eds
+          )
+        );
       }
 
       // Track highlighted nodes

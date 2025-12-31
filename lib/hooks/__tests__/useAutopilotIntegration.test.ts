@@ -29,6 +29,7 @@ describe("useAutopilotIntegration", () => {
       useAutopilotIntegration({
         setNodes: mockSetNodes,
         setEdges: mockSetEdges,
+        edges: [],
       })
     );
 

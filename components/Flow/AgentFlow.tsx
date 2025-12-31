@@ -190,7 +190,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
     undoChanges: undoAutopilotChanges,
     clearHighlights: clearAutopilotHighlights,
     clearHighlightOnDrag,
-  } = useAutopilotIntegration({ setNodes, setEdges });
+  } = useAutopilotIntegration({ setNodes, setEdges, edges });
 
   // Undo/redo hook
   const { takeSnapshot, clearHistory } = useUndoRedo({
