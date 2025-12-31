@@ -3,14 +3,42 @@ import type { FlowSnapshot } from "./types";
 import type { NodeType, AgentNodeData } from "@/types/flow";
 
 // Fields to exclude from node data (runtime state, not part of flow definition)
+// Autopilot only needs flow structure - not execution results or binary data
 const EXCLUDED_DATA_FIELDS = [
+  // Execution state (all nodes)
   "executionStatus",
   "executionOutput",
   "executionError",
-  "isGenerating",       // MagicNode runtime state
-  "generationError",    // MagicNode runtime state
-  "uploadedImage",      // ImageInputNode runtime state
-  "imageInput",         // PromptNode runtime state (vision input)
+  "fromCache",
+
+  // MagicNode runtime state
+  "isGenerating",
+  "generationError",
+  "code",              // Generated JS code (can be large)
+  "evalResult",        // Evaluation result
+
+  // Image data (various nodes)
+  "uploadedImage",     // Base64 image data (ImageInputNode)
+  "imageInput",        // Vision input image (PromptNode, ImageNode)
+  "imageOutput",       // Generated image output (OutputNode)
+
+  // PromptNode runtime state
+  "executionReasoning", // Thinking output (can be large)
+
+  // AudioInputNode runtime state (base64 audio is HUGE)
+  "audioBuffer",       // Base64-encoded audio data
+  "audioMimeType",
+  "recordingDuration",
+  "isRecording",
+  "awaitingInput",
+
+  // RealtimeNode runtime state
+  "transcript",        // Conversation transcript (can be large)
+  "sessionStatus",
+  "audioOutStreamId",
+
+  // ReactComponentNode runtime state
+  "generatedCode",     // Generated React code
 ] as const;
 
 /**
