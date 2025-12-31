@@ -59,6 +59,7 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
   const { isInputConnected, isOutputConnected } = useEdgeConnections(id);
   const [isPttHeld, setIsPttHeld] = useState(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
+  const hasAutoStartedRef = useRef(false); // Track if we've auto-started this execution cycle
 
   // Check if any output is connected (for auto-start behavior)
   const hasOutputConnection = isOutputConnected("transcript") || isOutputConnected("audio-out");
@@ -137,23 +138,37 @@ export function RealtimeNode({ id, data }: NodeProps<RealtimeNodeType>) {
     }
   }, [data.transcript, transcript.length, clearTranscript]);
 
+  // Reset auto-start tracking when execution is reset
+  useEffect(() => {
+    if (data.executionStatus === undefined) {
+      hasAutoStartedRef.current = false;
+    }
+  }, [data.executionStatus]);
+
   // Auto-start session when flow execution begins (if connected to output)
   const instructionsConnected = isInputConnected("instructions");
   useEffect(() => {
     // Only auto-start if:
-    // 1. Execution just started (status is "running")
+    // 1. Execution started (status is "running" or "success" - executor completes fast)
     // 2. Session is not already active
     // 3. Node has an output connection
-    // 4. If instructions input is connected, wait for resolvedInstructions to be set
+    // 4. Haven't already auto-started this execution cycle
+    // 5. If instructions input is connected, wait for resolvedInstructions to be set
+    const executionStarted = data.executionStatus === "running" || data.executionStatus === "success";
+
     if (
-      data.executionStatus === "running" &&
+      executionStarted &&
       status === "disconnected" &&
-      hasOutputConnection
+      hasOutputConnection &&
+      !hasAutoStartedRef.current
     ) {
       // If instructions are connected, wait for resolved value from executor
       if (instructionsConnected && !data.resolvedInstructions) {
         return; // Wait for resolvedInstructions to be set
       }
+
+      // Mark as auto-started to prevent duplicate starts
+      hasAutoStartedRef.current = true;
 
       // Use resolved instructions from connected input, fallback to inline
       const effectiveInstructions = data.resolvedInstructions ?? data.instructions;
