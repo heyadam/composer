@@ -1,4 +1,22 @@
 import type { NodeType, AgentNodeData } from "@/types/flow";
+import type { LanguageModelUsage } from "ai";
+
+// Token usage tracking for context display
+export interface AutopilotUsage {
+  /** Cumulative input tokens across all messages */
+  inputTokens: number;
+  /** Cumulative output tokens across all messages */
+  outputTokens: number;
+  /** Cumulative total tokens */
+  totalTokens: number;
+  /** Cumulative reasoning tokens (extended thinking) */
+  reasoningTokens: number;
+  /** Cumulative cached input tokens */
+  cachedInputTokens: number;
+}
+
+// Re-export for convenience
+export type { LanguageModelUsage };
 
 // Autopilot mode
 export type AutopilotMode = "execute" | "plan";

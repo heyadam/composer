@@ -51,6 +51,8 @@ export function AutopilotSidebar({
     applyAnyway,
     retryFix,
     clearHistory,
+    usage,
+    selectedModel,
   } = useAutopilotChat({ nodes, edges, onApplyChanges, onUndoChanges });
 
   // Wrap sendMessage to notify parent when a message is sent
@@ -124,6 +126,8 @@ export function AutopilotSidebar({
           hasMessages={messages.length > 0}
           testModeEnabled={testModeEnabled}
           onTestModeChange={setTestModeEnabled}
+          usage={usage}
+          selectedModel={selectedModel}
         />
         <AutopilotChat
           messages={messages}

@@ -23,7 +23,7 @@ import type { AutopilotMode, AutopilotModel } from "@/lib/autopilot/types";
 const templateIcons = [Sparkles, Wand2, Zap];
 
 const MODES: { id: AutopilotMode; name: string; icon: typeof Zap }[] = [
-  { id: "execute", name: "Execute", icon: Zap },
+  { id: "execute", name: "Agent", icon: Zap },
   { id: "plan", name: "Plan", icon: ListTodo },
 ];
 

@@ -82,7 +82,7 @@ const MODELS: { id: AutopilotModel; name: string }[] = [
 ];
 
 const MODES: { id: AutopilotMode; name: string; icon: typeof Zap }[] = [
-  { id: "execute", name: "Execute", icon: Zap },
+  { id: "execute", name: "Agent", icon: Zap },
   { id: "plan", name: "Plan", icon: ListTodo },
 ];
 
@@ -435,8 +435,8 @@ export function AutopilotChat({
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
-                className={`h-6 px-2 text-[11px] gap-1 ${
+                size="icon"
+                className={`h-6 w-6 ${
                   thinkingEnabled
                     ? "text-purple-600 hover:text-purple-700"
                     : "text-muted-foreground hover:text-foreground"
@@ -444,8 +444,7 @@ export function AutopilotChat({
                 onClick={() => onThinkingChange(!thinkingEnabled)}
                 title={thinkingEnabled ? "Disable extended thinking" : "Enable extended thinking"}
               >
-                <Brain className="h-3 w-3" />
-                <span>Think</span>
+                <Brain className="h-3.5 w-3.5" />
               </Button>
             </div>
             <PromptInputSubmit

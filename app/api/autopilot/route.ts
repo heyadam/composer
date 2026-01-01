@@ -131,6 +131,11 @@ This should work perfectly!`;
                 );
               }
             }
+            // Send usage data at the end
+            const usage = await result.usage;
+            controller.enqueue(
+              encoder.encode(JSON.stringify({ type: "usage", usage }) + "\n")
+            );
             controller.close();
           } catch (error) {
             controller.error(error);
@@ -146,7 +151,36 @@ This should work perfectly!`;
       });
     }
 
-    return result.toTextStreamResponse();
+    // For non-thinking mode, stream NDJSON with text and usage
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const part of result.fullStream) {
+            if (part.type === "text-delta") {
+              controller.enqueue(
+                encoder.encode(JSON.stringify({ type: "text", content: part.text }) + "\n")
+              );
+            }
+          }
+          // Send usage data at the end
+          const usage = await result.usage;
+          controller.enqueue(
+            encoder.encode(JSON.stringify({ type: "usage", usage }) + "\n")
+          );
+          controller.close();
+        } catch (error) {
+          controller.error(error);
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "application/x-ndjson",
+        "Transfer-Encoding": "chunked",
+      },
+    });
   } catch (error) {
     console.error("Autopilot error:", error);
     return NextResponse.json(

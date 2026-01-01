@@ -18,7 +18,18 @@ import type {
   RemoveEdgeAction,
   RemoveNodeAction,
   AddNodeAction,
+  AutopilotUsage,
+  LanguageModelUsage,
 } from "@/lib/autopilot/types";
+
+/** Initial empty usage state */
+const INITIAL_USAGE: AutopilotUsage = {
+  inputTokens: 0,
+  outputTokens: 0,
+  totalTokens: 0,
+  reasoningTokens: 0,
+  cachedInputTokens: 0,
+};
 
 /**
  * Enrich flow changes with labels for display.
@@ -106,6 +117,8 @@ export function useAutopilotChat({
   const [mode, setMode] = useState<AutopilotMode>("execute");
   const [thinkingEnabled, setThinkingEnabled] = useState(false);
   const [testModeEnabled, setTestModeEnabled] = useState(false);
+  const [usage, setUsage] = useState<AutopilotUsage>(INITIAL_USAGE);
+  const [selectedModel, setSelectedModel] = useState<AutopilotModel>("sonnet-4-5");
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesRef = useRef<AutopilotMessage[]>([]);
   const { keys: apiKeys } = useApiKeys();
@@ -210,12 +223,12 @@ export function useAutopilotChat({
           throw new Error("No response body");
         }
 
-        // Stream the response
+        // Stream the response (always NDJSON format now)
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let fullOutput = "";
         let fullThinking = "";
-        const isNdjson = response.headers.get("Content-Type")?.includes("ndjson");
+        let messageUsage: LanguageModelUsage | undefined;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -223,39 +236,45 @@ export function useAutopilotChat({
 
           const chunk = decoder.decode(value);
 
-          if (isNdjson) {
-            // Parse NDJSON chunks for thinking-enabled responses
-            const lines = chunk.split("\n").filter((line) => line.trim());
-            for (const line of lines) {
-              try {
-                const parsed = JSON.parse(line);
-                if (parsed.type === "thinking") {
-                  fullThinking += parsed.content;
-                } else if (parsed.type === "text") {
-                  fullOutput += parsed.content;
-                }
-              } catch {
-                // Skip invalid JSON lines
+          // Parse NDJSON chunks
+          const lines = chunk.split("\n").filter((line) => line.trim());
+          for (const line of lines) {
+            try {
+              const parsed = JSON.parse(line);
+              if (parsed.type === "thinking") {
+                fullThinking += parsed.content;
+              } else if (parsed.type === "text") {
+                fullOutput += parsed.content;
+              } else if (parsed.type === "usage") {
+                messageUsage = parsed.usage as LanguageModelUsage;
               }
+            } catch {
+              // Skip invalid JSON lines
             }
-            // Update message with both thinking and content
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === assistantMessageId
-                  ? { ...m, content: fullOutput, thinking: fullThinking || undefined }
-                  : m
-              )
-            );
-          } else {
-            // Regular text stream
-            fullOutput += chunk;
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === assistantMessageId ? { ...m, content: fullOutput } : m
-              )
-            );
           }
+          // Update message with thinking and content
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMessageId
+                ? { ...m, content: fullOutput, thinking: fullThinking || undefined }
+                : m
+            )
+          );
         }
+
+        // Accumulate usage after streaming completes
+        if (messageUsage) {
+          setUsage((prev) => ({
+            inputTokens: prev.inputTokens + (messageUsage.inputTokens ?? 0),
+            outputTokens: prev.outputTokens + (messageUsage.outputTokens ?? 0),
+            totalTokens: prev.totalTokens + (messageUsage.totalTokens ?? 0),
+            reasoningTokens: prev.reasoningTokens + (messageUsage.reasoningTokens ?? 0),
+            cachedInputTokens: prev.cachedInputTokens + (messageUsage.cachedInputTokens ?? 0),
+          }));
+        }
+
+        // Track which model was used for this message
+        setSelectedModel(model);
 
         // Parse response - could be plan, changes, or neither
         const parseResult = parseResponse(fullOutput);
@@ -541,6 +560,7 @@ export function useAutopilotChat({
   const clearHistory = useCallback(() => {
     setMessages([]);
     setError(null);
+    setUsage(INITIAL_USAGE);
   }, []);
 
   const cancelRequest = useCallback(() => {
@@ -566,5 +586,9 @@ export function useAutopilotChat({
     retryFix,
     clearHistory,
     cancelRequest,
+    /** Cumulative token usage across all messages in this session */
+    usage,
+    /** The model used for the most recent message */
+    selectedModel,
   };
 }

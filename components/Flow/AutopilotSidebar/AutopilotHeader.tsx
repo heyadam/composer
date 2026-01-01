@@ -3,6 +3,31 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles, Trash2, X, AlertTriangle, Copy, Check } from "lucide-react";
 import { useState } from "react";
+import {
+  Context,
+  ContextTrigger,
+  ContextContent,
+  ContextContentHeader,
+  ContextContentBody,
+  ContextContentFooter,
+  ContextInputUsage,
+  ContextOutputUsage,
+  ContextReasoningUsage,
+  ContextCacheUsage,
+} from "@/components/ai-elements/context";
+import type { AutopilotUsage, AutopilotModel } from "@/lib/autopilot/types";
+
+/** Claude model context window sizes */
+const MODEL_CONTEXT_WINDOWS: Record<AutopilotModel, number> = {
+  "sonnet-4-5": 200_000,
+  "opus-4-5": 200_000,
+};
+
+/** Map autopilot model IDs to tokenlens model IDs for cost calculation */
+const MODEL_ID_MAP: Record<AutopilotModel, string> = {
+  "sonnet-4-5": "anthropic:claude-sonnet-4-5-20250514",
+  "opus-4-5": "anthropic:claude-opus-4-20250514",
+};
 
 interface AutopilotHeaderProps {
   onClear: () => void;
@@ -11,6 +36,8 @@ interface AutopilotHeaderProps {
   hasMessages: boolean;
   testModeEnabled?: boolean;
   onTestModeChange?: (enabled: boolean) => void;
+  usage?: AutopilotUsage;
+  selectedModel?: AutopilotModel;
 }
 
 export function AutopilotHeader({
@@ -20,6 +47,8 @@ export function AutopilotHeader({
   hasMessages,
   testModeEnabled,
   onTestModeChange,
+  usage,
+  selectedModel = "sonnet-4-5",
 }: AutopilotHeaderProps) {
   const [copied, setCopied] = useState(false);
 
@@ -29,11 +58,41 @@ export function AutopilotHeader({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const maxTokens = MODEL_CONTEXT_WINDOWS[selectedModel];
+  const modelId = MODEL_ID_MAP[selectedModel];
+  const usedTokens = usage?.totalTokens ?? 0;
+
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b glass-divider bg-transparent">
       <div className="flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-purple-500" />
         <span className="font-medium text-sm">Composer AI</span>
+        {usedTokens > 0 && (
+          <Context
+            maxTokens={maxTokens}
+            usedTokens={usedTokens}
+            modelId={modelId}
+            usage={{
+              inputTokens: usage?.inputTokens ?? 0,
+              outputTokens: usage?.outputTokens ?? 0,
+              totalTokens: usage?.totalTokens ?? 0,
+              reasoningTokens: usage?.reasoningTokens ?? 0,
+              cachedInputTokens: usage?.cachedInputTokens ?? 0,
+            }}
+          >
+            <ContextTrigger className="h-6 px-2 text-xs gap-1.5" />
+            <ContextContent>
+              <ContextContentHeader />
+              <ContextContentBody className="space-y-1">
+                <ContextInputUsage />
+                <ContextOutputUsage />
+                <ContextReasoningUsage />
+                <ContextCacheUsage />
+              </ContextContentBody>
+              <ContextContentFooter />
+            </ContextContent>
+          </Context>
+        )}
         {process.env.NEXT_PUBLIC_DEV_MODE === "true" && onTestModeChange && (
           <Button
             variant="ghost"
