@@ -11,7 +11,7 @@ import { NodeFooter } from "./NodeFooter";
 import { CacheToggle } from "./CacheToggle";
 import { ProviderModelSelector } from "./ProviderModelSelector";
 import { cn } from "@/lib/utils";
-import { PROVIDERS, DEFAULT_REACT_PROVIDER, DEFAULT_REACT_MODEL, type ProviderId } from "@/lib/providers";
+import { PROVIDERS, DEFAULT_THREE_PROVIDER, DEFAULT_THREE_MODEL, type ProviderId } from "@/lib/providers";
 import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
 
 type ThreejsSceneNodeType = Node<ThreejsSceneNodeData, "threejs-scene">;
@@ -20,8 +20,8 @@ export function ThreejsSceneNode({ id, data }: NodeProps<ThreejsSceneNodeType>) 
   const { updateNodeData } = useReactFlow();
   const { isInputConnected, isOutputConnected } = useEdgeConnections(id);
 
-  const currentProvider = (data.provider || DEFAULT_REACT_PROVIDER) as ProviderId;
-  const currentModel = data.model || DEFAULT_REACT_MODEL;
+  const currentProvider = (data.provider || DEFAULT_THREE_PROVIDER) as ProviderId;
+  const currentModel = data.model || DEFAULT_THREE_MODEL;
 
   return (
     <NodeFrame

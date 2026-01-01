@@ -21,10 +21,15 @@ function cleanThreejsCode(code: string): string {
 }
 
 // Encode string to base64 using modern TextEncoder (UTF-8 safe)
+// Uses a loop instead of spread operator to avoid stack overflow with large inputs
 function encodeToBase64(str: string): string {
   const encoder = new TextEncoder();
   const bytes = encoder.encode(str);
-  return btoa(String.fromCharCode(...Array.from(bytes)));
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
 }
 
 // HTML template for the sandboxed iframe with Three.js + R3F

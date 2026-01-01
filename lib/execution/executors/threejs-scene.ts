@@ -28,6 +28,11 @@ export const threejsSceneExecutor: NodeExecutor = {
     const inlineUserPrompt = typeof node.data?.userPrompt === "string" ? node.data.userPrompt : "";
     const promptInput = hasPromptEdge ? inputs["prompt"] : inlineUserPrompt;
 
+    // Validate prompt input before making API call
+    if (!promptInput || promptInput.trim().length === 0) {
+      throw new Error("Scene description is required");
+    }
+
     // Get system prompt - from connection or inline textarea
     const hasSystemEdge = "system" in inputs;
     const inlineSystemPrompt = typeof node.data?.systemPrompt === "string" ? node.data.systemPrompt : "";

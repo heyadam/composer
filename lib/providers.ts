@@ -35,9 +35,13 @@ export const DEFAULT_VISION_MODELS: Record<ProviderId, string> = {
   anthropic: "claude-sonnet-4-5",
 };
 
-// React component node defaults
+// React component node defaults (uses fast model for code generation)
 export const DEFAULT_REACT_PROVIDER: ProviderId = "anthropic";
 export const DEFAULT_REACT_MODEL = "claude-haiku-4-5";
+
+// Three.js scene node defaults (uses capable model for complex 3D scenes)
+export const DEFAULT_THREE_PROVIDER: ProviderId = "anthropic";
+export const DEFAULT_THREE_MODEL = "claude-sonnet-4-5";
 
 export const VERBOSITY_OPTIONS = [
   { value: "low", label: "Low" },
