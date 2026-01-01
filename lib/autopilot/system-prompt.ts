@@ -109,12 +109,14 @@ Exit point that displays results. Can be named to describe what it shows (e.g., 
 - \`image\` - Image data (dataType: "image")
 - \`audio\` - Audio data (dataType: "audio")
 - \`code\` - React/JSX code for website preview (dataType: "response")
+- \`three\` - Three.js/R3F code for 3D scene preview (dataType: "three")
 
 When connecting to this node, use \`targetHandle\` to specify which input:
 - To connect text/string output: \`targetHandle: "string"\`
 - To connect image output: \`targetHandle: "image"\`
 - To connect audio output: \`targetHandle: "audio"\`
 - To connect React component code: \`targetHandle: "code"\`
+- To connect Three.js 3D scene code: \`targetHandle: "three"\`
 
 ### 5. ai-logic (AI Logic)
 Custom code transformation node. Uses Claude to generate JavaScript code based on a natural language description. The generated code processes inputs and returns a string output. Useful for data manipulation, formatting, parsing, or custom logic.
@@ -156,7 +158,131 @@ When connecting react-component output to preview-output for website preview:
 - Use \`targetHandle: "code"\` on the preview-output node
 - Use \`data: { dataType: "response" }\` for the edge
 
-### 7. image-input (Image Input)
+### 7. threejs-scene (3D Scene)
+AI-powered Three.js/React Three Fiber scene generator. Takes a description and generates a 3D scene rendered in a sandboxed iframe. Supports interactive orbit controls and dynamic lighting. Useful for 3D visualizations, product displays, or interactive demos.
+**Default: provider="anthropic", model="claude-sonnet-4-5"**
+\`\`\`typescript
+{
+  type: "threejs-scene",
+  data: {
+    label: string,            // Display name
+    userPrompt?: string,      // Scene description (used when prompt input not connected)
+    systemPrompt?: string,    // Additional style/behavior instructions
+    sceneInfo?: string,       // Optional context about the scene (e.g., product details)
+    provider?: "openai" | "google" | "anthropic",  // Default: "anthropic"
+    model?: string            // Model ID - Default: "claude-sonnet-4-5"
+  }
+}
+\`\`\`
+
+**Input Handles:**
+- \`prompt\` - Scene description (dataType: "string")
+- \`system\` - Additional style/behavior instructions (dataType: "string")
+- \`scene\` - Dynamic Scene Variable: optional context injected as \`sceneInput\` variable (dataType: "string")
+- \`options\` - Scene Options: settings from ThreejsOptionsNode (dataType: "string")
+
+**Output Handles:**
+- \`output\` - Generated Three.js code (dataType: "three") - connect to preview-output's \`three\` handle for 3D preview
+- \`done\` - Pulse when generation completes (dataType: "pulse")
+
+When connecting threejs-scene output to preview-output for 3D preview:
+- Use \`targetHandle: "three"\` on the preview-output node
+- Use \`data: { dataType: "three" }\` for the edge
+
+Example - creating a 3D product visualization:
+\`\`\`json
+{
+  "actions": [
+    {
+      "type": "addNode",
+      "node": {
+        "id": "autopilot-threejs-scene-1234",
+        "type": "threejs-scene",
+        "position": { "x": 400, "y": 200 },
+        "data": {
+          "label": "Product Visualizer",
+          "userPrompt": "Create a rotating 3D display of a sleek smartphone with metallic finish"
+        }
+      }
+    },
+    {
+      "type": "addNode",
+      "node": {
+        "id": "autopilot-preview-1234",
+        "type": "preview-output",
+        "position": { "x": 800, "y": 200 },
+        "data": { "label": "3D Preview" }
+      }
+    },
+    {
+      "type": "addEdge",
+      "edge": {
+        "id": "edge-to-three-preview",
+        "source": "autopilot-threejs-scene-1234",
+        "target": "autopilot-preview-1234",
+        "targetHandle": "three",
+        "data": { "dataType": "three" }
+      }
+    }
+  ],
+  "explanation": "Added 3D scene node for product visualization with preview"
+}
+\`\`\`
+
+### 8. threejs-options (3D Scene Options)
+Utility node for configuring camera, lighting, and interaction settings for 3D scenes. Has inline text fields for each setting that can also accept connected inputs (connected inputs take precedence). Combines values into a formatted options string for the threejs-scene node.
+\`\`\`typescript
+{
+  type: "threejs-options",
+  data: {
+    label: string,        // Display name
+    cameraText?: string,  // Inline camera settings
+    lightText?: string,   // Inline lighting settings
+    mouseText?: string    // Inline interaction settings
+  }
+}
+\`\`\`
+
+**Input Handles (with inline text fields):**
+- \`camera\` - Camera settings (position, angle, FOV) (dataType: "string")
+- \`light\` - Lighting configuration (dataType: "string")
+- \`mouse\` - Mouse/interaction behavior (dataType: "string")
+
+**Output Handles:**
+- \`output\` - Formatted options string (dataType: "string") - connect to threejs-scene's \`options\` handle
+- \`done\` - Pulse when complete (dataType: "pulse")
+
+**Priority:** Connected inputs take precedence over inline text field values.
+
+Example - adding scene options to a 3D scene:
+\`\`\`json
+{
+  "actions": [
+    {
+      "type": "addNode",
+      "node": {
+        "id": "autopilot-threejs-options-1234",
+        "type": "threejs-options",
+        "position": { "x": 200, "y": 200 },
+        "data": { "label": "Scene Options" }
+      }
+    },
+    {
+      "type": "addEdge",
+      "edge": {
+        "id": "edge-options-to-scene",
+        "source": "autopilot-threejs-options-1234",
+        "target": "autopilot-threejs-scene-1234",
+        "targetHandle": "options",
+        "data": { "dataType": "string" }
+      }
+    }
+  ],
+  "explanation": "Added scene options to control camera and lighting"
+}
+\`\`\`
+
+### 9. image-input (Image Input)
 Image upload entry point. Allows users to upload an image to use in the flow.
 \`\`\`typescript
 {
@@ -167,7 +293,7 @@ Image upload entry point. Allows users to upload an image to use in the flow.
 }
 \`\`\`
 
-### 8. audio-input (Audio Input)
+### 10. audio-input (Audio Input)
 Microphone recording entry point. Allows users to record audio from their microphone for use in the flow. The audio stream can be connected to other audio-capable nodes like Realtime Audio or Preview Output.
 \`\`\`typescript
 {
@@ -181,7 +307,7 @@ Microphone recording entry point. Allows users to record audio from their microp
 **Output Handles:**
 - \`output\` - Audio stream from microphone (dataType: "audio")
 
-### 9. realtime-conversation (Realtime Audio)
+### 11. realtime-conversation (Realtime Audio)
 Real-time voice conversation with OpenAI's Realtime API. Users can have speech-to-speech conversations with the AI model. The node is interactive and manages its own session lifecycle (not triggered by flow execution).
 **Default: voice="marin", vadMode="semantic_vad"**
 \`\`\`typescript
@@ -231,7 +357,7 @@ Example - creating a realtime conversation node:
 }
 \`\`\`
 
-### 10. audio-transcription (Transcribe)
+### 12. audio-transcription (Transcribe)
 Audio-to-text transcription node using OpenAI's GPT-4o transcription models. Takes audio input and outputs text.
 **Default: model="gpt-4o-transcribe"**
 \`\`\`typescript
@@ -256,7 +382,7 @@ When connecting to this node, use \`targetHandle\` to specify the input:
 - To connect audio: \`targetHandle: "audio"\`
 - To connect language hint: \`targetHandle: "language"\`
 
-### 11. switch (Switch)
+### 13. switch (Switch)
 Toggleable boolean state node inspired by Origami's Switch patch. Remembers its on/off state across executions. Can be controlled manually or via pulse inputs from upstream nodes.
 **Default: isOn=false**
 \`\`\`typescript
@@ -311,7 +437,7 @@ Example - connecting a text-generation's done pulse to flip a switch:
 }
 \`\`\`
 
-### 12. string-combine (String Combine)
+### 14. string-combine (String Combine)
 Utility node that combines up to 4 string inputs into a single output string with an optional separator. All inputs are optional - only connected inputs are included in the output.
 **Default: separator="" (empty string)**
 \`\`\`typescript
@@ -383,13 +509,14 @@ Example - combining two text inputs with a newline separator:
 Edges connect nodes and carry data. Each edge has a \`dataType\`:
 - \`"string"\` - Text data (from Text Input, Text Generation, AI Logic, or Realtime Audio transcript)
 - \`"image"\` - Image data (from Image Generation or Image Input nodes)
-- \`"response"\` - Final output going to a Preview Output node (from React Component or other terminal nodes)
+- \`"response"\` - React component code (from React Component node)
+- \`"three"\` - Three.js/R3F scene code (from 3D Scene node)
 - \`"audio"\` - Audio stream data (from Realtime Audio audio-out)
 - \`"boolean"\` - True/false value (for logic gates and conditionals)
 - \`"pulse"\` - Momentary signal that fires once when a node completes execution
 
 ### Pulse Outputs ("done" handle)
-Processing nodes (text-generation, image-generation, ai-logic, react-component, audio-transcription) have a special "done" output that fires a pulse when execution completes. This can be used to trigger downstream actions.
+Processing nodes (text-generation, image-generation, ai-logic, react-component, threejs-scene, audio-transcription) have a special "done" output that fires a pulse when execution completes. This can be used to trigger downstream actions.
 - To connect from a done pulse: \`sourceHandle: "done"\`, \`data: { dataType: "pulse" }\`
 
 Edge format:
@@ -400,7 +527,7 @@ Edge format:
   sourceHandle?: string, // Optional: specific output handle (e.g., "output", "transcript", "audio-out", "done")
   target: string,        // Target node ID
   targetHandle?: string, // Optional: specific input handle (e.g., "prompt", "system", "image", "instructions", "audio-in")
-  data: { dataType: "string" | "image" | "response" | "audio" | "boolean" | "pulse" }
+  data: { dataType: "string" | "image" | "response" | "three" | "audio" | "boolean" | "pulse" }
 }
 \`\`\`
 
@@ -410,11 +537,12 @@ Edge format:
 - Text Input nodes have only OUTPUT connections (they start the flow with text)
 - Image Input nodes have only OUTPUT connections (they start the flow with an image)
 - Audio Input nodes have only OUTPUT connections (they start the flow with audio from microphone)
-- Preview Output nodes have only INPUT connections (they end the flow, accepts string, image, or audio via separate handles)
+- Preview Output nodes have only INPUT connections (they end the flow, accepts string, image, audio, code, or three via separate handles)
 - Text Generation nodes have both INPUT and OUTPUT connections
 - Image Generation nodes have both INPUT and OUTPUT connections
 - AI Logic nodes have both INPUT and OUTPUT connections (output is string)
 - React Component nodes have both INPUT and OUTPUT connections (output is response dataType)
+- 3D Scene nodes have both INPUT and OUTPUT connections (output is three dataType)
 - Realtime Audio nodes have both INPUT (instructions, audio-in) and OUTPUT (transcript, audio-out) connections
 - Audio Transcription nodes have both INPUT (audio, language) and OUTPUT (string) connections
 - Switch nodes have both INPUT (flip, turnOn, turnOff - all pulse) and OUTPUT (boolean) connections

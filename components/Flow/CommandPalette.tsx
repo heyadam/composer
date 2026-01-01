@@ -18,6 +18,8 @@ import {
   FileAudio,
   ToggleLeft,
   Combine,
+  Box,
+  SlidersHorizontal,
   ArrowRight,
   X,
 } from "lucide-react";
@@ -40,6 +42,8 @@ const iconMap: Record<NodeType, typeof Keyboard> = {
   "audio-transcription": FileAudio,
   "switch": ToggleLeft,
   "string-combine": Combine,
+  "threejs-scene": Box,
+  "threejs-options": SlidersHorizontal,
 };
 
 // Extended node definitions with categories
@@ -53,13 +57,13 @@ const categorizedNodes = [
   {
     category: "AI Generation",
     nodes: nodeDefinitions.filter((n) =>
-      ["text-generation", "image-generation", "react-component", "realtime-conversation", "audio-transcription"].includes(n.type)
+      ["text-generation", "image-generation", "react-component", "threejs-scene", "realtime-conversation", "audio-transcription"].includes(n.type)
     ),
   },
   {
     category: "Logic",
     nodes: nodeDefinitions.filter((n) =>
-      ["ai-logic", "switch", "string-combine"].includes(n.type)
+      ["ai-logic", "switch", "string-combine", "threejs-options"].includes(n.type)
     ),
   },
   {

@@ -205,6 +205,7 @@ export function useFlowExecution({
                   ...(state.imageOutput !== undefined && { imageOutput: state.imageOutput }),
                   ...(state.audioOutput !== undefined && { audioOutput: state.audioOutput }),
                   ...(state.codeOutput !== undefined && { codeOutput: state.codeOutput }),
+                  ...(state.threeOutput !== undefined && { threeOutput: state.threeOutput }),
                   // Cache indicator
                   ...(state.fromCache !== undefined && { fromCache: state.fromCache }),
                   // Switch node state persistence
@@ -280,7 +281,7 @@ export function useFlowExecution({
             });
           }
           // Update preview with streaming output while running
-          if (state.output || state.stringOutput || state.imageOutput || state.audioOutput || state.codeOutput) {
+          if (state.output || state.stringOutput || state.imageOutput || state.audioOutput || state.codeOutput || state.threeOutput) {
             updatePreviewEntry(nodeId, {
               status: "running",
               output: state.output,
@@ -288,6 +289,7 @@ export function useFlowExecution({
               imageOutput: state.imageOutput,
               audioOutput: state.audioOutput,
               codeOutput: state.codeOutput,
+              threeOutput: state.threeOutput,
             });
           } else if (state.sourceType) {
             // Update source type if provided (for loading state)
@@ -306,6 +308,7 @@ export function useFlowExecution({
             imageOutput: state.imageOutput,
             audioOutput: state.audioOutput,
             codeOutput: state.codeOutput,
+            threeOutput: state.threeOutput,
           });
         }
       }
@@ -325,11 +328,12 @@ export function useFlowExecution({
           imageOutput?: string;
           audioOutput?: string;
           codeOutput?: string;
+          threeOutput?: string;
           executionStatus?: string;
         };
 
         // Check if this node has output that's not yet in preview entries
-        const hasOutput = nodeData.stringOutput || nodeData.imageOutput || nodeData.audioOutput || nodeData.codeOutput;
+        const hasOutput = nodeData.stringOutput || nodeData.imageOutput || nodeData.audioOutput || nodeData.codeOutput || nodeData.threeOutput;
         if (hasOutput) {
           // Ensure preview entry exists
           if (!addedPreviewIds.current.has(node.id)) {
@@ -349,6 +353,7 @@ export function useFlowExecution({
             imageOutput: nodeData.imageOutput,
             audioOutput: nodeData.audioOutput,
             codeOutput: nodeData.codeOutput,
+            threeOutput: nodeData.threeOutput,
           });
         }
       }
@@ -380,6 +385,7 @@ export function useFlowExecution({
               imageOutput: undefined,
               audioOutput: undefined,
               codeOutput: undefined,
+              threeOutput: undefined,
             },
           };
         }

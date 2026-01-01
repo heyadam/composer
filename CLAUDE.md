@@ -73,6 +73,10 @@ Invoke `/testing` when writing or modifying tests. Covers Vitest setup, testing 
 
 Invoke `/docs` when writing or updating user-facing documentation. Covers Nextra page creation, navigation setup, MDX conventions, and common issues like hydration errors.
 
+### Updates Skill
+
+Invoke `/updates` to create app update announcements. Guides through gathering context (manual description or auto-detect from git), generates polished markdown copy, and creates the file in `/public/updates/` with manifest entry.
+
 ## Architecture Overview
 
 This is an AI agent workflow builder using Next.js 16 App Router with React Flow for visual flow editing.
@@ -84,7 +88,7 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 | Topic | Rule File | Key Components |
 |-------|-----------|----------------|
 | Core architecture | `architecture.md` | Flow editor, providers, edges, sidebars |
-| Node types | `nodes.md` | All 12 node types and their features |
+| Node types | `nodes.md` | All 14 node types and their features |
 | Execution | `execution.md` | Engine, API routes, execution hooks, caching |
 | Autopilot | `autopilot.md` | AI chat interface, flow generation |
 | Collaboration | `collaboration.md` | Live sharing, cursors, owner-funded execution |
@@ -105,6 +109,8 @@ This is an AI agent workflow builder using Next.js 16 App Router with React Flow
 - `ai-logic`: Custom code transformation
 - `string-combine`: Combine up to 4 strings with separator
 - `react-component`: AI-generated React components
+- `threejs-scene`: AI-generated Three.js/R3F 3D scenes
+- `threejs-options`: 3D scene options (camera, light, mouse settings)
 - `audio-transcription`: Speech-to-text (OpenAI transcription)
 - `realtime-conversation`: Real-time voice conversation (OpenAI Realtime API)
 - `comment`: Annotation boxes

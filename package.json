@@ -55,6 +55,7 @@
     "perfect-cursors": "^1.0.5",
     "react": "19.2.1",
     "react-dom": "19.2.1",
+    "react-markdown": "^10.1.0",
     "shiki": "^3.19.0",
     "streamdown": "^1.6.10",
     "tailwind-merge": "^3.4.0",

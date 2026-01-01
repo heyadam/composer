@@ -45,6 +45,16 @@ All node components are in `components/Flow/nodes/` with editable labels.
 - Code output port (amber) - connects to preview-output Code input for website preview
 - Multi-provider support (OpenAI, Google, Anthropic)
 
+**ThreejsSceneNode** (type: `threejs-scene`): AI-generated Three.js/React Three Fiber 3D scenes:
+- Scene description input (prompt) - text field for scene description
+- Additional instructions input (system) - text field for style/behavior
+- Dynamic Scene Variable input (scene) - optional context injected as `sceneInput` variable
+- Scene Options input (options) - optional settings from ThreejsOptionsNode
+- 3D output port (coral) - connects to preview-output 3D input for 3D preview
+- Interactive orbit controls and dynamic lighting
+- Multi-provider support (OpenAI, Google, Anthropic)
+- Default: Anthropic `claude-sonnet-4-5`
+
 **AudioTranscriptionNode** (type: `audio-transcription`): Speech-to-text using OpenAI transcription:
 - Models: `gpt-4o-transcribe` (default), `gpt-4o-mini-transcribe`
 - Audio input port (required, emerald)
@@ -68,6 +78,14 @@ All node components are in `components/Flow/nodes/` with editable labels.
 - Configurable separator (default: none)
 - Outputs combined string on "output" port
 - Has "done" pulse output for execution chaining
+
+**ThreejsOptionsNode** (type: `threejs-options`): Configures 3D scene options for ThreejsSceneNode:
+- Three input ports with inline text fields (camera, light, mouse)
+- Text fields allow direct input; connected inputs take precedence
+- Combines values into labeled plain text format (CAMERA/LIGHT/MOUSE sections)
+- Outputs combined options on "output" port
+- Has "done" pulse output for execution chaining
+- Connect output to ThreejsSceneNode's Scene Options input
 
 ## Annotation Nodes
 

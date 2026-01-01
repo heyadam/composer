@@ -17,10 +17,10 @@
    rose (image-gen), amber (ai-logic), emerald (output)
    blue (react), teal (audio)
 
-   PORT COLORS (6)
+   PORT COLORS (7)
    ---------------
    cyan=string, purple=image, amber=response
-   emerald=audio, rose=boolean, orange=pulse
+   emerald=audio, rose=boolean, orange=pulse, coral=three
 
    FORM STATES
    -----------
@@ -83,6 +83,7 @@
   --port-emerald: 142 246 228;  /* Electric mint - audio */
   --port-rose: 246 168 184;     /* Soft coral - boolean */
   --port-orange: 246 200 142;   /* Apricot signal - pulse */
+  --port-coral: 255 140 100;    /* Warm coral - 3D/three.js */
 
   /* Comment Theme Colors */
   --node-comment-gray: 161 161 170;
@@ -263,6 +264,10 @@
 .port-orange {
   background-color: rgb(var(--port-orange)) !important;
   color: rgb(var(--port-orange));
+}
+.port-coral {
+  background-color: rgb(var(--port-coral)) !important;
+  color: rgb(var(--port-coral));
 }
 
 .port-label {

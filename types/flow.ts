@@ -2,7 +2,7 @@ import type { Node, Edge } from "@xyflow/react";
 import type { ExecutionStatus } from "@/lib/execution/types";
 
 // Port data types (for coloring and validation)
-export type PortDataType = "string" | "image" | "response" | "audio" | "boolean" | "pulse";
+export type PortDataType = "string" | "image" | "response" | "audio" | "boolean" | "pulse" | "three";
 
 // Audio edge data structure for audio streaming between nodes
 export interface AudioEdgeData {
@@ -50,6 +50,7 @@ export interface OutputNodeData extends Record<string, unknown>, ExecutionData {
   imageOutput?: string;
   audioOutput?: string;
   codeOutput?: string;
+  threeOutput?: string;  // Three.js scene code output
 }
 
 // Google safety setting types
@@ -251,6 +252,26 @@ export interface StringCombineNodeData extends Record<string, unknown>, Executio
   separator?: string;  // Separator between strings (default: empty string)
 }
 
+// Three.js Scene node data
+export interface ThreejsSceneNodeData extends Record<string, unknown>, ExecutionData {
+  label: string;
+  userPrompt?: string;    // Scene description (when not connected)
+  systemPrompt?: string;  // Additional instructions (when not connected)
+  sceneInfo?: string;     // Display only - shows connected scene input info
+  provider?: string;
+  model?: string;
+  // Cache: when true, reuse output if inputs unchanged (opt-in)
+  cacheable?: boolean;
+}
+
+// Three.js Options node data (combines camera, light, interaction settings)
+export interface ThreejsOptionsNodeData extends Record<string, unknown>, ExecutionData {
+  label: string;
+  cameraText?: string;
+  lightText?: string;
+  mouseText?: string;
+}
+
 // Union type for all node data
 export type AgentNodeData =
   | InputNodeData
@@ -265,10 +286,12 @@ export type AgentNodeData =
   | RealtimeNodeData
   | AudioTranscriptionNodeData
   | SwitchNodeData
-  | StringCombineNodeData;
+  | StringCombineNodeData
+  | ThreejsSceneNodeData
+  | ThreejsOptionsNodeData;
 
 // Custom node types
-export type NodeType = "text-input" | "preview-output" | "text-generation" | "image-generation" | "image-input" | "audio-input" | "ai-logic" | "comment" | "react-component" | "realtime-conversation" | "audio-transcription" | "switch" | "string-combine";
+export type NodeType = "text-input" | "preview-output" | "text-generation" | "image-generation" | "image-input" | "audio-input" | "ai-logic" | "comment" | "react-component" | "realtime-conversation" | "audio-transcription" | "switch" | "string-combine" | "threejs-scene" | "threejs-options";
 
 // Typed nodes
 export type InputNode = Node<InputNodeData, "text-input">;
@@ -284,6 +307,8 @@ export type RealtimeNode = Node<RealtimeNodeData, "realtime-conversation">;
 export type AudioTranscriptionNode = Node<AudioTranscriptionNodeData, "audio-transcription">;
 export type SwitchNode = Node<SwitchNodeData, "switch">;
 export type StringCombineNode = Node<StringCombineNodeData, "string-combine">;
+export type ThreejsSceneNode = Node<ThreejsSceneNodeData, "threejs-scene">;
+export type ThreejsOptionsNode = Node<ThreejsOptionsNodeData, "threejs-options">;
 
 export type AgentNode =
   | InputNode
@@ -298,7 +323,9 @@ export type AgentNode =
   | RealtimeNode
   | AudioTranscriptionNode
   | SwitchNode
-  | StringCombineNode;
+  | StringCombineNode
+  | ThreejsSceneNode
+  | ThreejsOptionsNode;
 
 // Edge type
 export type AgentEdge = Edge;
@@ -384,6 +411,18 @@ export const nodeDefinitions: NodeDefinition[] = [
     description: "Combine multiple strings into one",
     color: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
   },
+  {
+    type: "threejs-scene",
+    label: "3D Scene",
+    description: "Generate Three.js 3D scenes",
+    color: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
+  },
+  {
+    type: "threejs-options",
+    label: "3D Scene Options",
+    description: "Configure camera, lighting, interaction",
+    color: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
+  },
 ];
 
 // Port schemas for each node type
@@ -409,6 +448,7 @@ export const NODE_PORT_SCHEMAS: Record<NodeType, NodePortSchema> = {
       { id: "image", label: "image", dataType: "image", required: false },
       { id: "audio", label: "audio", dataType: "audio", required: false },
       { id: "code", label: "code", dataType: "response", required: false },
+      { id: "three", label: "3D", dataType: "three", required: false },
     ],
     outputs: [],
   },
@@ -499,6 +539,29 @@ export const NODE_PORT_SCHEMAS: Record<NodeType, NodePortSchema> = {
     ],
     outputs: [
       { id: "output", label: "combined", dataType: "string" },
+      { id: "done", label: "Done", dataType: "pulse" },
+    ],
+  },
+  "threejs-scene": {
+    inputs: [
+      { id: "prompt", label: "prompt", dataType: "string", required: true },
+      { id: "system", label: "system", dataType: "string", required: false },
+      { id: "scene", label: "scene", dataType: "string", required: false },
+      { id: "options", label: "options", dataType: "string", required: false },
+    ],
+    outputs: [
+      { id: "output", label: "3D", dataType: "three" },
+      { id: "done", label: "Done", dataType: "pulse" },
+    ],
+  },
+  "threejs-options": {
+    inputs: [
+      { id: "camera", label: "camera", dataType: "string", required: false },
+      { id: "light", label: "light", dataType: "string", required: false },
+      { id: "mouse", label: "mouse", dataType: "string", required: false },
+    ],
+    outputs: [
+      { id: "output", label: "options", dataType: "string" },
       { id: "done", label: "Done", dataType: "pulse" },
     ],
   },

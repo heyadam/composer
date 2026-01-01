@@ -6,9 +6,11 @@ import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isImageOutput } from "@/lib/image-utils";
 import { isReactOutput, parseReactOutput } from "@/lib/react-utils";
+import { isThreejsOutput, parseThreejsOutput } from "@/lib/three-utils";
 import { isAudioOutput } from "@/lib/audio-utils";
 import { NodeImagePreview } from "@/components/Flow/nodes/NodeImagePreview";
 import { ReactPreview } from "./ReactPreview";
+import { ThreePreview } from "./ThreePreview";
 import { AudioPreview } from "./AudioPreview";
 
 interface ResponsesContentProps {
@@ -29,7 +31,15 @@ function ResponseCard({ entry }: { entry: PreviewEntry }) {
     if (entry.nodeType === "preview-output") {
       const outputs: React.ReactNode[] = [];
 
-      // Render code output (website preview) - takes priority for visual output
+      // Render 3D scene output - takes priority for visual output
+      if (entry.threeOutput) {
+        const threeData = parseThreejsOutput(entry.threeOutput);
+        if (threeData) {
+          outputs.push(<ThreePreview key="three" data={threeData} />);
+        }
+      }
+
+      // Render code output (website preview)
       if (entry.codeOutput) {
         // Parse as React component for website preview
         const reactData = parseReactOutput(entry.codeOutput);
@@ -103,6 +113,11 @@ function ResponseCard({ entry }: { entry: PreviewEntry }) {
 
     // For other node types, use the combined output field
     if (entry.output) {
+      if (isThreejsOutput(entry.output)) {
+        const threeData = parseThreejsOutput(entry.output);
+        return threeData ? <ThreePreview data={threeData} /> : null;
+      }
+
       if (isReactOutput(entry.output)) {
         const reactData = parseReactOutput(entry.output);
         return reactData ? <ReactPreview data={reactData} /> : null;

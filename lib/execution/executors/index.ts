@@ -21,6 +21,8 @@ import { realtimeConversationExecutor } from "./realtime-conversation";
 import { commentExecutor } from "./comment";
 import { switchExecutor } from "./switch";
 import { stringCombineExecutor } from "./string-combine";
+import { threejsSceneExecutor } from "./threejs-scene";
+import { threejsOptionsExecutor } from "./threejs-options";
 
 // Register all executors
 registerExecutor(textInputExecutor);
@@ -36,6 +38,8 @@ registerExecutor(realtimeConversationExecutor);
 registerExecutor(commentExecutor);
 registerExecutor(switchExecutor);
 registerExecutor(stringCombineExecutor);
+registerExecutor(threejsSceneExecutor);
+registerExecutor(threejsOptionsExecutor);
 
 // Re-export types for convenience
 export type { NodeExecutor, ExecutionContext, ExecuteNodeResult } from "./types";
@@ -55,3 +59,5 @@ export { realtimeConversationExecutor } from "./realtime-conversation";
 export { commentExecutor } from "./comment";
 export { switchExecutor } from "./switch";
 export { stringCombineExecutor } from "./string-combine";
+export { threejsSceneExecutor } from "./threejs-scene";
+export { threejsOptionsExecutor } from "./threejs-options";

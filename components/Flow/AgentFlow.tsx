@@ -22,6 +22,7 @@ import "@xyflow/react/dist/style.css";
 import { nodeTypes } from "./nodes";
 import { edgeTypes } from "./edges/ColoredEdge";
 import { ConnectionContext } from "./ConnectionContext";
+import { SidebarContext } from "./SidebarContext";
 import { CommandPalette } from "./CommandPalette";
 import { AutopilotSidebar } from "./AutopilotSidebar";
 import { ActionBar } from "./ActionBar";
@@ -46,6 +47,8 @@ import { SettingsDialogControlled } from "./SettingsDialogControlled";
 import { WelcomeDialog, isNuxComplete } from "./WelcomeDialog";
 import { TemplatesModal } from "./TemplatesModal";
 import { useTemplatesModal } from "./TemplatesModal/hooks";
+import { UpdatesModal } from "./UpdatesModal";
+import { useUpdates } from "@/lib/hooks/useUpdates";
 // executeFlow and NodeExecutionState now used in useFlowExecution hook
 import type { PendingAutopilotMessage, AutopilotMode, AutopilotModel } from "@/lib/autopilot/types";
 import { ResponsesSidebar } from "./ResponsesSidebar";
@@ -82,6 +85,8 @@ const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
   "audio-transcription": { label: "Transcribe", model: "gpt-4o-transcribe" },
   "switch": { label: "Switch", isOn: false },
   "string-combine": { label: "String Combine", separator: "" },
+  "threejs-scene": { label: "3D Scene", userPrompt: "", provider: "anthropic", model: "claude-sonnet-4-5" },
+  "threejs-options": { label: "3D Options", cameraText: "", lightText: "", mouseText: "" },
 };
 
 export function AgentFlow({ collaborationMode }: AgentFlowProps) {
@@ -229,6 +234,9 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
   );
 
   const [responsesOpen, setResponsesOpen] = useState(false);
+  const sidebarContextValue = useMemo(() => ({
+    openResponsesSidebar: () => setResponsesOpen(true),
+  }), []);
 
   // Flow operations hook
   const {
@@ -372,6 +380,10 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
 
   // Settings dialog state
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Updates modal state
+  const [updatesModalOpen, setUpdatesModalOpen] = useState(false);
+  const { updates, hasUnseenUpdates, markAsSeen, fetchUpdateContent } = useUpdates();
 
   // Share dialog state
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -547,6 +559,8 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
         return "audio";
       case "react-component":
         return "response";
+      case "threejs-scene":
+        return "three";
       default:
         return "default";
     }
@@ -886,6 +900,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
           }}
         />
         <CommentEditContext.Provider value={{ markUserEdited }}>
+          <SidebarContext.Provider value={sidebarContextValue}>
           <ConnectionContext.Provider value={{ isConnecting, connectingFromNodeId }}>
             <FlowContextMenu
               hasSelection={hasSelection}
@@ -954,6 +969,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
             </ReactFlow>
             </FlowContextMenu>
           </ConnectionContext.Provider>
+          </SidebarContext.Provider>
         </CommentEditContext.Provider>
         <FlowHeader
           autopilotOpen={autopilotOpen}
@@ -988,6 +1004,8 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
           onOwnerKeysChange={(enabled) => setPublishedFlowInfo(prev => prev ? { ...prev, useOwnerKeys: enabled } : null)}
           isPanning={isPanning}
           canvasWidth={canvasWidth}
+          hasUnseenUpdates={hasUnseenUpdates}
+          onUpdatesOpen={() => setUpdatesModalOpen(true)}
         />
         <ActionBar
           onToggleNodes={() => setNodesPaletteOpen(!nodesPaletteOpen)}
@@ -1056,6 +1074,13 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
         handleNewFlow();
         openTemplatesModal();
       }} />
+      <UpdatesModal
+        open={updatesModalOpen}
+        onOpenChange={setUpdatesModalOpen}
+        updates={updates}
+        fetchUpdateContent={fetchUpdateContent}
+        onOpen={markAsSeen}
+      />
     </div>
   );
 }

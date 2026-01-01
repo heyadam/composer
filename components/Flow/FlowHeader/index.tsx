@@ -54,6 +54,8 @@ export function FlowHeader({
   onOwnerKeysChange,
   isPanning,
   canvasWidth,
+  hasUnseenUpdates,
+  onUpdatesOpen,
 }: FlowHeaderProps) {
   const transition = getTransition(isResizing);
 
@@ -122,6 +124,8 @@ export function FlowHeader({
             showLabels={showLabels}
             showSettingsWarning={showSettingsWarning}
             onSettingsOpen={onSettingsOpen}
+            hasUnseenUpdates={hasUnseenUpdates}
+            onUpdatesOpen={onUpdatesOpen}
           />
         </motion.div>
       </TooltipProvider>

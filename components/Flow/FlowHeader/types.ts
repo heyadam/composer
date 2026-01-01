@@ -55,6 +55,10 @@ export interface FlowHeaderProps {
   // Logo state
   isPanning: boolean;
   canvasWidth: number;
+
+  // Updates state
+  hasUnseenUpdates: boolean;
+  onUpdatesOpen: () => void;
 }
 
 export interface LeftControlsProps {
@@ -93,4 +97,6 @@ export interface RightControlsProps {
   showLabels: boolean;
   showSettingsWarning: boolean;
   onSettingsOpen: () => void;
+  hasUnseenUpdates: boolean;
+  onUpdatesOpen: () => void;
 }

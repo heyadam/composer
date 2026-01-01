@@ -12,6 +12,8 @@ import { RealtimeNode } from "./RealtimeNode";
 import { AudioTranscriptionNode } from "./AudioTranscriptionNode";
 import { SwitchNode } from "./SwitchNode";
 import { StringCombineNode } from "./StringCombineNode";
+import { ThreejsSceneNode } from "./ThreejsSceneNode";
+import { ThreejsOptionsNode } from "./ThreejsOptionsNode";
 
 export const nodeTypes: NodeTypes = {
   "text-input": InputNode,
@@ -27,6 +29,8 @@ export const nodeTypes: NodeTypes = {
   "audio-transcription": AudioTranscriptionNode,
   "switch": SwitchNode,
   "string-combine": StringCombineNode,
+  "threejs-scene": ThreejsSceneNode,
+  "threejs-options": ThreejsOptionsNode,
 };
 
-export { InputNode, OutputNode, PromptNode, ImageNode, ImageInputNode, AudioInputNode, MagicNode, CommentNode, ReactNode, RealtimeNode, AudioTranscriptionNode, SwitchNode, StringCombineNode };
+export { InputNode, OutputNode, PromptNode, ImageNode, ImageInputNode, AudioInputNode, MagicNode, CommentNode, ReactNode, RealtimeNode, AudioTranscriptionNode, SwitchNode, StringCombineNode, ThreejsSceneNode, ThreejsOptionsNode };

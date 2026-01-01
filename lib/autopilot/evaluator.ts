@@ -43,6 +43,7 @@ const NODE_INPUT_HANDLES: Record<string, Record<string, string[]>> = {
     image: ["image"],
     audio: ["audio"],
     code: ["response"],
+    three: ["three"],
   },
   "comment": {
     // No inputs
@@ -54,6 +55,17 @@ const NODE_INPUT_HANDLES: Record<string, Record<string, string[]>> = {
   "audio-transcription": {
     audio: ["audio"],
     language: ["string"],
+  },
+  "threejs-scene": {
+    prompt: ["string"],
+    system: ["string"],
+    scene: ["string"],
+    options: ["string"],
+  },
+  "threejs-options": {
+    camera: ["string"],
+    light: ["string"],
+    mouse: ["string"],
   },
 };
 
@@ -68,8 +80,11 @@ const OUTPUT_DATA_TYPES: Record<string, string> = {
   "image-generation": "image",
   "ai-logic": "string",
   "react-component": "response",
+  "threejs-scene": "three",          // 3D scene code output
+  "threejs-options": "string",       // Formatted options string
   "realtime-conversation": "string", // Primary output is transcript (string)
   "audio-transcription": "string",   // Transcribed text output
+  "string-combine": "string",        // Combined string output
 };
 
 /**
@@ -80,9 +95,12 @@ const NODES_WITH_DONE_OUTPUT = new Set([
   "image-generation",
   "ai-logic",
   "react-component",
+  "threejs-scene",
+  "threejs-options",
   "audio-transcription",
   "audio-input",
   "realtime-conversation",
+  "string-combine",
 ]);
 
 /**
@@ -500,7 +518,7 @@ Please fix these specific issues and regenerate the FlowChanges JSON.
 - image-generation accepts: \`targetHandle: "prompt"\` (string) OR \`targetHandle: "image"\` (image-to-image)
 - realtime-conversation accepts: \`targetHandle: "instructions"\` (string) OR \`targetHandle: "audio-in"\` (audio)
 - audio-transcription accepts: \`targetHandle: "audio"\` (audio, required) OR \`targetHandle: "language"\` (string, optional)
-- preview-output accepts: \`targetHandle: "string"\` (string), \`targetHandle: "image"\` (image), \`targetHandle: "audio"\` (audio), OR \`targetHandle: "code"\` (response)
+- preview-output accepts: \`targetHandle: "string"\` (string), \`targetHandle: "image"\` (image), \`targetHandle: "audio"\` (audio), \`targetHandle: "code"\` (response), OR \`targetHandle: "three"\` (three)
 - Image data can connect to \`targetHandle: "image"\` on text-generation, image-generation, or preview-output
 - Audio data can connect to \`targetHandle: "audio"\` on audio-transcription, preview-output, OR \`targetHandle: "audio-in"\` on realtime-conversation
 - All new nodes must be connected via edges (unless adding a single standalone node)`;

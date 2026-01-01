@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useConnectionState } from "../ConnectionContext";
 
 // Shared color class type for ports
-export type PortColorClass = "cyan" | "purple" | "amber" | "emerald" | "rose" | "orange";
+export type PortColorClass = "cyan" | "purple" | "amber" | "emerald" | "rose" | "orange" | "coral";
 
 interface PortRowProps {
   nodeId: string;
