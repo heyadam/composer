@@ -12,6 +12,7 @@ import { BaseEdge, getSmoothStepPath, type EdgeProps } from "@xyflow/react";
  * - audio:    --port-emerald
  * - boolean:  --port-rose
  * - pulse:    --port-orange
+ * - three:    --port-coral
  */
 const edgeColors = {
   string: "rgb(var(--port-cyan))",
@@ -20,6 +21,7 @@ const edgeColors = {
   audio: "rgb(var(--port-emerald))",
   boolean: "rgb(var(--port-rose))",
   pulse: "rgb(var(--port-orange))",
+  three: "rgb(var(--port-coral))",
   default: "rgb(var(--port-cyan))",
 };
 

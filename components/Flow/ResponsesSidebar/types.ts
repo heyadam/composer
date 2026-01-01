@@ -20,6 +20,8 @@ export interface PreviewEntry {
   audioOutput?: string;
   /** Output node: code input (renders as website preview) */
   codeOutput?: string;
+  /** Output node: three input (renders as 3D scene preview) */
+  threeOutput?: string;
 }
 
 export interface DebugEntry {

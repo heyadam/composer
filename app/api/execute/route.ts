@@ -602,6 +602,84 @@ export default function Component() {
       }
     }
 
+    if (type === "threejs-scene") {
+      const { inputs, provider, model } = body;
+      const promptInput = inputs?.prompt ?? "";
+      const userSystemPrompt = inputs?.system ?? "";
+      const sceneInput = inputs?.scene ?? "";
+
+      // Build comprehensive system prompt for Three.js/R3F scene generation
+      const systemPrompt = `You are an expert Three.js and React Three Fiber developer. Generate clean, functional 3D scene components.
+
+RULES:
+1. Generate a single React functional component with <Canvas> wrapper
+2. NO import statements - React, THREE, Canvas, useFrame, and all @react-three/drei components are globally available
+3. Export the component as default: \`export default function Scene() {...}\`
+4. Use React Three Fiber patterns (useFrame for animations, mesh for objects)
+5. Include OrbitControls by default for user interaction
+6. Handle edge cases gracefully
+
+AVAILABLE GLOBALS (NO imports needed):
+- React and all hooks (useState, useEffect, useRef, useMemo, etc.)
+- THREE (the entire Three.js library)
+- Canvas, useFrame, useThree from @react-three/fiber
+- OrbitControls, Box, Sphere, Plane, Text, Environment, Sky, Stars, Float, MeshWobbleMaterial, MeshDistortMaterial, useTexture, Html, Center, PerspectiveCamera, etc. from @react-three/drei
+
+SCENE INPUT VARIABLE:
+${sceneInput ? `A variable called \`sceneInput\` is available with this value: "${sceneInput}"` : "The sceneInput variable may be available for dynamic content."}
+- Access it as: window.sceneInput or just sceneInput
+- Use it for dynamic text, colors, or other configurable values
+
+${userSystemPrompt ? `\nADDITIONAL INSTRUCTIONS:\n${userSystemPrompt}` : ""}
+
+OUTPUT FORMAT:
+Return ONLY the component code wrapped in a jsx code block. No explanations before or after.
+
+Example output:
+\`\`\`jsx
+export default function Scene() {
+  const meshRef = useRef();
+
+  useFrame((state, delta) => {
+    meshRef.current.rotation.y += delta * 0.5;
+  });
+
+  return (
+    <Canvas camera={{ position: [0, 2, 5], fov: 50 }}>
+      <ambientLight intensity={0.5} />
+      <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
+      <mesh ref={meshRef}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="hotpink" />
+      </mesh>
+      <OrbitControls />
+    </Canvas>
+  );
+}
+\`\`\``;
+
+      const messages: { role: "system" | "user"; content: string }[] = [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: String(promptInput) },
+      ];
+
+      try {
+        const result = streamText({
+          model: getModel(provider || "anthropic", model || "claude-sonnet-4-5", apiKeys),
+          messages,
+          maxOutputTokens: 4000,
+        });
+
+        return result.toTextStreamResponse();
+      } catch (streamError) {
+        console.error("[API] threejs-scene streamText error:", streamError);
+        return NextResponse.json(
+          { error: streamError instanceof Error ? streamError.message : "Stream error" },
+          { status: 500 }
+        );
+      }
+    }
+
     if (type === "magic-generate") {
       const { prompt } = body;
 

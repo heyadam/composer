@@ -40,6 +40,14 @@ export interface AudioTranscriptionDebugParams {
   model: string;
 }
 
+export interface ThreejsSceneDebugParams {
+  provider: string;
+  model: string;
+  userPrompt: string;
+  systemPrompt: string;
+  hasSceneInput: boolean;
+}
+
 /**
  * Create initial debug info for text generation
  */
@@ -125,6 +133,28 @@ export function createAudioTranscriptionDebugInfo(
     request: {
       type: "audio-transcription",
       model: params.model,
+    },
+    streamChunksReceived: 0,
+    rawRequestBody: JSON.stringify(redactRequestBody(requestBody), null, 2),
+  };
+}
+
+/**
+ * Create initial debug info for Three.js scene generation
+ */
+export function createThreejsSceneDebugInfo(
+  params: ThreejsSceneDebugParams,
+  requestBody: Record<string, unknown>
+): DebugInfo {
+  return {
+    startTime: Date.now(),
+    request: {
+      type: "threejs-scene",
+      provider: params.provider,
+      model: params.model,
+      userPrompt: params.userPrompt,
+      systemPrompt: params.systemPrompt,
+      hasSceneInput: params.hasSceneInput,
     },
     streamChunksReceived: 0,
     rawRequestBody: JSON.stringify(redactRequestBody(requestBody), null, 2),

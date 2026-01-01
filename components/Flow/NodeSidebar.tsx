@@ -1,7 +1,7 @@
 "use client";
 
 import { nodeDefinitions, type NodeType } from "@/types/flow";
-import { Keyboard, Square, MessageSquare, ImageIcon, X, Upload, Sparkles, MessageSquarePlus, Code, Mic, AudioWaveform, FileAudio, ToggleLeft, Combine } from "lucide-react";
+import { Keyboard, Square, MessageSquare, ImageIcon, X, Upload, Sparkles, MessageSquarePlus, Code, Mic, AudioWaveform, FileAudio, ToggleLeft, Combine, Box } from "lucide-react";
 import type { DragEvent } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -19,6 +19,7 @@ const iconMap: Record<NodeType, typeof Keyboard> = {
   "audio-transcription": FileAudio,
   "switch": ToggleLeft,
   "string-combine": Combine,
+  "threejs-scene": Box,
 };
 
 interface NodeSidebarProps {

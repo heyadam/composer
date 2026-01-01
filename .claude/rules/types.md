@@ -4,7 +4,7 @@ Flow types in `types/flow.ts` define node data interfaces with execution state t
 
 ## Port Data Types
 
-**PortDataType**: Union type for port/edge data types: `"string"` | `"image"` | `"response"` | `"audio"` | `"boolean"` | `"pulse"`. Used for edge coloring and connection validation.
+**PortDataType**: Union type for port/edge data types: `"string"` | `"image"` | `"response"` | `"audio"` | `"boolean"` | `"pulse"` | `"three"`. Used for edge coloring and connection validation.
 
 **Color Mapping**:
 - `cyan` = string
@@ -13,8 +13,9 @@ Flow types in `types/flow.ts` define node data interfaces with execution state t
 - `emerald` = audio
 - `rose` = boolean
 - `orange` = pulse
+- `coral` = three (3D scenes)
 
-**Pulse Ports**: Processing nodes (`text-generation`, `image-generation`, `ai-logic`, `react-component`, `audio-transcription`, `string-combine`) have a `done` output port that fires a pulse when execution completes. Pulses are momentary signals that are "on" for a single execution cycle, then return to "off".
+**Pulse Ports**: Processing nodes (`text-generation`, `image-generation`, `ai-logic`, `react-component`, `threejs-scene`, `audio-transcription`, `string-combine`) have a `done` output port that fires a pulse when execution completes. Pulses are momentary signals that are "on" for a single execution cycle, then return to "off".
 
 ## Node Data Interfaces
 
@@ -63,6 +64,14 @@ Interface for audio streaming between nodes:
 
 - `separator`: String to insert between inputs (default: empty string)
 
+### ThreejsSceneNodeData
+
+- `userPrompt`: Scene description (used when prompt input not connected)
+- `systemPrompt`: Additional style/behavior instructions
+- `sceneInfo`: Optional context about the scene (e.g., product details)
+- `provider`, `model`: AI provider and model selection
+- `cacheable`: Enable caching for this node
+
 ## Node Type Constants
 
 Valid node types for flow operations:
@@ -75,6 +84,7 @@ Valid node types for flow operations:
 - `string-combine`
 - `preview-output`
 - `react-component`
+- `threejs-scene`
 - `comment`
 - `realtime-conversation`
 - `audio-transcription`

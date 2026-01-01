@@ -29,6 +29,7 @@ export const VALID_NODE_TYPES = [
   "ai-logic",
   "preview-output",
   "react-component",
+  "threejs-scene",
   "comment",
   "realtime-conversation",
   "audio-transcription",
@@ -39,7 +40,7 @@ export const VALID_NODE_TYPES = [
 export type ValidNodeType = (typeof VALID_NODE_TYPES)[number];
 
 // Valid data types for edge connections
-export const VALID_DATA_TYPES = ["string", "image", "response", "audio", "boolean", "pulse"] as const;
+export const VALID_DATA_TYPES = ["string", "image", "response", "audio", "boolean", "pulse", "three"] as const;
 
 export type ValidDataType = (typeof VALID_DATA_TYPES)[number];
 
@@ -69,6 +70,7 @@ export const NODE_REQUIRED_FIELDS: Record<ValidNodeType, string[]> = {
   "ai-logic": ["label"],
   "preview-output": ["label"],
   "react-component": ["label"],
+  "threejs-scene": ["label"],
   comment: ["title"],
   "realtime-conversation": ["label", "voice", "vadMode"],
   "audio-transcription": ["label"],

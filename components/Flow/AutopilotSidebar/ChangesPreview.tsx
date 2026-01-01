@@ -22,6 +22,7 @@ import {
   FileAudio,
   ToggleLeft,
   Combine,
+  Box,
   ChevronDown,
   CheckCircle2,
   AlertTriangle,
@@ -52,6 +53,7 @@ const iconMap: Record<NodeType, typeof Keyboard> = {
   "audio-transcription": FileAudio,
   "switch": ToggleLeft,
   "string-combine": Combine,
+  "threejs-scene": Box,
 };
 
 const nodeTypeLabels: Record<NodeType, string> = {
@@ -68,6 +70,7 @@ const nodeTypeLabels: Record<NodeType, string> = {
   "audio-transcription": "Transcribe",
   "switch": "Switch",
   "string-combine": "String Combine",
+  "threejs-scene": "3D Scene",
 };
 
 const dataTypeColors: Record<

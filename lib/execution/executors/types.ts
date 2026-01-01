@@ -30,6 +30,8 @@ export interface ExecuteNodeResult {
   audioOutput?: string;
   /** Output node: code input (renders as website preview) */
   codeOutput?: string;
+  /** Output node: three input (renders as 3D scene preview) */
+  threeOutput?: string;
   /** Switch node: updated state after execution */
   switchState?: boolean;
 }

@@ -46,6 +46,8 @@ import { SettingsDialogControlled } from "./SettingsDialogControlled";
 import { WelcomeDialog, isNuxComplete } from "./WelcomeDialog";
 import { TemplatesModal } from "./TemplatesModal";
 import { useTemplatesModal } from "./TemplatesModal/hooks";
+import { UpdatesModal } from "./UpdatesModal";
+import { useUpdates } from "@/lib/hooks/useUpdates";
 // executeFlow and NodeExecutionState now used in useFlowExecution hook
 import type { PendingAutopilotMessage, AutopilotMode, AutopilotModel } from "@/lib/autopilot/types";
 import { ResponsesSidebar } from "./ResponsesSidebar";
@@ -82,6 +84,7 @@ const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
   "audio-transcription": { label: "Transcribe", model: "gpt-4o-transcribe" },
   "switch": { label: "Switch", isOn: false },
   "string-combine": { label: "String Combine", separator: "" },
+  "threejs-scene": { label: "3D Scene", userPrompt: "", provider: "anthropic", model: "claude-sonnet-4-5" },
 };
 
 export function AgentFlow({ collaborationMode }: AgentFlowProps) {
@@ -373,6 +376,10 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
   // Settings dialog state
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // Updates modal state
+  const [updatesModalOpen, setUpdatesModalOpen] = useState(false);
+  const { updates, hasUnseenUpdates, markAsSeen, fetchUpdateContent } = useUpdates();
+
   // Share dialog state
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
@@ -547,6 +554,8 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
         return "audio";
       case "react-component":
         return "response";
+      case "threejs-scene":
+        return "three";
       default:
         return "default";
     }
@@ -988,6 +997,8 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
           onOwnerKeysChange={(enabled) => setPublishedFlowInfo(prev => prev ? { ...prev, useOwnerKeys: enabled } : null)}
           isPanning={isPanning}
           canvasWidth={canvasWidth}
+          hasUnseenUpdates={hasUnseenUpdates}
+          onUpdatesOpen={() => setUpdatesModalOpen(true)}
         />
         <ActionBar
           onToggleNodes={() => setNodesPaletteOpen(!nodesPaletteOpen)}
@@ -1056,6 +1067,13 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
         handleNewFlow();
         openTemplatesModal();
       }} />
+      <UpdatesModal
+        open={updatesModalOpen}
+        onOpenChange={setUpdatesModalOpen}
+        updates={updates}
+        fetchUpdateContent={fetchUpdateContent}
+        onOpen={markAsSeen}
+      />
     </div>
   );
 }

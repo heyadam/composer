@@ -68,6 +68,7 @@ Each node type has its own executor file in `lib/execution/executors/`:
 | `image-generation.ts` | image-generation | hasPulseOutput, shouldTrackDownstream |
 | `ai-logic.ts` | ai-logic | hasPulseOutput |
 | `react-component.ts` | react-component | hasPulseOutput, shouldTrackDownstream |
+| `threejs-scene.ts` | threejs-scene | hasPulseOutput, shouldTrackDownstream |
 | `audio-transcription.ts` | audio-transcription | hasPulseOutput |
 | `realtime-conversation.ts` | realtime-conversation | hasPulseOutput |
 | `string-combine.ts` | string-combine | hasPulseOutput |

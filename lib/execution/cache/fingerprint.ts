@@ -178,6 +178,11 @@ export function estimateResultSize(result: {
   generatedCode?: string;
   codeExplanation?: string;
   debugInfo?: unknown;
+  stringOutput?: string;
+  imageOutput?: string;
+  audioOutput?: string;
+  codeOutput?: string;
+  threeOutput?: string;
 }): number {
   let size = 0;
 
@@ -186,6 +191,12 @@ export function estimateResultSize(result: {
   if (result.reasoning) size += result.reasoning.length * 2;
   if (result.generatedCode) size += result.generatedCode.length * 2;
   if (result.codeExplanation) size += result.codeExplanation.length * 2;
+  // Output node separate inputs
+  if (result.stringOutput) size += result.stringOutput.length * 2;
+  if (result.imageOutput) size += result.imageOutput.length * 2;
+  if (result.audioOutput) size += result.audioOutput.length * 2;
+  if (result.codeOutput) size += result.codeOutput.length * 2;
+  if (result.threeOutput) size += result.threeOutput.length * 2;
   if (result.debugInfo) {
     try {
       size += JSON.stringify(result.debugInfo).length * 2;

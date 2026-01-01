@@ -18,6 +18,7 @@ describe("executor integration", () => {
     "image-generation",
     "ai-logic",
     "react-component",
+    "threejs-scene",
     "audio-transcription",
     "realtime-conversation",
     "comment",
@@ -71,6 +72,12 @@ describe("executor integration", () => {
       expect(executor?.shouldTrackDownstream).toBe(true);
     });
 
+    it("threejs-scene has pulse output and downstream tracking", () => {
+      const executor = getExecutor("threejs-scene");
+      expect(executor?.hasPulseOutput).toBe(true);
+      expect(executor?.shouldTrackDownstream).toBe(true);
+    });
+
     it("audio-transcription has pulse output", () => {
       const executor = getExecutor("audio-transcription");
       expect(executor?.hasPulseOutput).toBe(true);
@@ -106,6 +113,7 @@ describe("executor integration", () => {
       expect(getExecutor("text-generation")?.shouldTrackDownstream).toBe(true);
       expect(getExecutor("image-generation")?.shouldTrackDownstream).toBe(true);
       expect(getExecutor("react-component")?.shouldTrackDownstream).toBe(true);
+      expect(getExecutor("threejs-scene")?.shouldTrackDownstream).toBe(true);
     });
 
     it("non-streaming executors do not have shouldTrackDownstream", () => {

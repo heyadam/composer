@@ -21,7 +21,7 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
       return <NodeFooter error={data.executionError} />;
     }
 
-    const hasOutput = data.stringOutput || data.imageOutput || data.audioOutput || data.codeOutput;
+    const hasOutput = data.stringOutput || data.imageOutput || data.audioOutput || data.codeOutput || data.threeOutput;
     if (!hasOutput) {
       return <NodeFooter emptyMessage="Output appears here" />;
     }
@@ -47,6 +47,12 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
             Code preview available in sidebar
           </p>
         )}
+
+        {data.threeOutput && (
+          <p className="text-xs text-white/65">
+            3D scene preview available in sidebar
+          </p>
+        )}
       </div>
     );
   };
@@ -67,6 +73,7 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
             { id: "image", label: "Image", colorClass: "purple", isConnected: isInputConnected("image") },
             { id: "audio", label: "Audio", colorClass: "emerald", isConnected: isInputConnected("audio") },
             { id: "code", label: "Code", colorClass: "amber", isConnected: isInputConnected("code") },
+            { id: "three", label: "3D", colorClass: "coral", isConnected: isInputConnected("three") },
           ]}
         />
       }

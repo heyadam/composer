@@ -45,6 +45,15 @@ All node components are in `components/Flow/nodes/` with editable labels.
 - Code output port (amber) - connects to preview-output Code input for website preview
 - Multi-provider support (OpenAI, Google, Anthropic)
 
+**ThreejsSceneNode** (type: `threejs-scene`): AI-generated Three.js/React Three Fiber 3D scenes:
+- Scene description input (prompt)
+- Additional instructions input (system)
+- Optional scene context input (e.g., product details)
+- 3D output port (coral) - connects to preview-output 3D input for 3D preview
+- Interactive orbit controls and dynamic lighting
+- Multi-provider support (OpenAI, Google, Anthropic)
+- Default: Anthropic `claude-sonnet-4-5`
+
 **AudioTranscriptionNode** (type: `audio-transcription`): Speech-to-text using OpenAI transcription:
 - Models: `gpt-4o-transcribe` (default), `gpt-4o-mini-transcribe`
 - Audio input port (required, emerald)

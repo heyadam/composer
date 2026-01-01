@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings, PanelRight, BookOpen } from "lucide-react";
+import { Settings, PanelRight, BookOpen, Bell } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -16,6 +16,8 @@ export function RightControls({
   showLabels,
   showSettingsWarning,
   onSettingsOpen,
+  hasUnseenUpdates,
+  onUpdatesOpen,
 }: RightControlsProps) {
   return (
     <div className="flex items-center gap-2">
@@ -33,6 +35,24 @@ export function RightControls({
         </TooltipTrigger>
         <TooltipContent side="bottom" className="bg-neutral-800 text-white border-neutral-700">
           Documentation
+        </TooltipContent>
+      </Tooltip>
+
+      {/* Updates */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={onUpdatesOpen}
+            className="p-2 transition-colors rounded-full border bg-background/50 backdrop-blur-sm text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-muted-foreground/40 relative cursor-pointer"
+          >
+            <Bell className="w-5 h-5" />
+            {hasUnseenUpdates && (
+              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-purple-500" />
+            )}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="bg-neutral-800 text-white border-neutral-700">
+          {hasUnseenUpdates ? "New updates" : "Updates"}
         </TooltipContent>
       </Tooltip>
 

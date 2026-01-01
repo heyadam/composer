@@ -2,6 +2,16 @@
 
 Copy-paste templates for common node types. Replace `YourNode` and `your-node-type` with your actual names.
 
+> **Type String Consistency**: The node type string (e.g., `"your-input"`) must be **identical** across all registration points:
+> - `NodeType` union in `types/flow.ts`
+> - Executor `type` property in `lib/execution/executors/your-node.ts`
+> - `VALID_NODE_TYPES` array in `lib/autopilot/config.ts`
+> - `nodeTypes` map in `AgentFlow.tsx`
+> - `nodeDefinitions` array in `types/flow.ts`
+> - `portSchemas` object in `types/flow.ts`
+>
+> A mismatch will cause silent failures in execution, autopilot, or rendering.
+
 ## Input Node Template
 
 For nodes that start a flow with user-provided data. No incoming edges, one output.

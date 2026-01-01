@@ -6,7 +6,7 @@ export interface DebugInfo {
   startTime: number;
   endTime?: number;
   request: {
-    type: "text-generation" | "image-generation" | "react-component" | "realtime-conversation" | "audio-transcription";
+    type: "text-generation" | "image-generation" | "react-component" | "threejs-scene" | "realtime-conversation" | "audio-transcription";
     provider?: string;
     model?: string;
     userPrompt?: string;
@@ -26,6 +26,8 @@ export interface DebugInfo {
     aspectRatio?: string;
     outputFormat?: string;
     partialImages?: number;
+    // Three.js-specific
+    hasSceneInput?: boolean;
   };
   streamChunksReceived?: number;
   rawRequestBody?: string;
@@ -60,6 +62,8 @@ export interface NodeExecutionState {
   audioOutput?: string;
   /** Output node: code input (renders as website preview) */
   codeOutput?: string;
+  /** Output node: three input (renders as 3D scene preview) */
+  threeOutput?: string;
   /** True if this result came from cache (not freshly executed) */
   fromCache?: boolean;
   /** Switch node: updated state after execution */
