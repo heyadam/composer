@@ -8,6 +8,7 @@ import { audioInputExecutor } from "../executors/audio-input";
 import { previewOutputExecutor } from "../executors/preview-output";
 import { commentExecutor } from "../executors/comment";
 import { switchExecutor } from "../executors/switch";
+import { threejsOptionsExecutor } from "../executors/threejs-options";
 
 function createMockContext(overrides: Partial<ExecutionContext> = {}): ExecutionContext {
   return {
@@ -577,5 +578,188 @@ describe("switch executor", () => {
 
     expect(result.output).toBe("false");
     expect(result.switchState).toBe(false);
+  });
+});
+
+describe("threejs-options executor", () => {
+  it("has correct type", () => {
+    expect(threejsOptionsExecutor.type).toBe("threejs-options");
+  });
+
+  it("has pulse output metadata", () => {
+    expect(threejsOptionsExecutor.hasPulseOutput).toBe(true);
+  });
+
+  it("combines all text fields when no inputs connected", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "opts-1",
+        type: "threejs-options",
+        position: { x: 0, y: 0 },
+        data: {
+          cameraText: "position: [0, 5, 10]",
+          lightText: "ambient: 0.5",
+          mouseText: "orbit controls enabled",
+        },
+      } as Node,
+      inputs: {},
+    });
+
+    const result = await threejsOptionsExecutor.execute(ctx);
+
+    expect(result.output).toBe(
+      "CAMERA: position: [0, 5, 10]\nLIGHT: ambient: 0.5\nMOUSE: orbit controls enabled"
+    );
+  });
+
+  it("connected inputs take precedence over text fields", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "opts-1",
+        type: "threejs-options",
+        position: { x: 0, y: 0 },
+        data: {
+          cameraText: "text field camera",
+          lightText: "text field light",
+          mouseText: "text field mouse",
+        },
+      } as Node,
+      inputs: {
+        camera: "connected camera",
+        light: "connected light",
+      },
+    });
+
+    const result = await threejsOptionsExecutor.execute(ctx);
+
+    expect(result.output).toBe(
+      "CAMERA: connected camera\nLIGHT: connected light\nMOUSE: text field mouse"
+    );
+  });
+
+  it("omits empty sections", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "opts-1",
+        type: "threejs-options",
+        position: { x: 0, y: 0 },
+        data: {
+          cameraText: "FOV: 75",
+          lightText: "", // Empty
+          mouseText: undefined, // Undefined
+        },
+      } as Node,
+      inputs: {},
+    });
+
+    const result = await threejsOptionsExecutor.execute(ctx);
+
+    expect(result.output).toBe("CAMERA: FOV: 75");
+    expect(result.output).not.toContain("LIGHT:");
+    expect(result.output).not.toContain("MOUSE:");
+  });
+
+  it("returns empty string when no options provided", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "opts-1",
+        type: "threejs-options",
+        position: { x: 0, y: 0 },
+        data: {},
+      } as Node,
+      inputs: {},
+    });
+
+    const result = await threejsOptionsExecutor.execute(ctx);
+
+    expect(result.output).toBe("");
+  });
+
+  it("only includes sections with values", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "opts-1",
+        type: "threejs-options",
+        position: { x: 0, y: 0 },
+        data: {
+          lightText: "directional: intensity 1.0",
+        },
+      } as Node,
+      inputs: {},
+    });
+
+    const result = await threejsOptionsExecutor.execute(ctx);
+
+    expect(result.output).toBe("LIGHT: directional: intensity 1.0");
+    expect(result.output).not.toContain("CAMERA:");
+    expect(result.output).not.toContain("MOUSE:");
+  });
+
+  it("handles only connected inputs with no text fields", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "opts-1",
+        type: "threejs-options",
+        position: { x: 0, y: 0 },
+        data: {},
+      } as Node,
+      inputs: {
+        camera: "connected camera value",
+        mouse: "connected mouse value",
+      },
+    });
+
+    const result = await threejsOptionsExecutor.execute(ctx);
+
+    expect(result.output).toBe(
+      "CAMERA: connected camera value\nMOUSE: connected mouse value"
+    );
+  });
+
+  it("preserves multi-line values", async () => {
+    const ctx = createMockContext({
+      node: {
+        id: "opts-1",
+        type: "threejs-options",
+        position: { x: 0, y: 0 },
+        data: {
+          cameraText: "position: [0, 5, 10]\nFOV: 60\nangle: top-down",
+        },
+      } as Node,
+      inputs: {},
+    });
+
+    const result = await threejsOptionsExecutor.execute(ctx);
+
+    expect(result.output).toBe(
+      "CAMERA: position: [0, 5, 10]\nFOV: 60\nangle: top-down"
+    );
+  });
+
+  it("connected empty string clears section instead of falling back to text field", async () => {
+    // A connected upstream node outputting "" should clear the section,
+    // not fall back to the text field value
+    const ctx = createMockContext({
+      node: {
+        id: "opts-1",
+        type: "threejs-options",
+        position: { x: 0, y: 0 },
+        data: {
+          cameraText: "should be ignored",
+          lightText: "should also appear",
+        },
+      } as Node,
+      inputs: {
+        camera: "", // Intentionally empty - should NOT fall back to cameraText
+      },
+    });
+
+    const result = await threejsOptionsExecutor.execute(ctx);
+
+    // Camera section should be omitted (connected empty string = clear)
+    // Light section should appear (text field, not connected)
+    expect(result.output).toBe("LIGHT: should also appear");
+    expect(result.output).not.toContain("CAMERA:");
+    expect(result.output).not.toContain("should be ignored");
   });
 });

@@ -20,11 +20,18 @@ function cleanThreejsCode(code: string): string {
   return cleaned.trim();
 }
 
+// Encode string to base64 using modern TextEncoder (UTF-8 safe)
+function encodeToBase64(str: string): string {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(str);
+  return btoa(String.fromCharCode(...Array.from(bytes)));
+}
+
 // HTML template for the sandboxed iframe with Three.js + R3F
 function createIframeContent(code: string, sceneInput?: string): string {
   const cleanCode = cleanThreejsCode(code);
-  const encodedCode = btoa(unescape(encodeURIComponent(cleanCode)));
-  const encodedSceneInput = sceneInput ? btoa(unescape(encodeURIComponent(sceneInput))) : "";
+  const encodedCode = encodeToBase64(cleanCode);
+  const encodedSceneInput = sceneInput ? encodeToBase64(sceneInput) : "";
 
   return `<!DOCTYPE html>
 <html>

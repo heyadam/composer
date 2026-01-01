@@ -178,7 +178,8 @@ AI-powered Three.js/React Three Fiber scene generator. Takes a description and g
 **Input Handles:**
 - \`prompt\` - Scene description (dataType: "string")
 - \`system\` - Additional style/behavior instructions (dataType: "string")
-- \`scene\` - Optional context about the scene, e.g., product details (dataType: "string")
+- \`scene\` - Dynamic Scene Variable: optional context injected as \`sceneInput\` variable (dataType: "string")
+- \`options\` - Scene Options: settings from ThreejsOptionsNode (dataType: "string")
 
 **Output Handles:**
 - \`output\` - Generated Three.js code (dataType: "three") - connect to preview-output's \`three\` handle for 3D preview
@@ -229,17 +230,20 @@ Example - creating a 3D product visualization:
 \`\`\`
 
 ### 8. threejs-options (3D Scene Options)
-Utility node for configuring camera, lighting, and interaction settings for 3D scenes. Combines multiple string inputs into a formatted options string that can be connected to a threejs-scene node's options input. This provides structured control over 3D scene behavior.
+Utility node for configuring camera, lighting, and interaction settings for 3D scenes. Has inline text fields for each setting that can also accept connected inputs (connected inputs take precedence). Combines values into a formatted options string for the threejs-scene node.
 \`\`\`typescript
 {
   type: "threejs-options",
   data: {
-    label: string  // Display name
+    label: string,        // Display name
+    cameraText?: string,  // Inline camera settings
+    lightText?: string,   // Inline lighting settings
+    mouseText?: string    // Inline interaction settings
   }
 }
 \`\`\`
 
-**Input Handles:**
+**Input Handles (with inline text fields):**
 - \`camera\` - Camera settings (position, angle, FOV) (dataType: "string")
 - \`light\` - Lighting configuration (dataType: "string")
 - \`mouse\` - Mouse/interaction behavior (dataType: "string")
@@ -247,6 +251,8 @@ Utility node for configuring camera, lighting, and interaction settings for 3D s
 **Output Handles:**
 - \`output\` - Formatted options string (dataType: "string") - connect to threejs-scene's \`options\` handle
 - \`done\` - Pulse when complete (dataType: "pulse")
+
+**Priority:** Connected inputs take precedence over inline text field values.
 
 Example - adding scene options to a 3D scene:
 \`\`\`json

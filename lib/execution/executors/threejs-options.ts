@@ -19,11 +19,12 @@ export const threejsOptionsExecutor: NodeExecutor = {
     const data = node.data as ThreejsOptionsNodeData;
 
     // Collect non-empty sections (connected inputs take precedence over text fields)
+    // Use nullish coalescing to respect connected empty strings (intentional clearing)
     const parts: string[] = [];
 
-    const camera = inputs["camera"] || data.cameraText;
-    const light = inputs["light"] || data.lightText;
-    const mouse = inputs["mouse"] || data.mouseText;
+    const camera = inputs["camera"] ?? data.cameraText;
+    const light = inputs["light"] ?? data.lightText;
+    const mouse = inputs["mouse"] ?? data.mouseText;
 
     if (camera) {
       parts.push(`CAMERA: ${camera}`);

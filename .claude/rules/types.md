@@ -66,8 +66,12 @@ Interface for audio streaming between nodes:
 
 ### ThreejsOptionsNodeData
 
-- `label`: Node label (only required field)
-- Combines camera, light, and mouse inputs into labeled plain text format
+- `label`: Node label
+- `cameraText`: Inline camera settings (position, FOV, angle)
+- `lightText`: Inline lighting settings (ambient, directional, intensity)
+- `mouseText`: Inline interaction settings (orbit controls, click behavior)
+- Connected inputs take precedence over text field values
+- Combines values into labeled plain text format (CAMERA/LIGHT/MOUSE sections)
 
 ### ThreejsSceneNodeData
 

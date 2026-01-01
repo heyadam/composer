@@ -511,6 +511,14 @@ export async function POST(request: NextRequest) {
       const promptInput = inputs?.prompt ?? "";
       const userSystemPrompt = inputs?.system ?? "";
 
+      // Validate prompt input
+      if (!promptInput || promptInput.trim().length === 0) {
+        return NextResponse.json(
+          { error: "Component description is required" },
+          { status: 400 }
+        );
+      }
+
       // Style-specific instructions
       const styleInstructions: Record<string, string> = {
         simple: `STYLING (Vercel/v0 inspired):
@@ -608,6 +616,14 @@ export default function Component() {
       const userSystemPrompt = inputs?.system ?? "";
       const sceneInput = inputs?.scene ?? "";
       const optionsInput = inputs?.options ?? "";
+
+      // Validate prompt input
+      if (!promptInput || promptInput.trim().length === 0) {
+        return NextResponse.json(
+          { error: "Scene description is required" },
+          { status: 400 }
+        );
+      }
 
       // Build comprehensive system prompt for Three.js/R3F scene generation
       const systemPrompt = `You are an expert Three.js and React Three Fiber developer. Generate clean, functional 3D scene components.
