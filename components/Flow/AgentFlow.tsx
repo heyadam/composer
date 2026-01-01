@@ -22,6 +22,7 @@ import "@xyflow/react/dist/style.css";
 import { nodeTypes } from "./nodes";
 import { edgeTypes } from "./edges/ColoredEdge";
 import { ConnectionContext } from "./ConnectionContext";
+import { SidebarContext } from "./SidebarContext";
 import { CommandPalette } from "./CommandPalette";
 import { AutopilotSidebar } from "./AutopilotSidebar";
 import { ActionBar } from "./ActionBar";
@@ -232,6 +233,9 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
   );
 
   const [responsesOpen, setResponsesOpen] = useState(false);
+  const sidebarContextValue = useMemo(() => ({
+    openResponsesSidebar: () => setResponsesOpen(true),
+  }), []);
 
   // Flow operations hook
   const {
@@ -895,6 +899,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
           }}
         />
         <CommentEditContext.Provider value={{ markUserEdited }}>
+          <SidebarContext.Provider value={sidebarContextValue}>
           <ConnectionContext.Provider value={{ isConnecting, connectingFromNodeId }}>
             <FlowContextMenu
               hasSelection={hasSelection}
@@ -963,6 +968,7 @@ export function AgentFlow({ collaborationMode }: AgentFlowProps) {
             </ReactFlow>
             </FlowContextMenu>
           </ConnectionContext.Provider>
+          </SidebarContext.Provider>
         </CommentEditContext.Provider>
         <FlowHeader
           autopilotOpen={autopilotOpen}

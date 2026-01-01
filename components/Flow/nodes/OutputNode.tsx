@@ -2,19 +2,21 @@
 
 import { useReactFlow, type NodeProps, type Node } from "@xyflow/react";
 import type { OutputNodeData } from "@/types/flow";
-import { Eye } from "lucide-react";
+import { Eye, PanelRight } from "lucide-react";
 import { NodeFrame } from "./NodeFrame";
 import { PortList } from "./PortLabel";
 import { NodeFooter } from "./NodeFooter";
 import { NodeImagePreview } from "./NodeImagePreview";
 import { AudioPreview } from "@/components/Flow/ResponsesSidebar/AudioPreview";
 import { useEdgeConnections } from "@/lib/hooks/useEdgeConnections";
+import { useSidebar } from "@/components/Flow/SidebarContext";
 
 type OutputNodeType = Node<OutputNodeData, "preview-output">;
 
 export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
   const { updateNodeData } = useReactFlow();
   const { isInputConnected } = useEdgeConnections(id);
+  const { openResponsesSidebar } = useSidebar();
 
   const renderFooter = () => {
     if (data.executionError) {
@@ -42,16 +44,14 @@ export function OutputNode({ id, data }: NodeProps<OutputNodeType>) {
           <AudioPreview output={data.audioOutput} compact />
         )}
 
-        {data.codeOutput && (
-          <p className="text-xs text-white/65">
-            Code preview available in sidebar
-          </p>
-        )}
-
-        {data.threeOutput && (
-          <p className="text-xs text-white/65">
-            3D scene preview available in sidebar
-          </p>
+        {(data.codeOutput || data.threeOutput) && (
+          <button
+            onClick={openResponsesSidebar}
+            className="flex items-center gap-1.5 text-xs text-white/65 hover:text-white/90 transition-colors cursor-pointer"
+          >
+            <PanelRight className="w-3.5 h-3.5" />
+            Open sidebar to view
+          </button>
         )}
       </div>
     );
