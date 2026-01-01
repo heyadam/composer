@@ -15,7 +15,7 @@ Flow types in `types/flow.ts` define node data interfaces with execution state t
 - `orange` = pulse
 - `coral` = three (3D scenes)
 
-**Pulse Ports**: Processing nodes (`text-generation`, `image-generation`, `ai-logic`, `react-component`, `threejs-scene`, `audio-transcription`, `string-combine`) have a `done` output port that fires a pulse when execution completes. Pulses are momentary signals that are "on" for a single execution cycle, then return to "off".
+**Pulse Ports**: Processing nodes (`text-generation`, `image-generation`, `ai-logic`, `react-component`, `threejs-scene`, `threejs-options`, `audio-transcription`, `string-combine`) have a `done` output port that fires a pulse when execution completes. Pulses are momentary signals that are "on" for a single execution cycle, then return to "off".
 
 ## Node Data Interfaces
 
@@ -64,6 +64,11 @@ Interface for audio streaming between nodes:
 
 - `separator`: String to insert between inputs (default: empty string)
 
+### ThreejsOptionsNodeData
+
+- `label`: Node label (only required field)
+- Combines camera, light, and mouse inputs into labeled plain text format
+
 ### ThreejsSceneNodeData
 
 - `userPrompt`: Scene description (used when prompt input not connected)
@@ -85,6 +90,7 @@ Valid node types for flow operations:
 - `preview-output`
 - `react-component`
 - `threejs-scene`
+- `threejs-options`
 - `comment`
 - `realtime-conversation`
 - `audio-transcription`

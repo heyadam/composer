@@ -72,6 +72,7 @@ Each node type has its own executor file in `lib/execution/executors/`:
 | `audio-transcription.ts` | audio-transcription | hasPulseOutput |
 | `realtime-conversation.ts` | realtime-conversation | hasPulseOutput |
 | `string-combine.ts` | string-combine | hasPulseOutput |
+| `threejs-options.ts` | threejs-options | hasPulseOutput |
 | `comment.ts` | comment | - |
 
 All executors are registered via `lib/execution/executors/index.ts`.

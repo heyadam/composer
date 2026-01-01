@@ -19,6 +19,7 @@ describe("executor integration", () => {
     "ai-logic",
     "react-component",
     "threejs-scene",
+    "threejs-options",
     "audio-transcription",
     "realtime-conversation",
     "comment",

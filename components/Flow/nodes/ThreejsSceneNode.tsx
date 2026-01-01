@@ -106,6 +106,26 @@ export function ThreejsSceneNode({ id, data }: NodeProps<ThreejsSceneNodeType>) 
           </div>
         </InputWithHandle>
 
+        {/* Scene Options (from ThreejsOptionsNode) */}
+        <InputWithHandle
+          id="options"
+          label="Scene Options"
+          colorClass="cyan"
+          required={false}
+          isConnected={isInputConnected("options")}
+        >
+          <div
+            className={cn(
+              "nodrag node-input min-h-[32px] text-xs flex items-center",
+              isInputConnected("options") ? "text-white/50" : "text-white/30"
+            )}
+          >
+            {isInputConnected("options")
+              ? "Connected (camera, light, interaction)"
+              : "Connect 3D Scene Options node"}
+          </div>
+        </InputWithHandle>
+
         {/* Configuration */}
         <div className="space-y-2.5 pt-3 border-t border-white/[0.06]">
           <ProviderModelSelector

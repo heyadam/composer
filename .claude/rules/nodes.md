@@ -49,6 +49,7 @@ All node components are in `components/Flow/nodes/` with editable labels.
 - Scene description input (prompt)
 - Additional instructions input (system)
 - Optional scene context input (e.g., product details)
+- Optional options input (from ThreejsOptionsNode for camera/light/mouse settings)
 - 3D output port (coral) - connects to preview-output 3D input for 3D preview
 - Interactive orbit controls and dynamic lighting
 - Multi-provider support (OpenAI, Google, Anthropic)
@@ -77,6 +78,13 @@ All node components are in `components/Flow/nodes/` with editable labels.
 - Configurable separator (default: none)
 - Outputs combined string on "output" port
 - Has "done" pulse output for execution chaining
+
+**ThreejsOptionsNode** (type: `threejs-options`): Configures 3D scene options for ThreejsSceneNode:
+- Three string input ports (camera, light, mouse)
+- Combines inputs into labeled plain text format (CAMERA/LIGHT/MOUSE sections)
+- Outputs combined options on "output" port
+- Has "done" pulse output for execution chaining
+- Connect output to ThreejsSceneNode's options input
 
 ## Annotation Nodes
 

@@ -46,6 +46,7 @@ export interface ThreejsSceneDebugParams {
   userPrompt: string;
   systemPrompt: string;
   hasSceneInput: boolean;
+  hasOptionsInput?: boolean;
 }
 
 /**
@@ -155,6 +156,7 @@ export function createThreejsSceneDebugInfo(
       userPrompt: params.userPrompt,
       systemPrompt: params.systemPrompt,
       hasSceneInput: params.hasSceneInput,
+      hasOptionsInput: params.hasOptionsInput,
     },
     streamChunksReceived: 0,
     rawRequestBody: JSON.stringify(redactRequestBody(requestBody), null, 2),

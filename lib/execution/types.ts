@@ -28,6 +28,7 @@ export interface DebugInfo {
     partialImages?: number;
     // Three.js-specific
     hasSceneInput?: boolean;
+    hasOptionsInput?: boolean;
   };
   streamChunksReceived?: number;
   rawRequestBody?: string;

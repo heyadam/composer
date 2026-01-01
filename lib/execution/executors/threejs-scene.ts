@@ -37,6 +37,10 @@ export const threejsSceneExecutor: NodeExecutor = {
     const hasSceneEdge = "scene" in inputs;
     const sceneInput = hasSceneEdge ? inputs["scene"] : undefined;
 
+    // Get options input (camera, light, interaction settings)
+    const hasOptionsEdge = "options" in inputs;
+    const optionsInput = hasOptionsEdge ? inputs["options"] : undefined;
+
     const provider = (node.data.provider as string) || "anthropic";
     const model = (node.data.model as string) || "claude-sonnet-4-5";
 
@@ -47,6 +51,7 @@ export const threejsSceneExecutor: NodeExecutor = {
         prompt: promptInput,
         system: effectiveSystemPrompt,
         scene: sceneInput,
+        options: optionsInput,
       },
       provider,
       model,
@@ -62,6 +67,7 @@ export const threejsSceneExecutor: NodeExecutor = {
         userPrompt: promptInput,
         systemPrompt: effectiveSystemPrompt,
         hasSceneInput: hasSceneEdge,
+        hasOptionsInput: hasOptionsEdge,
       },
       requestBody
     );

@@ -19,6 +19,7 @@ import {
   ToggleLeft,
   Combine,
   Box,
+  SlidersHorizontal,
   ArrowRight,
   X,
 } from "lucide-react";
@@ -42,6 +43,7 @@ const iconMap: Record<NodeType, typeof Keyboard> = {
   "switch": ToggleLeft,
   "string-combine": Combine,
   "threejs-scene": Box,
+  "threejs-options": SlidersHorizontal,
 };
 
 // Extended node definitions with categories
@@ -61,7 +63,7 @@ const categorizedNodes = [
   {
     category: "Logic",
     nodes: nodeDefinitions.filter((n) =>
-      ["ai-logic", "switch", "string-combine"].includes(n.type)
+      ["ai-logic", "switch", "string-combine", "threejs-options"].includes(n.type)
     ),
   },
   {

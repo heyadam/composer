@@ -264,6 +264,11 @@ export interface ThreejsSceneNodeData extends Record<string, unknown>, Execution
   cacheable?: boolean;
 }
 
+// Three.js Options node data (combines camera, light, interaction settings)
+export interface ThreejsOptionsNodeData extends Record<string, unknown>, ExecutionData {
+  label: string;
+}
+
 // Union type for all node data
 export type AgentNodeData =
   | InputNodeData
@@ -279,10 +284,11 @@ export type AgentNodeData =
   | AudioTranscriptionNodeData
   | SwitchNodeData
   | StringCombineNodeData
-  | ThreejsSceneNodeData;
+  | ThreejsSceneNodeData
+  | ThreejsOptionsNodeData;
 
 // Custom node types
-export type NodeType = "text-input" | "preview-output" | "text-generation" | "image-generation" | "image-input" | "audio-input" | "ai-logic" | "comment" | "react-component" | "realtime-conversation" | "audio-transcription" | "switch" | "string-combine" | "threejs-scene";
+export type NodeType = "text-input" | "preview-output" | "text-generation" | "image-generation" | "image-input" | "audio-input" | "ai-logic" | "comment" | "react-component" | "realtime-conversation" | "audio-transcription" | "switch" | "string-combine" | "threejs-scene" | "threejs-options";
 
 // Typed nodes
 export type InputNode = Node<InputNodeData, "text-input">;
@@ -299,6 +305,7 @@ export type AudioTranscriptionNode = Node<AudioTranscriptionNodeData, "audio-tra
 export type SwitchNode = Node<SwitchNodeData, "switch">;
 export type StringCombineNode = Node<StringCombineNodeData, "string-combine">;
 export type ThreejsSceneNode = Node<ThreejsSceneNodeData, "threejs-scene">;
+export type ThreejsOptionsNode = Node<ThreejsOptionsNodeData, "threejs-options">;
 
 export type AgentNode =
   | InputNode
@@ -314,7 +321,8 @@ export type AgentNode =
   | AudioTranscriptionNode
   | SwitchNode
   | StringCombineNode
-  | ThreejsSceneNode;
+  | ThreejsSceneNode
+  | ThreejsOptionsNode;
 
 // Edge type
 export type AgentEdge = Edge;
@@ -404,6 +412,12 @@ export const nodeDefinitions: NodeDefinition[] = [
     type: "threejs-scene",
     label: "3D Scene",
     description: "Generate Three.js 3D scenes",
+    color: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
+  },
+  {
+    type: "threejs-options",
+    label: "3D Scene Options",
+    description: "Configure camera, lighting, interaction",
     color: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
   },
 ];
@@ -530,9 +544,21 @@ export const NODE_PORT_SCHEMAS: Record<NodeType, NodePortSchema> = {
       { id: "prompt", label: "prompt", dataType: "string", required: true },
       { id: "system", label: "system", dataType: "string", required: false },
       { id: "scene", label: "scene", dataType: "string", required: false },
+      { id: "options", label: "options", dataType: "string", required: false },
     ],
     outputs: [
       { id: "output", label: "3D", dataType: "three" },
+      { id: "done", label: "Done", dataType: "pulse" },
+    ],
+  },
+  "threejs-options": {
+    inputs: [
+      { id: "camera", label: "camera", dataType: "string", required: false },
+      { id: "light", label: "light", dataType: "string", required: false },
+      { id: "mouse", label: "mouse", dataType: "string", required: false },
+    ],
+    outputs: [
+      { id: "output", label: "options", dataType: "string" },
       { id: "done", label: "Done", dataType: "pulse" },
     ],
   },

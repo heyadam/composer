@@ -56,6 +56,17 @@ const NODE_INPUT_HANDLES: Record<string, Record<string, string[]>> = {
     audio: ["audio"],
     language: ["string"],
   },
+  "threejs-scene": {
+    prompt: ["string"],
+    system: ["string"],
+    scene: ["string"],
+    options: ["string"],
+  },
+  "threejs-options": {
+    camera: ["string"],
+    light: ["string"],
+    mouse: ["string"],
+  },
 };
 
 /**
@@ -70,8 +81,10 @@ const OUTPUT_DATA_TYPES: Record<string, string> = {
   "ai-logic": "string",
   "react-component": "response",
   "threejs-scene": "three",          // 3D scene code output
+  "threejs-options": "string",       // Formatted options string
   "realtime-conversation": "string", // Primary output is transcript (string)
   "audio-transcription": "string",   // Transcribed text output
+  "string-combine": "string",        // Combined string output
 };
 
 /**
@@ -83,9 +96,11 @@ const NODES_WITH_DONE_OUTPUT = new Set([
   "ai-logic",
   "react-component",
   "threejs-scene",
+  "threejs-options",
   "audio-transcription",
   "audio-input",
   "realtime-conversation",
+  "string-combine",
 ]);
 
 /**

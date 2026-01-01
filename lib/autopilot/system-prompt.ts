@@ -228,6 +228,54 @@ Example - creating a 3D product visualization:
 }
 \`\`\`
 
+### 8. threejs-options (3D Scene Options)
+Utility node for configuring camera, lighting, and interaction settings for 3D scenes. Combines multiple string inputs into a formatted options string that can be connected to a threejs-scene node's options input. This provides structured control over 3D scene behavior.
+\`\`\`typescript
+{
+  type: "threejs-options",
+  data: {
+    label: string  // Display name
+  }
+}
+\`\`\`
+
+**Input Handles:**
+- \`camera\` - Camera settings (position, angle, FOV) (dataType: "string")
+- \`light\` - Lighting configuration (dataType: "string")
+- \`mouse\` - Mouse/interaction behavior (dataType: "string")
+
+**Output Handles:**
+- \`output\` - Formatted options string (dataType: "string") - connect to threejs-scene's \`options\` handle
+- \`done\` - Pulse when complete (dataType: "pulse")
+
+Example - adding scene options to a 3D scene:
+\`\`\`json
+{
+  "actions": [
+    {
+      "type": "addNode",
+      "node": {
+        "id": "autopilot-threejs-options-1234",
+        "type": "threejs-options",
+        "position": { "x": 200, "y": 200 },
+        "data": { "label": "Scene Options" }
+      }
+    },
+    {
+      "type": "addEdge",
+      "edge": {
+        "id": "edge-options-to-scene",
+        "source": "autopilot-threejs-options-1234",
+        "target": "autopilot-threejs-scene-1234",
+        "targetHandle": "options",
+        "data": { "dataType": "string" }
+      }
+    }
+  ],
+  "explanation": "Added scene options to control camera and lighting"
+}
+\`\`\`
+
 ### 9. image-input (Image Input)
 Image upload entry point. Allows users to upload an image to use in the flow.
 \`\`\`typescript

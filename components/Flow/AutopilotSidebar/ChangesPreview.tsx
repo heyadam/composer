@@ -23,6 +23,7 @@ import {
   ToggleLeft,
   Combine,
   Box,
+  SlidersHorizontal,
   ChevronDown,
   CheckCircle2,
   AlertTriangle,
@@ -54,6 +55,7 @@ const iconMap: Record<NodeType, typeof Keyboard> = {
   "switch": ToggleLeft,
   "string-combine": Combine,
   "threejs-scene": Box,
+  "threejs-options": SlidersHorizontal,
 };
 
 const nodeTypeLabels: Record<NodeType, string> = {
@@ -71,6 +73,7 @@ const nodeTypeLabels: Record<NodeType, string> = {
   "switch": "Switch",
   "string-combine": "String Combine",
   "threejs-scene": "3D Scene",
+  "threejs-options": "3D Options",
 };
 
 const dataTypeColors: Record<

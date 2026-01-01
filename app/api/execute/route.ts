@@ -607,6 +607,7 @@ export default function Component() {
       const promptInput = inputs?.prompt ?? "";
       const userSystemPrompt = inputs?.system ?? "";
       const sceneInput = inputs?.scene ?? "";
+      const optionsInput = inputs?.options ?? "";
 
       // Build comprehensive system prompt for Three.js/R3F scene generation
       const systemPrompt = `You are an expert Three.js and React Three Fiber developer. Generate clean, functional 3D scene components.
@@ -615,9 +616,10 @@ RULES:
 1. Generate a single React functional component with <Canvas> wrapper
 2. NO import statements - React, THREE, Canvas, useFrame, and all @react-three/drei components are globally available
 3. Export the component as default: \`export default function Scene() {...}\`
-4. Use React Three Fiber patterns (useFrame for animations, mesh for objects)
-5. Include OrbitControls by default for user interaction
-6. Handle edge cases gracefully
+4. CRITICAL: R3F hooks (useFrame, useThree, useLoader) can ONLY be used in components rendered INSIDE Canvas, never in the parent component
+5. For animations, create a child component that uses useFrame, then render it inside Canvas
+6. Include OrbitControls by default for user interaction
+7. Handle edge cases gracefully
 
 AVAILABLE GLOBALS (NO imports needed):
 - React and all hooks (useState, useEffect, useRef, useMemo, etc.)
@@ -629,7 +631,7 @@ SCENE INPUT VARIABLE:
 ${sceneInput ? `A variable called \`sceneInput\` is available with this value: "${sceneInput}"` : "The sceneInput variable may be available for dynamic content."}
 - Access it as: window.sceneInput or just sceneInput
 - Use it for dynamic text, colors, or other configurable values
-
+${optionsInput ? `\nSCENE OPTIONS:\n${optionsInput}` : ""}
 ${userSystemPrompt ? `\nADDITIONAL INSTRUCTIONS:\n${userSystemPrompt}` : ""}
 
 OUTPUT FORMAT:
@@ -637,7 +639,7 @@ Return ONLY the component code wrapped in a jsx code block. No explanations befo
 
 Example output:
 \`\`\`jsx
-export default function Scene() {
+function RotatingBox() {
   const meshRef = useRef();
 
   useFrame((state, delta) => {
@@ -645,13 +647,19 @@ export default function Scene() {
   });
 
   return (
+    <mesh ref={meshRef}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color="hotpink" />
+    </mesh>
+  );
+}
+
+export default function Scene() {
+  return (
     <Canvas camera={{ position: [0, 2, 5], fov: 50 }}>
       <ambientLight intensity={0.5} />
       <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
-      <mesh ref={meshRef}>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color="hotpink" />
-      </mesh>
+      <RotatingBox />
       <OrbitControls />
     </Canvas>
   );
