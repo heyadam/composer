@@ -267,6 +267,9 @@ export interface ThreejsSceneNodeData extends Record<string, unknown>, Execution
 // Three.js Options node data (combines camera, light, interaction settings)
 export interface ThreejsOptionsNodeData extends Record<string, unknown>, ExecutionData {
   label: string;
+  cameraText?: string;
+  lightText?: string;
+  mouseText?: string;
 }
 
 // Union type for all node data

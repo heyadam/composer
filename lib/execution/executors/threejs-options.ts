@@ -3,28 +3,36 @@
  *
  * Combines camera, lighting, and interaction settings into a single formatted
  * options string for the 3D Scene node.
+ *
+ * Priority: Connected inputs take precedence over text field values.
  */
 
 import type { NodeExecutor, ExecutionContext, ExecuteNodeResult } from "./types";
+import type { ThreejsOptionsNodeData } from "@/types/flow";
 
 export const threejsOptionsExecutor: NodeExecutor = {
   type: "threejs-options",
   hasPulseOutput: true,
 
   async execute(ctx: ExecutionContext): Promise<ExecuteNodeResult> {
-    const { inputs } = ctx;
+    const { inputs, node } = ctx;
+    const data = node.data as ThreejsOptionsNodeData;
 
-    // Collect non-empty sections
+    // Collect non-empty sections (connected inputs take precedence over text fields)
     const parts: string[] = [];
 
-    if (inputs["camera"]) {
-      parts.push(`CAMERA: ${inputs["camera"]}`);
+    const camera = inputs["camera"] || data.cameraText;
+    const light = inputs["light"] || data.lightText;
+    const mouse = inputs["mouse"] || data.mouseText;
+
+    if (camera) {
+      parts.push(`CAMERA: ${camera}`);
     }
-    if (inputs["light"]) {
-      parts.push(`LIGHT: ${inputs["light"]}`);
+    if (light) {
+      parts.push(`LIGHT: ${light}`);
     }
-    if (inputs["mouse"]) {
-      parts.push(`MOUSE: ${inputs["mouse"]}`);
+    if (mouse) {
+      parts.push(`MOUSE: ${mouse}`);
     }
 
     // Combine with newlines

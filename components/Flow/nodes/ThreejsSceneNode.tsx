@@ -36,10 +36,12 @@ export function ThreejsSceneNode({ id, data }: NodeProps<ThreejsSceneNodeType>) 
         <>
           <PortRow
             nodeId={id}
+            input={{ id: "scene", label: "Dynamic Scene Variable", colorClass: "cyan", isConnected: isInputConnected("scene") }}
             output={{ id: "output", label: "3D", colorClass: "coral", isConnected: isOutputConnected("output", true) }}
           />
           <PortRow
             nodeId={id}
+            input={{ id: "options", label: "Scene Options", colorClass: "cyan", isConnected: isInputConnected("options") }}
             output={{ id: "done", label: "Done", colorClass: "orange", isConnected: isOutputConnected("done") }}
           />
         </>
@@ -84,46 +86,6 @@ export function ThreejsSceneNode({ id, data }: NodeProps<ThreejsSceneNodeType>) 
               isInputConnected("system") && "node-input:disabled"
             )}
           />
-        </InputWithHandle>
-
-        {/* Scene Input (Variable Injection) */}
-        <InputWithHandle
-          id="scene"
-          label="Scene Input"
-          colorClass="cyan"
-          required={false}
-          isConnected={isInputConnected("scene")}
-        >
-          <div
-            className={cn(
-              "nodrag node-input min-h-[32px] text-xs flex items-center",
-              isInputConnected("scene") ? "text-white/50" : "text-white/30"
-            )}
-          >
-            {isInputConnected("scene")
-              ? "Connected → sceneInput variable"
-              : "Connect to inject as sceneInput"}
-          </div>
-        </InputWithHandle>
-
-        {/* Scene Options (from ThreejsOptionsNode) */}
-        <InputWithHandle
-          id="options"
-          label="Scene Options"
-          colorClass="cyan"
-          required={false}
-          isConnected={isInputConnected("options")}
-        >
-          <div
-            className={cn(
-              "nodrag node-input min-h-[32px] text-xs flex items-center",
-              isInputConnected("options") ? "text-white/50" : "text-white/30"
-            )}
-          >
-            {isInputConnected("options")
-              ? "Connected (camera, light, interaction)"
-              : "Connect 3D Scene Options node"}
-          </div>
         </InputWithHandle>
 
         {/* Configuration */}

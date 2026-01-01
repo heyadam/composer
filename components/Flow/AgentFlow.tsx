@@ -86,7 +86,7 @@ const defaultNodeData: Record<NodeType, Record<string, unknown>> = {
   "switch": { label: "Switch", isOn: false },
   "string-combine": { label: "String Combine", separator: "" },
   "threejs-scene": { label: "3D Scene", userPrompt: "", provider: "anthropic", model: "claude-sonnet-4-5" },
-  "threejs-options": { label: "3D Options" },
+  "threejs-options": { label: "3D Options", cameraText: "", lightText: "", mouseText: "" },
 };
 
 export function AgentFlow({ collaborationMode }: AgentFlowProps) {
