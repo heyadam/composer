@@ -131,3 +131,17 @@ Processing nodes have a `done` output that fires a pulse when execution complete
 **Documentation Lookup**: Use the **Context7 MCP tools** (`mcp__context7__resolve-library-id` and `mcp__context7__get-library-docs`) to fetch the latest documentation for any libraries or SDKs. Note: `docs/AI_MODELS.md` supersedes Context7 for model information.
 
 **AI Elements**: Use the AI Elements MCP (`mcp__ai-elements__get_ai_elements_components` and `mcp__ai-elements__get_ai_elements_component`) to discover and add UI components.
+
+## Native App Context
+
+A companion iOS/macOS app is being developed in a separate repository. The file `.claude/docs/NATIVE_APP_CONTEXT.md` documents all server-side APIs, data models, and integration patterns for the native app team.
+
+**Keep this document updated** when making major changes to:
+- API routes (`app/api/`) - new endpoints, changed request/response schemas
+- Data models (`types/flow.ts`, `lib/flows/types.ts`) - new node types, changed interfaces
+- Authentication (`lib/auth/`, `lib/supabase/`) - auth flow changes
+- Real-time collaboration (`lib/hooks/useCollaboration.ts`) - broadcast events, presence data
+- Execution engine (`lib/execution/`) - new execution types, streaming formats
+- MCP server (`lib/mcp/`) - new tools, changed protocols
+
+When updating, ensure absolute file paths remain accurate for cross-reference.
